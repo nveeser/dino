@@ -102,7 +102,7 @@ class RapidsGenerator(Generator):
             d['inherit']['appliance'] = host.appliance.name            
             d['inherit']['datacenter'] = host.device.rack.site.name
             d['inherit']['pod'] = host.pod.name + '.' + host.device.rack.site.name
-            if bool(self.settings.rapids_force_stage_inherit):
+            if int(self.settings.rapids_force_stage_inherit):
                 d['inherit']['stage-definitions'] = 'default'
             d['inherit']['host'] = d['host']
 

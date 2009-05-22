@@ -15,6 +15,9 @@ for p in sys.path[:]:
 
 #sys.path.insert(0, "/u/nicholas/mac/Documents/workspace/SQLAlchemy-0.5.3/lib/")
 
+import sqlalchemy
+if sqlalchemy.__version__ != "0.5.3":
+    raise RuntimeException("Found wrong version of SqlAlchemy: %s" % sqlalchemy.__version__)
 
 
 def get_class_logger(cls):

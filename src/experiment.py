@@ -1,8 +1,10 @@
+''' Script used for experimenting with sqlalchemy features'''
+
 import sys
 import os
 
 if __name__ == "__main__":
-    sys.path[0] = os.path.join(os.path.dirname(__file__), "..", "..")
+    sys.path[0] = os.path.join(os.path.dirname(__file__))
     
 sys.path.insert(0, "/u/nicholas/mac/Documents/workspace/SQLAlchemy-0.5.3/lib/")
 
@@ -21,16 +23,6 @@ __session__ = None
 entity_set = __entity_collection__ = elixir.EntityCollection()
 metadata = __metadata__ = sqlalchemy.schema.MetaData()
 
-
-class IpAddress(types.Mutable, types.TypeEngine):
-
-    impl = types.Integer
-
-    def get_col_spec(self):
-        return self.impl.get_col_spec()
-
-
-
 ###############################################
 #
 # Example Classes 
@@ -43,7 +35,6 @@ class Person(elixir.Entity):
     age = Field(types.Integer)
     numbers = OneToMany("PhoneNumber")
 
-    ip_address = Field(IpAddress)
 
     def __str__(self):
         return "<%s %s(%s)>" % (self.__class__.__name__, self.name, self.age)
@@ -89,7 +80,8 @@ def create_engine():
     
     return sqlalchemy.engine.create_engine(URI % opts, echo=False)
 
-    
+
+
 
 def stuff():   
     #db_config = DbConfig.create(file_section="unittest.db", entity_set=entity_set)
@@ -155,7 +147,42 @@ def stuff():
     for k in p.addresses.keys():
         print "Key: %s" % k
         
+
+
+    
+
+def stuff2():
+    from dino.db.dbconfig import DbConfig
+    from dino.db.schema import *
+    
+    db = DbConfig.create(file_section="unittest.db")
+    print "Create/Drop"
+    db.drop_all()
+    db.create_all()
+    session = db.session()
+    
+    session.begin()
+    s = Site(name='sjc1', address1="", address2="", city="", state="", postal="", description="")   
+    r = Rack(name="1.10", site=s)
+    session.add(r) 
+    c = Chassis(name='small', vendor='yourmom', product='yourmom', racksize=1)
+    session.add(c)
+    print "Commit Chassis, Rack, Site"
+    session.commit()
+
+    
+    session.begin()
+    
+    d = Device(status="INVENTORY", hid="001EC943AF41", rackpos=13, rack=r,  chassis=c, serialno='..CN7082184700NF.',
+        hw_type="util-6", pdu_port=0, pdu_module=None )
+    p1 = Port(name="eth0", mac="03:03:03:03:00:01", device=d, vlan=10, is_ipmi=None, is_blessed=True)    
+    p2 = Port(name="eth1", mac="03:03:03:03:00:02", device=d, vlan=None, is_ipmi=True, is_blessed=None)
+    session.add(d)
+
+    print "Commit Device/Port/Port"
+    session.commit()
+    
         
 if __name__ == "__main__":
-    stuff()
+    stuff2()
         
