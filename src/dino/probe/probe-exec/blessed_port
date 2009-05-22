@@ -1,0 +1,21 @@
+#!/bin/sh
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_CDP_DISCOVER" == "" ]] &&  declare -x MW_CDP_DISCOVER="$($SUDO $DIR/cdp_discover)"
+
+MW_BLESSED_PORT=$( echo $MW_CDP_DISCOVER | perl -ni -e  'print $1 if s/Local_Port: ([\w]+)/\1/' )
+
+if [ -z "$MW_BLESSED_PORT" ]; then
+	PORTS=$(/sbin/ifconfig -a | grep 'encap:Ether' | awk '{print $1}')
+	for p in $PORTS; do
+		if /sbin/ifconfig $p | grep -q UP; then
+			MW_BLESSED_PORT=$p
+		fi
+	done
+fi
+declare -x MW_BLESSED_PORT="$MW_BLESSED_PORT"
+
+echo "$MW_BLESSED_PORT" 
+

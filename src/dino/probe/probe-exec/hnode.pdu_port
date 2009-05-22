@@ -1,0 +1,51 @@
+#!/bin/sh -
+
+# DEBUG=1
+
+# Determine row location.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_IPMAC_ADDR_BLESSED" == "" ]] && \
+MW_IPMAC_ADDR_BLESSED="$($SUDO $DIR/ip_mac.addr blessed)"
+
+NET=$(echo $MW_IPMAC_ADDR_BLESSED | cut -d'.' -f 1-3 ) 
+
+[[ "$MW_SITE_DOMAIN" == "" ]] && MW_SITE_DOMAIN="$($DIR/site.domain)"
+
+S_PORT=$( $DIR/mac_port.s_port | sed -e 's/.*\///')
+
+# formula for finding port position
+# (only works for 24-port PDUs).
+PDU_PORT=$(python -c "import decimal, math; \
+  S_NUM=$S_PORT/2.0; \
+  SLOT=math.ceil(S_NUM); \
+  PLUG=math.fabs(SLOT-25); \
+  MOD=math.floor(PLUG/8); \
+  POS=math.fmod(PLUG,8); \
+  print 'A'+chr(65+MOD)+str(int((POS)))"\
+  2> /dev/null \
+)
+
+# minor fix (a pain to do in python).
+if [[ "$PDU_PORT" == "AD0" ]]; then
+  PORT=AC8
+elif [[ "$PDU_PORT" == "AC0" ]]; then 
+  PORT=AB8
+elif [[ "$PDU_PORT" == "AB0" ]]; then
+  PORT=AA8
+else
+  PORT=$PDU_PORT
+fi
+
+# debug output
+if [[ "$DEBUG" == "1" ]]; then 
+  echo PORT: $PORT
+fi
+
+if [[ "$MW_SITE_DOMAIN" == "sjc1" && "$NET" != "179.29.1" ]]; then
+  echo "$PORT"
+else 
+  echo "None"
+fi
+

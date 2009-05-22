@@ -1,0 +1,17 @@
+#############################################
+# System Attributes (Read-Only) 
+# 
+element_name: Person/eddie
+id: None
+
+#############################################
+# Attributes
+# 
+
+name: eddie
+age: 12
+
+#############################################
+# Relationships
+# 
+addresses: [  ]

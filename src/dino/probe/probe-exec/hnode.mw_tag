@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# hnode.mw_tag
+# ------------
+# find my dexter hardware ID, if one exists.
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+# no se nada
+TAG="None"
+
+echo $TAG
+

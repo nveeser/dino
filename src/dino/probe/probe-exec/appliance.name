@@ -1,0 +1,36 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+APP=""
+
+if [[ -f /discover-os ]]; then
+  echo "discover" > /etc/motd
+  APP="discover"
+fi
+
+# For existing rapids hosts, get appliance type from /etc/motd.
+if [[ "$APP" == "" ]]; then
+  APP=$( cat /etc/motd | grep 'Appliance Type' | sed -r -e 's/.*\: (.*)/\1/' )
+fi
+# For legacy rapids hosts.
+if [[ "$APP" == "" ]]; then
+  APP=$( cat /etc/motd | grep -E '\(.*\)' | sed -r -e 's/.*\((.*)\)/\1/' | awk '{print $1}' )
+fi
+
+# For newer hosts
+if [[ "$APP" == "" ]]; then 
+  # get hostname
+  HOST=$( $SUDO $DIR/name_ip.name blessed ) 
+  # get rapids file from hostname
+  H_FILE=$( grep -REl "(fqdn: $HOST)" /var/rapids/state/* )
+  # parse appliance def from rapids file.
+  APP=$( python -c "import yaml; print yaml.load(open('$H_FILE')).get('inherit', {}).get('appliance')" )
+fi
+
+#If still nothing, set a default build.
+if [[ "$APP" == "" ]]; then 
+  APP=None
+fi
+echo $APP

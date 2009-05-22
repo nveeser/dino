@@ -1,0 +1,20 @@
+#!/bin/sh -
+
+# Determine row location.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_BLESSED_PORT" == "" ]] && declare -x MW_BLESSED_PORT=$($DIR/blessed_port)
+
+# Rack position (in ru's number from the bottom) 
+# corresponds to switch port, starting at 1.
+[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN=$($DIR/site.domain)
+SLOT=$($DIR/mac_port.s_port | sed -e 's/.*\///')
+
+#echo $S_PORT
+
+case "$MW_SITE_DOMAIN" in 
+  sjc1 ) echo "$SLOT"; exit 0;;
+  *) echo "None"; exit 1;;
+esac
+

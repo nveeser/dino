@@ -1,0 +1,6 @@
+# run this command: 
+# svn propset -R svn:ignore -F svnignore .
+*.swp
+*.pyc
+*~
+

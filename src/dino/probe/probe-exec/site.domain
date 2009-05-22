@@ -1,0 +1,20 @@
+#!/bin/sh -
+
+# site.domain
+# ------------
+# Show at which site the server is located
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_IPMAC_ADDR_BLESSED" == "" ]] && declare -x \
+MW_IPMAC_ADDR_BLESSED="$($DIR/ip_mac.addr blessed)"
+
+COLO_NET="$(echo $MW_IPMAC_ADDR_BLESSED | cut -d'.' -f 1,2 )"
+
+case "$COLO_NET" in 
+  10.1 | 172.30 ) echo "sfo1"; exit 0;;
+  10.2 | 172.29 ) echo "sjc1"; exit 0;;
+  192.* | 172.31 ) echo "631h"; exit 0;;
+  *) echo "None"; exit 1;;
+esac
+

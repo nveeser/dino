@@ -1,0 +1,14 @@
+#!/bin/sh
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_CDP_DISCOVER" == "" ]] && declare -x MW_CDP_DISCOVER="$($SUDO $DIR/cdp_discover)"
+
+MW_MACPORT_VLAN="$(echo $MW_CDP_DISCOVER | \
+  perl -ni -e 'print $1 if s/VLAN: ([\w-_:\.\/]+)/\1/i' )"
+
+if [[ "$MW_MACPORT_VLAN" == "" ]]; then
+	MW_MACPORT_VLAN="None"
+fi
+echo $MW_MACPORT_VLAN

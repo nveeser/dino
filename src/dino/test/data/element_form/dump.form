@@ -1,0 +1,16 @@
+#############################################
+# System Attributes (Read-Only)                     
+#                 
+element_name: Person/eddie
+
+#############################################
+# Attributes               
+#
+age: 12
+name: eddie
+
+#############################################
+# Relationships  
+#
+phone_number: None
+addresses: [ Address/ADDR-eddie-Work ]

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_CDP_DISCOVER" == "" ]] && declare -x MW_CDP_DISCOVER="$($SUDO $DIR/cdp_discover)"
+
+MW_MACPORT_S_PORT="$(echo $MW_CDP_DISCOVER | \
+  perl -ni -e 'print $1 if s/[\|]+Port: [a-zA-Z]+([0-9\/]+)/\1/')"
+
+echo $MW_MACPORT_S_PORT

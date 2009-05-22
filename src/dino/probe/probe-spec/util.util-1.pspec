@@ -1,0 +1,22 @@
+{
+  "parent": "full",
+  "probes": [
+    { "name": "ip_mac.addr", "args": "ipmi", "cache_result": "MW_IPMAC_ADDR_IPMI" },
+    { "name": "model.name", "cache_result": "MW_MODEL_NAME" },
+    { "name": "mb_manufacturer", "result_expected": "TYAN" },
+    { "name": "mb_model", "result_expected": "S2892" },
+    { "name": "cpu_num", "result_expected": "4" },
+    { "name": "cpu_speed", "result_expected": "2200" },
+    { "name": "physmem", "result_expected": "8GB" },
+    { "name": "hdd_total", "result_expected": "2" },
+    { "name": "hdd.controller_dict", "result_expected": "none" },
+    { "name": "mac_port.mac", "sequence": "28" },
+    { "name": "mac_port.mac", "args": "eth1", "sequence": "29" },
+    { "name": "mac_port.mac", "args": "eth2", "sequence": "30" },
+    { "name": "mac_port.mac", "args": "ipmi", "sequence": "31" },
+    { "name": "name_ip.name", "sequence": "5" },
+    { "name": "name_ip.name", "args": "ipmi", "sequence": "5" },
+    { "name": "name_ip.name", "args": "loc", "sequence": "5" },
+    { "name": "name_ip.name", "args": "iloc", "sequence": "5" }
+  ]
+}

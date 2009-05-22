@@ -1,0 +1,142 @@
+#!/usr/bin/env perl
+my $debug = 0;
+
+# capture switch info, using CDP.
+# run as root.
+use strict;
+use warnings;
+
+# This script can be run directly from the source directory
+use lib 'blib/arch';
+use lib 'blib/lib';
+
+use Net::CDP::Manager qw( 
+	cdp_managed cdp_active cdp_inactive 
+	cdp_loop cdp_manage cdp_ports 
+	cdp_args CDP_LOOP_ABORT 
+);
+use Net::CDP::Packet qw(:caps );
+
+cdp_args( promiscuous => 1) ;
+
+use Sys::Hostname;
+
+# deal with specialness on the test net.
+my $SPECIAL_NET = '172.31.127';
+my $SPECIAL_DEVICE = 'core01.test.631h.metaweb.com';
+
+my $CACHE_DIR = "/var/cache/dino";
+my $CACHE_FILE = "$CACHE_DIR/cdp_info";
+
+sub pretty { defined $_[0] ? @_ : '(unspecified)' }
+sub duplex { defined $_[0] ? ($_[0] ? 'full' : 'half') : '(unspecified)' }
+sub trust { defined $_[0] ? ($_[0] ? 'trusted' : 'untrusted') : '(unspecified)' }
+sub voice_vlan { defined $_[0] ? "Appliance $_[1], VLAN $_[0]" : '(unspecified)' }
+sub power_consumption { defined $_[0] ? "$_[0] mW" : '(unspecified)' }
+sub hexify { join ' ', map { map { sprintf '0x%02x', ord } split // } @_ }
+
+sub caps {
+	my $caps = shift;
+	my %map = (
+		CDP_CAP_ROUTER()             => 'Router',
+		CDP_CAP_TRANSPARENT_BRIDGE() => 'Transparent bridge',
+		CDP_CAP_SOURCE_BRIDGE()      => 'Source route bridge',
+		CDP_CAP_SWITCH()             => 'Switch',
+		CDP_CAP_HOST()               => 'Host',
+		CDP_CAP_IGMP()               => 'IGMP capable',
+		CDP_CAP_REPEATER()           => 'Repeater',
+	);
+	join ', ', @map{sort grep { $caps & $_ } keys %map}
+}
+
+
+sub callback 
+{
+  my ($packet, $port) = @_;
+  my $v = $packet->version;
+  if ($v != 2) 
+  {
+    # We only accept CDP verson 2.
+    print "WARNING: got a version 1 packet.\n";
+  }
+  else
+  {
+    print FH "Local_Port: $port", "|";
+    print FH 'Device: ', pretty($packet->device), "|";
+    if ($packet->addresses) 
+    {
+      foreach ($packet->addresses) 
+      {
+        print FH 'Address: ', pretty($_->address), "|";
+      }
+    } 
+    print FH 'Port: ', pretty($packet->port), "|";
+    print FH 'Platform: ', pretty($packet->platform), "|";
+    print FH 'VLAN: ', pretty($packet->native_vlan), "|";
+    print FH 'Duplex: ', duplex($packet->duplex), "|";
+    return CDP_LOOP_ABORT;
+  }
+
+}
+
+sub specialness {
+	my ($ip) = @_;
+	
+	open(F, "> $CACHE_FILE") || die "Could not open cache file: $CACHE_FILE: $!\n";
+	
+    print F "Local_Port: eth0", "|";
+    print F 'Device: ', $SPECIAL_DEVICE, "|";
+    print F 'Address: ', "$ip", "|";
+    print F 'Port: 0', "|";
+    print F 'Platform: cisco', "|";
+    print F 'VLAN: 0', , "|";
+    print F 'Duplex: full', "|";
+    
+    close(F);
+}
+
+sub main {
+
+	if ( ! -d $CACHE_DIR ) {
+		mkdir($CACHE_DIR,0755) || die "Could not make dir: $CACHE_DIR: $!\n";
+	}
+	
+	my $name  = hostname();
+	my $ip  = join(".",unpack("C4",(gethostbyname($name))[4]));
+	if($ip =~ /172.31.127/ ) { 
+	  # deal with test net.specialness
+	  print "i am special...\n" if($debug);
+	  &specialness($ip);
+	  
+	} else {
+	  &cdp_manage(cdp_ports);
+	  
+	}
+	
+	if($debug) {
+	  print 'Currently managing: ', join(', ', sort &cdp_managed), "\n";
+	  print 'Currently active:   ', join(', ', sort &cdp_active), "\n";
+	  print 'Currently inactive:   ', join(', ', sort &cdp_inactive), "\n\n";
+	};
+	
+	
+	if ( ! -f $CACHE_FILE ) {
+		open(FH, "> $CACHE_FILE") || die "Could not open cache file: $CACHE_FILE\n";
+			
+		# Wait for CDP packets for 180 seconds
+		cdp_loop( \&callback, 180);
+
+		close(FH);	
+	} 
+		
+	open(CACHE, $CACHE_FILE);	
+	while (<CACHE>) {
+		print "$_\n";
+	}
+	close(CACHE)
+}
+
+
+&main;
+
+

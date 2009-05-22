@@ -1,0 +1,16 @@
+#!/bin/sh --
+
+# hnode.serial
+# ------------
+# print motherboard serial.
+SERIAL=$(lshw | grep -E -A 6 '\-core' | grep serial | awk -F: '{ print $2}' )
+
+if [[ "$SERIAL" == " None" ]]; then
+	SERIAL=$(lshw | head -20 | grep serial | head -1 | awk -F: '{ print $2}')
+fi
+
+if [[ "$SERIAL" == "empty" || "$SERIAL" == "" ]]; then
+  echo "None"
+else
+  echo $SERIAL
+fi

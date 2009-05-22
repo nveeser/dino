@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# hnode.mw_tag
+# ------------
+# find my dexter hardware ID, if one exists.
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+IPMI=$($DIR/mac_port.mac ipmi)
+
+if [[ "$IPMI" != "None" && "$IPMI" != "None\n" && "$IPMI" != "" ]]; then
+  echo "None" && exit 0
+fi
+
+# if we made it this far, there's no ipmi.
+# serial console is determined by the switch port.
+S_PORT=$($DIR/mac_port.s_port | sed -e 's/.*\///')
+# NOTE: In sjc1, we use ports 1-20
+CONSOLE_PORT=$(python -c "import decimal, math; \
+  NUM=$S_PORT/2.0; \
+  PORT=math.ceil(NUM); \
+  print int(PORT);" \
+  2> /dev/null \
+)
+
+if [[ "$CONSOLE_PORT" == "" ]]; then 
+  echo "None"
+else 
+  echo \"$CONSOLE_PORT\"
+fi
+

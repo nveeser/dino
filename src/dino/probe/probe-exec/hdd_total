@@ -1,0 +1,69 @@
+#!/bin/sh 
+
+# lib
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+TW_CLI=`dirname $0`/bin/tw_cli
+MEGARC=`dirname $0`/bin/megarc.bin
+
+function has_3ware() {
+    $SUDO lspci | grep "RAID" | grep -q "3ware"
+    echo $?
+}
+
+
+function has_adaptec_aac() {
+    $SUDO lspci | grep "RAID" | grep -q "Adaptec AAC"
+    echo $?
+}
+
+function has_megaraid_sas() {
+    $SUDO lspci | grep "RAID" | grep -q "MegaRAID SAS"
+    echo $?
+}
+
+function has_megaraid() {
+    $SUDO lspci | grep "RAID" | grep -q "MegaRAID"
+    echo $?
+}
+
+$SUDO lspci | grep -q "RAID"
+
+
+if [ $? -gt 0 ]; then   # no raid.
+    num=`cat /sys/bus/scsi/devices/[0-9]*/scsi_device*/device/model | wc -l`
+else                    # raid
+    
+    # 3ware
+    if [ `has_3ware` -eq 0 ]; then
+        ctrlr=$( $SUDO $TW_CLI show | sed -e "1,3d" | awk '{print $1}' )
+        num=$( $SUDO $TW_CLI /$ctrlr show | \
+	  grep -E "^[[:alpha:]]+[[:digit:]][[:space:]]+OK.+[[:digit:]]\.[[:digit:]]{2} GB" | \
+	  wc -l )
+
+    # Adaptec AAC (Sun)
+    elif [ `has_adaptec_aac` -eq 0 ]; then
+        num=$( $SUDO cat /var/log/dmesg | \
+	  grep -E '^scsi 0:1:.*[[:space:]]+0603' | \
+	  wc -l )
+
+    # MegaRAID SAS (Dell)
+    elif [ `has_megaraid_sas` -eq 0 ]; then
+        num=$( $SUDO cat /var/log/dmesg | \
+	  grep -E '^scsi ([0-9]+:){3}[0-9]:.*[[:space:]]+ATA[[:space:]]+' | \
+	  wc -l )
+
+    # MegaRAID
+    elif [ `has_megaraid` -eq 0 ]; then
+        num=$( $SUDO $MEGARC -LogPhysInfo -a0 | \
+	  sed -n '/[[:digit:]]MB/p' | \
+	  sed -e 's/[[:space:]]*//' -e "s/drive.*//" | wc -l )
+    else
+        # unknown controller
+        num="None"
+    fi
+   
+fi
+
+echo $num

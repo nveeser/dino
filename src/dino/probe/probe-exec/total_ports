@@ -1,0 +1,7 @@
+#!/bin/sh -
+
+ETH=$(/sbin/ifconfig -a | grep -Ei ^eth | awk '{print $1}' | sed -r -e 's/^[a-zA-Z]+//' | tail -n 1
+  )
+INDEX=`expr $ETH + 1`
+echo $INDEX
+

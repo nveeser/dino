@@ -1,0 +1,100 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_BLESSED_PORT" == "" ]] && declare -x MW_BLESSED_PORT="$($DIR/blessed_port)"
+
+###  type of name to generate
+TYPE=$1
+[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN="$($DIR/site.domain)"
+
+###  discover blessed name
+get_blessed()
+{
+  ###  look in DNS.
+  [[ "$MW_IPMAC_ADDR_BLESSED" == "" ]] && \
+  declare -x MW_IPMAC_ADDR_BLESSED="$($DIR/ip_mac.addr blessed)"
+
+  ###  try reverse DNS
+  NAME=$(/usr/bin/dig +time=2 +tries=2 +short -x $MW_IPMAC_ADDR_BLESSED | \
+        head -n 1 | grep -vE '^;;' | sed -e 's/\.$//' )
+
+  ###  if nothing, try /etc/hosts
+  if [[ "$NAME" == "" ]]; then
+    head -n 1 /etc/hosts | grep localhost | grep '\.metaweb\.com' | awk '{print $2}'
+  fi
+
+  if [[ "$NAME" != "" ]]; then
+    echo "$NAME" && exit 0
+  fi
+
+  [[ "$MW_MAC_BLESSED" == "" ]] && declare -x MW_MAC_BLESSED="$($DIR/mac_port.mac blessed)"
+
+  ###  No pre-existing name was found. 
+  ###  Create an 'inventory' name. 
+  POD='inv'
+  HW=$($DIR/hnode.type_dict)  
+  MAC=$(echo -n -e $MW_MAC_BLESSED | sed -e 's/://g') 
+  
+  # inventory name
+  NAME="$HW-$MAC.$POD.${MW_SITE_DOMAIN}.metaweb.com"
+}
+
+get_ipmi()
+{
+  ###  look in DNS.
+  [[ "$MW_IPMAC_ADDR_IPMI" == "" ]] && declare -x MW_IPMAC_ADDR_IPMI="$($DIR/ip_mac.addr ipmi)"
+  I_IP=${MW_IPMAC_ADDR_IPMI}
+
+  if [[ "$I_IP" == "None" ]]; then
+    NAME="None" 
+  else
+    [[ "$MW_NAMEIP_NAME_BLESSED" == "" ]] && \
+    declare -x MW_NAMEIP_NAME_BLESSED="$($DIR/name_ip.name blessed)"
+
+    NAME="ipmi-$MW_NAMEIP_NAME_BLESSED"
+    
+  fi
+  #echo "ipmi test"
+}
+
+get_loc()
+{ 
+  RACK=$($DIR/hnode.loc_rack)
+  SLOT=$($DIR/hnode.loc_rackpos)
+  if [[ "$RACK" == "None" || "$SLOT" == "None" ]]; then
+    NAME="None"
+  else
+    NAME="slot$SLOT.rack$RACK.${MW_SITE_DOMAIN}.metaweb.com"
+  fi
+  #echo "loc test"
+}
+
+get_iloc()
+{
+  get_loc
+  [[ "$MW_IPMAC_ADDR_IPMI" == "" ]] && declare -x MW_IPMAC_ADDR_IPMI="$($DIR/ip_mac.addr ipmi)"
+  I_IP=${MW_IPMAC_ADDR_IPMI}
+
+  if [[ "$I_IP" == "None" ]]; then
+    NAME="None"
+  else
+    NAME="ipmi-slot$SLOT.rack$RACK.${MW_SITE_DOMAIN}.metaweb.com"
+  fi
+  #echo "ipmi loc test"
+}
+
+if [[ "$TYPE" == "blessed" ]]; then
+  get_blessed
+elif [[ "$TYPE" == "ipmi" ]]; then
+  get_ipmi
+elif [[ "$TYPE" == "loc" ]]; then
+  get_loc
+elif [[ "$TYPE" == "iloc" ]]; then
+  get_iloc
+else
+  echo "bad alias type"
+fi
+
+echo $NAME

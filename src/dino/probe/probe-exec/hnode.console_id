@@ -1,0 +1,27 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+# exit if ipmi is present.
+IPMI=$($DIR/mac_port.mac ipmi)
+if [[ "$IPMI" != "None" && "$IPMI" != "" ]]; then
+  echo "None" && exit 0
+fi
+
+[[ "$MW_CDP_DISCOVER" == "" ]] && declare -x MW_CDP_DISCOVER="$($SUDO $DIR/cdp_discover)"
+
+# note: just get the first name, not the cannonical.
+NAME="$(echo $MW_CDP_DISCOVER | \
+  perl -ni -e 'print "con$1" if /Device: [Aa]([0-9]+[\w_-]+)/')"
+POD="mgmt"
+#[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN="$($SUDO $DIR/site.domain)"
+MW_SITE_DOMAIN=sjc1
+
+if [[ "$NAME" != "" && "$NAME" != "None" ]]; then
+  MW_CONSRV_HANDLE="$NAME.$POD.$MW_SITE_DOMAIN.metaweb.com"
+else 
+  MW_CONSRV_HANDLE="None"
+fi
+
+echo $MW_CONSRV_HANDLE

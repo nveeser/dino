@@ -1,0 +1,17 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_CDP_DISCOVER" == "" ]] && declare -x MW_CDP_DISCOVER="$($SUDO $DIR/cdp_discover)"
+
+# note: just get the first name, not the cannonical.
+NAME="$(echo $MW_CDP_DISCOVER | \
+  perl -ni -e 'print $1 if s/Device: ([\w_-]+)/\1/' )"
+POD="net"
+
+[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN="$($DIR/site.domain)"
+
+MW_SWITCH_HANDLE="$NAME.$POD.$MW_SITE_DOMAIN.metaweb.com"
+
+echo $MW_SWITCH_HANDLE

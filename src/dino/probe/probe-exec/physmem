@@ -1,0 +1,18 @@
+#!/bin/sh -
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+### must run as root
+GB=$( $SUDO /usr/sbin/lshw | \
+  grep -A 6 '\-memory' | \
+  grep size: | \
+  cut -d':' -f 2 | \
+  awk '{print $1}'
+  )
+
+if [[ "$GB" == "empty" ]]; then
+  echo "None"
+else
+  echo $GB
+fi

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+
+BUILD_TAG=""
+
+
+# Still another method.
+if [[ "$BUILD_TAG" == "" && -e /usr/bin/render ]]; then
+  BUILD_TAG="$(/usr/bin/render os_codename)"
+fi
+
+# For newer hosts
+if [[ "$BUILD_TAG" == "" ]]; then
+  HID="$(grep HOSTNO /var/rapids/environment.sh | \
+  sed -r -e 's/.*HOSTNO=(.*)/\1/' | awk '{print $1}')"
+  # parse appliance def from rapids file.
+  BUILD_TAG=$( python -c "import yaml; print yaml.load(open('/var/rapids/state/hostid-$HID')).get('os_codename')" )
+fi
+
+# fall through to default
+if [[ "$BUILD_TAG" == "" ]]; then 
+  echo "unknown"
+fi
+
+echo $BUILD_TAG

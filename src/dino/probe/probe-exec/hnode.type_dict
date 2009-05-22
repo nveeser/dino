@@ -1,0 +1,17 @@
+#!/bin/sh -
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_HNODE_TYPE_DICT" == "" ]] && declare -x MW_HNODE_TYPE_DICT="unknown"
+[[ "$MW_HNODE_STATUS" == "" ]] && declare -x MW_HNODE_STATUS="$($DIR/hnode.status)"
+
+# unknown subtype and status of active
+# means the server is legacy. 
+if [[ "$MW_HNODE_TYPE_DICT" == "unknown" ]]; then
+  if [[ "$MW_HNODE_STATUS" == "ACTIVE" ]]; then 
+    declare -x MW_HNODE_TYPE_DICT="legacy"
+  fi
+fi
+
+echo $MW_HNODE_TYPE_DICT

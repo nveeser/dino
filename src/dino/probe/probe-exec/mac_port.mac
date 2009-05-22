@@ -1,0 +1,46 @@
+#!/bin/bash 
+
+# find ethernet port mac addresses
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+ETH=$1
+
+if [[ "$ETH" == "blessed" ]]; then 
+  [[ "$MW_BLESSED_PORT" == "" ]] && declare -x  MW_BLESSED_PORT=$($DIR/blessed_port)
+  ETH="$MW_BLESSED_PORT"
+fi
+
+[[ $# -ne 1 ]] && echo "syntax error" && exit 1
+[[ "$1" == "0" ]] && echo "syntax error" && exit 1
+
+
+if [[ "$1" == "ipmi" ]]; then 
+  if [[ ! -e /usr/sbin/ipmitool ]]; then
+    echo -n -e "None" && exit;
+  fi
+  IPMI=$(/usr/sbin/ipmitool lan print 2> /dev/null | \
+    grep -E '^MAC Address[[:space:]]+: ' | \
+    sed -e 's/.*\: //' | \
+    grep -E '.*\:.*\:.*\:.*\:.*' )
+  if [[ "$IPMI" == "" ]]; then
+    IPMI="None"
+  fi
+  echo "$IPMI"
+else 
+  MAC=$( /sbin/ifconfig -a  | \
+    grep -i ^$ETH | \
+    tail -n +1 | \
+    head -n 1 | \
+    sed -r -e 's/.*HWaddr //' | \
+    awk '{ print $1}'
+    )
+  # clean output
+  echo $MAC | grep -E '.*\:.*\:.*\:.*\:.*' 
+fi
+
+
+[[ "$MAC" != "" ]] && declare -x MW_MAC_BLESSED=$MAC
+
+

@@ -1,0 +1,14 @@
+#!/bin/sh -
+
+# Determine row location.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN="$($DIR/site.domain)"
+
+# there is only 1 row today.
+case "$MW_SITE_DOMAIN" in 
+  sjc1 ) echo "1"; exit 0;;
+  *) echo "None"; exit 1;;
+esac
+

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+P_DIR=$DIR
+
+speed=$( $SUDO /usr/sbin/lshw -C processor | 
+       grep -E "size: [[:digit:]]+MHz" | 
+       sed -e "s/\s*size: //" | 
+       sed -e "s/MHz//" )
+
+if [[ "$speed" == "empty" ]]; then
+  echo "None"
+else
+  echo $speed | awk '{print NF}'
+fi

@@ -1,0 +1,17 @@
+#!/bin/bash 
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+###  look for setting installed by rapids/discover.
+IP="10.1.10.11" # seed02.ops.sfo1.metaweb.com
+[ -f /etc/dino/server ] && IP=$( cat /etc/dino/server | awk '{print $1}' )
+
+#echo IP: $IP
+if [[ "$IP" == "" ]]; then 
+  DINO=localhost
+else 
+  DINO=$IP
+fi
+
+echo $DINO

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+P_DIR=$(dirname $0)
+
+HID=$( $P_DIR/hnode.mw_tag )
+
+if [[ "$HID" == "" ]]; then 
+  HID="0"
+fi
+
+# Create rapids dir, if not there. (Assume discover kernel.)
+if [[ ! -d /var/rapids/instances ]]; then
+  mkdir -p /var/rapids/instances
+fi
+
+# Create state dir, if not there. (Assume discover kernel)
+if [[ ! -d /var/rapids/state ]]; then
+  mkdir -p /var/rapids/state
+  echo "os_codename: discover" > /var/rapids/state/hostid-0
+fi
+
+T1=$( grep -s 'VEID=' /var/rapids/instance/rapids-$HID/environment.sh | wc -l )
+T2=$( grep -Es 'role: container' /var/rapids/state/hostid-$HID | wc -l)
+
+if [[ $T1 == "1" || $T2 == "1" ]]; then
+ echo "container" 
+else
+  echo "physical"
+fi

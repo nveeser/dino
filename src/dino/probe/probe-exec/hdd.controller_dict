@@ -1,0 +1,42 @@
+#!/bin/sh -
+
+# hdd.controller
+# --------------
+# return the name of any raid controller, or 'None'.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+RAID=$( $SUDO /usr/sbin/lspci | \
+  grep -i 3ware | \
+  sed -r -e 's/.*(3ware).*/\1/i' | \
+  awk '{print $1}' \
+  )
+
+LSI=$( $SUDO /usr/sbin/lspci | \
+  grep -i -q -s megaraid && \
+  echo "LSI"
+  )
+
+SAS=$( $SUDO /usr/sbin/lspci | \
+  grep -q -s SAS && \
+  echo "SAS"
+  )
+
+AAC=$( $SUDO /usr/sbin/lspci | \
+  grep -q -s 'Adaptec AAC' && \
+  echo "AAC"
+  )
+
+if [[ "$RAID" == "3ware" ]]; then
+  echo "3Ware 9500"
+elif [[ "$LSI" == "LSI" && "$SAS" == "SAS" ]]; then 
+    echo "MegaRAID SAS"
+elif [[ "$LSI" == "LSI" ]]; then 
+    echo "MegaRAID"
+elif [[ $AAC == "AAC" ]]; then 
+    echo "Adaptec AAC"
+else 
+  echo "None"
+fi
+
+exit

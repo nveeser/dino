@@ -1,0 +1,18 @@
+#!/bin/sh -
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+### must run as root
+MB=$( $SUDO lshw | \
+  grep -A 6 '\-core' | \
+  grep vendor: | \
+  cut -d':' -f 2 | \
+  awk '{print $1}'
+  )
+
+if [[ "$MB" == "empty" ]]; then
+  echo "None"
+else
+  echo $MB
+fi

@@ -1,0 +1,236 @@
+{
+    "db db-1": { 
+        "mb_manufacturer":"TYAN", 
+        "mb_model":"S2892", 
+        "cpu_num":"2", 
+        "cpu_speed":"2600", 
+        "physmem":"32GB", 
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"4"
+    },
+    "db db-2": { 
+        "mb_manufacturer":"TYAN", 
+        "mb_model":"S2892", 
+        "cpu_num":"2", 
+        "cpu_speed":"2800",
+        "physmem":"32GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"4"
+    },
+    "db db-3": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2", 
+        "cpu_speed":"2600", 
+        "physmem":"32GB", 
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"5"
+    },
+    "db db-4": {
+        "mb_model": "S2932",
+        "cpu_num": "2",
+        "mb_manufacturer": "TYAN",
+        "physmem": "64GB",
+        "hdd_total": "5",
+        "cpu_speed": "2800",
+        "hdd.controller_dict": "3Ware 9500"
+    },
+    "db db-5": {
+        "mb_model": "S2892",
+        "cpu_num": "2",
+        "mb_manufacturer": "TYAN",
+        "physmem": "33GB",
+        "hdd_total": "8",
+        "cpu_speed": "2600",
+        "hdd.controller_dict": "3Ware 9500"
+    },
+    "dw dw-1": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"3000",
+        "physmem":"32GB",
+        "hdd.controller_dict":"MegaRAID",
+        "hdd_total":"5"
+    },
+    "ss ss-1": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"2GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"2"
+    },
+    "ss ss-2": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"8GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"2"
+    },
+    "ss ss-3": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2600",
+        "physmem":"8GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"2"
+    },
+    "ss ss-4": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2600",
+        "physmem":"2GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"2"
+    },
+    "ss ss-5": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"16GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"4"
+    },
+    "ss ss-6": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"16GB",
+        "hdd.controller_dict":"3Ware 9500",
+        "hdd_total":"2"
+    },
+    "st st-1": {
+        "mb_model": "S2892",
+        "cpu_num": "2",
+        "mb_manufacturer": "TYAN",
+        "physmem": "8GB",
+        "hdd_total": "4",
+        "cpu_speed": "2200",
+        "hdd.controller_dict": "3Ware 9500"
+    },
+    "st st-2": {
+        "mb_model": "S2892",
+        "cpu_num": "2",
+        "mb_manufacturer": "TYAN",
+        "physmem": "8GB",
+        "hdd_total": "4",
+        "cpu_speed": "2600",
+        "hdd.controller_dict": "3Ware 9500"
+    },
+    "st st-3": {
+        "mb_model": "S2892",
+        "cpu_num": "2",
+        "mb_manufacturer": "TYAN",
+        "physmem": "2GB",
+        "hdd_total": "4",
+        "cpu_speed": "2600",
+        "hdd.controller_dict": "3Ware 9500"
+    },
+    "util util-1": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"4",
+        "cpu_speed":"2200",
+        "physmem":"8GB",
+        "hdd.controller_dict":"None",
+        "hdd_total":"2"
+    },
+    "util util-2": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"2GB",
+        "hdd.controller_dict":"None",
+        "hdd_total":"1"
+    },
+    "util util-3": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"2GB",
+        "hdd.controller_dict":"None",
+        "hdd_total":"2"
+    },
+    "util util-4": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"8GB",
+        "hdd.controller_dict":"None",
+        "hdd_total":"2"
+    },
+    "util util-5": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2600",
+        "physmem":"2GB",
+        "hdd.controller_dict":"None",
+        "hdd_total":"2"
+    },
+    "util util-6": {
+        "mb_manufacturer":"Dell",
+        "mb_model":"0H268G",
+        "cpu_num":"2",
+        "cpu_speed":"2333",
+        "physmem":"8GB",
+        "hdd.controller_dict":"MegaRAID SAS",
+        "hdd_total":"2"
+    },
+    "fd fd-1": {
+        "mb_manufacturer":"TYAN",
+        "mb_model":"S2892",
+        "cpu_num":"2",
+        "cpu_speed":"2200",
+        "physmem":"16GB",
+        "hdd.controller_dict":"MegaRAID",
+        "hdd_total":"8"
+    },
+    "hdp hdp-1": {
+        "mb_manufacturer":"Dell",
+        "mb_model":"0H268G",
+        "cpu_num":"2",
+        "cpu_speed":"2333",
+        "physmem":"16GB",
+        "hdd.controller_dict":"MegaRAID SAS",
+        "hdd_total":"6"
+    }, 
+    "blob blob-1": {
+        "mb_manufacturer":"Dell",
+        "mb_model":"0H268G",
+        "cpu_num":"2",
+        "cpu_speed":"2333",
+        "physmem":"8GB",
+        "hdd.controller_dict":"MegaRAID SAS",
+        "hdd_total":"4"
+    }, 
+    "idx idx-1": {
+        "mb_manufacturer":"Dell",
+        "mb_model":"0H268G",
+        "cpu_num":"2",
+        "cpu_speed":"2333",
+        "physmem":"16GB",
+        "hdd.controller_dict":"MegaRAID SAS",
+        "hdd_total":"2"
+    }, 
+    "gph gph-1": {
+        "mb_manufacturer":"Dell",
+        "mb_model":"0H268G",
+        "cpu_num":"2",
+        "cpu_speed":"2333",
+        "physmem":"32GB",
+        "hdd.controller_dict":"MegaRAID SAS",
+        "hdd_total":"2"
+    } 
+}

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# rapids version (there is only 1).
+echo -n -e '3'

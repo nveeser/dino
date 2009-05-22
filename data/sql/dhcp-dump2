@@ -1,0 +1,258 @@
+{ 
+'hosts' :       
+	{'blob01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:B2', 'rapids.rapids_ver': '3'}
+, 'app08.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B6:FC', 'rapids.rapids_ver': '3'}
+, 'app02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:41', 'rapids.rapids_ver': '3'}
+, 'ldap02.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.4.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:16:3E:09:91:0C', 'rapids.rapids_ver': '0'}
+, 'graph03.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.33', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:72', 'rapids.rapids_ver': '3'}
+, 'cache01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:F8:B8', 'rapids.rapids_ver': '3'}
+, 'svn02.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:CC:C6', 'rapids.rapids_ver': '3'}
+, 'hadoop0014.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.45', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:C9', 'rapids.rapids_ver': '3'}
+, 'sql01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.37', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:BA', 'rapids.rapids_ver': '3'}
+, 'cache01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:15', 'rapids.rapids_ver': '3'}
+, 'acre02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.39', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:69:96', 'rapids.rapids_ver': '3'}
+, 'icee.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.101', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:BF:1D', 'rapids.rapids_ver': '3'}
+, 'spare01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:C2', 'rapids.rapids_ver': '3'}
+, 'dw03.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.127', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:C3:94', 'rapids.rapids_ver': '3'}
+, 'outbound02.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:86:4A', 'rapids.rapids_ver': '3'}
+, 'graph05.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.37', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E2:A5', 'rapids.rapids_ver': '3'}
+, 'hadoop0012.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.41', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:27:77', 'rapids.rapids_ver': '3'}
+, 'dove.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.133', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:F8:34', 'rapids.rapids_ver': '3'}
+, 'graph02.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:95', 'rapids.rapids_ver': '3'}
+, 'blog01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.253.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:86:1E', 'rapids.rapids_ver': '3'}
+, 'st-2-5041kn.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:E6:54', 'rapids.rapids_ver': '3'}
+, 'hadoop0018.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.53', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:5E:9E', 'rapids.rapids_ver': '3'}
+, 'dots.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:DF:48', 'rapids.rapids_ver': '3'}
+, 'util-4-2q1u1cu.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:82:CA', 'rapids.rapids_ver': '3'}
+, 'index01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:39:A6', 'rapids.rapids_ver': '3'}
+, 'app07.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.35', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:90', 'rapids.rapids_ver': '3'}
+, 'oat.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.119', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:82:08', 'rapids.rapids_ver': '3'}
+, 'otg-scratch.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:20', 'rapids.rapids_ver': '3'}
+, 'app01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:7C', 'rapids.rapids_ver': '3'}
+, 'hadoop0020.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.57', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:DE:6F', 'rapids.rapids_ver': '3'}
+, 'file02.corp.sjc1.metaweb.com': {'rapids.bootimg': 'physical', 'ip_mac.addr': '172.29.4.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:a0:98:03:bd:52', 'rapids.rapids_ver': '3'}
+, 'blob02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:E8:92', 'rapids.rapids_ver': '3'}
+, 'app01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:AB:FC', 'rapids.rapids_ver': '3'}
+, 'app01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:2E', 'rapids.rapids_ver': '3'}
+, 'seed01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5B:E2', 'rapids.rapids_ver': '3'}
+, 'dw01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.123', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:83:F6', 'rapids.rapids_ver': '3'}
+, 'util-3-50421a.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.38', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:AE', 'rapids.rapids_ver': '3'}
+, 'phobos.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:9B:AE', 'rapids.rapids_ver': '3'}
+, 'seed02.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:7B:02', 'rapids.rapids_ver': '3'}
+, 'dough.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.103', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:32:99:6A', 'rapids.rapids_ver': '3'}
+, 'util-5-2q1u1cv.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:9B:AA', 'rapids.rapids_ver': '3'}
+, 'app03.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:48', 'rapids.rapids_ver': '3'}
+, 'index02.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:61:DC', 'rapids.rapids_ver': '3'}
+, 'ldap01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.3.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:16:3E:16:5A:C9', 'rapids.rapids_ver': '0'}
+, 'pusherdb01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:82:D0', 'rapids.rapids_ver': '3'}
+, 'ss-4-2q1u1ci.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:E7:2E', 'rapids.rapids_ver': '3'}
+, 'taco.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.129', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:34:24:8A', 'rapids.rapids_ver': '3'}
+, 'app04.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:1A', 'rapids.rapids_ver': '3'}
+, 'util-3-5041kr.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:16', 'rapids.rapids_ver': '3'}
+, 'graph04.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.31', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:D2:93', 'rapids.rapids_ver': '3'}
+, 'ntop.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:CC:70', 'rapids.rapids_ver': '3'}
+, 'index01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.41', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:8D', 'rapids.rapids_ver': '3'}
+, 'unknown-2q1u1cq.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:86:4C', 'rapids.rapids_ver': '3'}
+, 'wiki01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.3.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:16:3E:38:B4:65', 'rapids.rapids_ver': '0'}
+, 'graph01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.35', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:45', 'rapids.rapids_ver': '3'}
+, 'util-3-2q1u1cl.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BB:14', 'rapids.rapids_ver': '3'}
+, 'necco.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.107', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:08', 'rapids.rapids_ver': '3'}
+, 'blob01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B5:2C', 'rapids.rapids_ver': '3'}
+, 'dw02.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.125', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:C3:22', 'rapids.rapids_ver': '3'}
+, 'graph02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.31', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:7C', 'rapids.rapids_ver': '3'}
+, 'vice.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.117', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7F:42', 'rapids.rapids_ver': '3'}
+, 'cache03.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:4B', 'rapids.rapids_ver': '3'}
+, 'io.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.30', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:0A:E5:51', 'rapids.rapids_ver': '3'}
+, 'acre01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.35', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:66:F4', 'rapids.rapids_ver': '3'}
+, 'randomunknown2.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B7:CC', 'rapids.rapids_ver': '3'}
+, 'mon01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:87:94', 'rapids.rapids_ver': '3'}
+, 'build.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:B4', 'rapids.rapids_ver': '3'}
+, 'hadoop0005.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:5E:A3', 'rapids.rapids_ver': '3'}
+, 'lime.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:66:76', 'rapids.rapids_ver': '3'}
+, 'app04.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:66:68', 'rapids.rapids_ver': '3'}
+, 'util-4-2q1u1cn.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:61:82', 'rapids.rapids_ver': '3'}
+, 'util-4-5041sg.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:61:80', 'rapids.rapids_ver': '3'}
+, 'test-baccus-postgis.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:46', 'rapids.rapids_ver': '3'}
+, 'sushi.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.115', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:DA:4D', 'rapids.rapids_ver': '3'}
+, 'hadoop0001.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:28', 'rapids.rapids_ver': '3'}
+, 'st-2-5041sv.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:E6:52', 'rapids.rapids_ver': '3'}
+, 'rdf01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BE:C6', 'rapids.rapids_ver': '3'}
+, 'blob-backup.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:E7:0C', 'rapids.rapids_ver': '3'}
+, 'app09.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.33', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:AE', 'rapids.rapids_ver': '3'}
+, 'is02.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.4.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:4B:D9:68', 'rapids.rapids_ver': '0'}
+, 'util-3-5041sh.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B5:12', 'rapids.rapids_ver': '3'}
+, 'app05.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.34', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:CA', 'rapids.rapids_ver': '3'}
+, 'mon02.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:1B', 'rapids.rapids_ver': '3'}
+, 'pork.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.109', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:FC', 'rapids.rapids_ver': '3'}
+, 'index02.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:6F', 'rapids.rapids_ver': '3'}
+, 'rooster.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:0E:0C:84:C4:C8', 'rapids.rapids_ver': '3'}
+, 'jam.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.121', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:D6', 'rapids.rapids_ver': '3'}
+, 'donkey.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:44:9A:5E', 'rapids.rapids_ver': '3'}
+, 'sql02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:7A:F8', 'rapids.rapids_ver': '3'}
+, 'hadoop0004.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:57:A0', 'rapids.rapids_ver': '3'}
+, 'hadoop0003.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:79', 'rapids.rapids_ver': '3'}
+, 'reindex01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:32:8B', 'rapids.rapids_ver': '3'}
+, 'hadoop0016.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.49', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:69', 'rapids.rapids_ver': '3'}
+, 'blob02.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:86:22', 'rapids.rapids_ver': '3'}
+, 'app06.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:61:D8', 'rapids.rapids_ver': '3'}
+, 'blob02.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B7:26', 'rapids.rapids_ver': '3'}
+, 'index02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:97', 'rapids.rapids_ver': '3'}
+, 'app02.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.50', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BE:E8', 'rapids.rapids_ver': '3'}
+, 'app03.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5C:05', 'rapids.rapids_ver': '3'}
+, 'sql01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.29', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:7B:11', 'rapids.rapids_ver': '3'}
+, 'dino.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B5:88', 'rapids.rapids_ver': '3'}
+, 'outbound01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:32:D0:A6', 'rapids.rapids_ver': '3'}
+, 'graph02.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:30:2E:6E', 'rapids.rapids_ver': '3'}
+, 'nectar.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.111', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7E:92', 'rapids.rapids_ver': '3'}
+, 'blob03.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:66:45', 'rapids.rapids_ver': '3'}
+, 'app02.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:94', 'rapids.rapids_ver': '3'}
+, 'mon01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:78:8B', 'rapids.rapids_ver': '3'}
+, 'hadoop0019.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.55', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:5A', 'rapids.rapids_ver': '3'}
+, 'hadoop0017.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.51', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:60:15', 'rapids.rapids_ver': '3'}
+, 'hadoop0010.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.35', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:47', 'rapids.rapids_ver': '3'}
+, 'graph01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.29', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:59', 'rapids.rapids_ver': '3'}
+, 'graph04.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.10.33', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:2C', 'rapids.rapids_ver': '3'}
+, 'acre01.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:67:08', 'rapids.rapids_ver': '3'}
+, 'almond.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.113', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:32:27:48', 'rapids.rapids_ver': '3'}
+, 'shell01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.253.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BE:F8', 'rapids.rapids_ver': '3'}
+, 'hadoop0006.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:E4:EC', 'rapids.rapids_ver': '3'}
+, 'raisin.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.11', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:DB:62', 'rapids.rapids_ver': '3'}
+, 'charon.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:39:E0', 'rapids.rapids_ver': '3'}
+, 'zimbra01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.253.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:6B', 'rapids.rapids_ver': '0'}
+, 'unknown-2q1u1co.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:CC:C8', 'rapids.rapids_ver': '3'}
+, 'index01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:5C:59', 'rapids.rapids_ver': '3'}
+, 'mars.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.117', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7F:5C', 'rapids.rapids_ver': '3'}
+, 'is01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.3.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:F8:B4', 'rapids.rapids_ver': '0'}
+, 'util-4-2q1u1cr.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B6:0B', 'rapids.rapids_ver': '3'}
+, 'hadoop0008.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.29', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:E1:53', 'rapids.rapids_ver': '3'}
+, 'graph01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:D0:F2', 'rapids.rapids_ver': '3'}
+, 'valid01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:A0', 'rapids.rapids_ver': '3'}
+, 'hadoop0009.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.31', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:44:6F:59', 'rapids.rapids_ver': '3'}
+, 'jira.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.253.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:B6:7E', 'rapids.rapids_ver': '3'}
+, 'hadoop0002.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.13', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:6A', 'rapids.rapids_ver': '3'}
+, 'unagi.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:0A', 'rapids.rapids_ver': '3'}
+, 'index03.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.31', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:83', 'rapids.rapids_ver': '3'}
+, 'cache02.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:4E', 'rapids.rapids_ver': '3'}
+, 'graph01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:44:7F:22', 'rapids.rapids_ver': '3'}
+, 'hiccory.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:82:36', 'rapids.rapids_ver': '3'}
+, 'hadoop0015.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.47', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B2:83', 'rapids.rapids_ver': '3'}
+, 'util-4-5041kv.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.27', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:2C', 'rapids.rapids_ver': '3'}
+, 'hadoop0013.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.43', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:E4:E2', 'rapids.rapids_ver': '3'}
+, 'blob04.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.28', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:B5:86', 'rapids.rapids_ver': '3'}
+, 'cache01.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BB:36', 'rapids.rapids_ver': '3'}
+, 'cache02.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.6.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:3C', 'rapids.rapids_ver': '3'}
+, 'graph05.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:F2:FC', 'rapids.rapids_ver': '3'}
+, 'sawmill01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:48:82:CC', 'rapids.rapids_ver': '3'}
+, 'graph03.sandbox.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:31:F4:D8', 'rapids.rapids_ver': '3'}
+, 'blob01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:CC:6E', 'rapids.rapids_ver': '3'}
+, 'bacon.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.105', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:32:51:C0', 'rapids.rapids_ver': '3'}
+, 'util-5-2q1u1cg.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:E7:3A', 'rapids.rapids_ver': '3'}
+, 'blob03.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.36', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:84:3A', 'rapids.rapids_ver': '3'}
+, 'shell01.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.23', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:34', 'rapids.rapids_ver': '3'}
+, 'mqlx01.dmz.sjc1.metaweb.com': {'rapids.bootimg': 'NA', 'ip_mac.addr': '172.29.253.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BF:35', 'rapids.rapids_ver': '0'}
+, 'krispy.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.129', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:66:63', 'rapids.rapids_ver': '3'}
+, 'hadoop0007.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:57:91', 'rapids.rapids_ver': '3'}
+, 'zucchini.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:DF:DA', 'rapids.rapids_ver': '3'}
+, 'graph06.qa.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.8.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:90', 'rapids.rapids_ver': '3'}
+, 'cache02.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.25', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:7A', 'rapids.rapids_ver': '3'}
+, 'hadoop0011.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.1.39', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:7A:BF', 'rapids.rapids_ver': '3'}
+, 'tethys.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.28', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:0A:E5:6F', 'rapids.rapids_ver': '3'}
+, 'svn01.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.15', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:86:4E', 'rapids.rapids_ver': '3'}
+, 'pez.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7D:48', 'rapids.rapids_ver': '3'}
+, 'hamachi.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.21', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:82:70', 'rapids.rapids_ver': '3'}
+, 'graphd-gcc-testing.ops.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.7.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:33:BE:C2', 'rapids.rapids_ver': '3'}
+, 'wasp.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.3.101', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:82:04', 'rapids.rapids_ver': '3'}
+, 'app05.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.19', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AF:6E', 'rapids.rapids_ver': '3'}
+, 'blob01.p01.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '10.2.9.29', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:B5:22', 'rapids.rapids_ver': '3'}
+, 'titan.corp.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.4.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:49:39:DE', 'rapids.rapids_ver': '3'}
+, 'util-5-2q1u1cm.inv.sjc1.metaweb.com': {'rapids.bootimg': 'pxelinux.0', 'ip_mac.addr': '172.29.5.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:CC:72', 'rapids.rapids_ver': '3'}
+},
+'ipmi_ports' :  {'ipmi-sql01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.30', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:7b:15'}
+, 'ipmi-graph05.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.38', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E2:A9'}
+, 'ipmi-dots.corp.sjc1.metaweb.com': {'ip_mac.addr': '192.168.1.3', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:DF:A8'}
+, 'ipmi-is02.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.4.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:47:85:FB'}
+, 'ipmi-index02.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:ad:73'}
+, 'ipmi-hadoop0003.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:7d'}
+, 'ipmi-cache02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:5e:7e'}
+, 'ipmi-graph01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.36', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:49'}
+, 'ipmi-graph02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.32', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:cc:e0:80'}
+, 'ipmi-io.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.5.31', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:0A:E5:55'}
+, 'ipmi-hadoop0004.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:57:a4'}
+, 'ipmi-hadoop0016.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.50', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:6d'}
+, 'ipmi-index01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.42', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:ad:91'}
+, 'ipmi-mon02.ops.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:1F'}
+, 'ipmi-hadoop0012.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.42', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:27:7b'}
+, 'ipmi-hadoop0002.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:6e'}
+, 'ipmi-hadoop0010.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.36', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:4b'}
+, 'ipmi-hadoop0011.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.40', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:7a:c3'}
+, 'ipmi-cache01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:19'}
+, 'ipmi-hadoop0017.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.52', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:60:19'}
+, 'ipmi-acre01.sandbox.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:67:0C'}
+, 'ipmi-graph04.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.34', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:30'}
+, 'ipmi-zucchini.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.152', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:D5:F0'}
+, 'ipmi-mon01.ops.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:78:8f'}
+, 'ipmi-graph02.sandbox.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:cc:e0:99'}
+, 'ipmi-shell01.ops.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.24', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:38'}
+, 'ipmi-index03.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.32', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:43:AD:87'}
+, 'ipmi-sql02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:7a:fc'}
+, 'ipmi-cache03.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:4f'}
+, 'ipmi-pez.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.112', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7C:C3'}
+, 'ipmi-jira.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.253.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:B6:82'}
+, 'ipmi-app04.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:66:6c'}
+, 'ipmi-hadoop0019.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.56', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:5e'}
+, 'ipmi-seed01.ops.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5B:E6'}
+, 'ipmi-hiccory.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.17', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:66:1B'}
+, 'ipmi-graph04.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.32', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:D2:97'}
+, 'ipmi-app03.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:5c:09'}
+, 'ipmi-app02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.28', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:45'}
+, 'ipmi-app05.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:72'}
+, 'ipmi-zimbra01.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.253.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:45:5e:6f'}
+, 'ipmi-tethys.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.5.29', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:0A:E5:73'}
+, 'ipmi-blob01.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.14', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b5:30'}
+, 'ipmi-graph06.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:94'}
+, 'ipmi-hadoop0014.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.46', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:ad:cd'}
+, 'ipmi-wasp.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.102', 'site.domain': 'sjc1', 'mac_port.mac': '00:e0:81:40:66:02'}
+, 'ipmi-hadoop0009.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.32', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:6f:5d'}
+, 'ipmi-app01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:32'}
+, 'ipmi-hadoop0013.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.44', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:e4:e6'}
+, 'ipmi-hadoop0001.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.12', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:af:2c'}
+, 'ipmi-acre01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.36', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:66:F8'}
+, 'ipmi-acre02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.40', 'site.domain': 'sjc1', 'mac_port.mac': '00:22:19:01:69:9A'}
+, 'ipmi-hadoop0005.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:5e:a7'}
+, 'ipmi-hadoop0015.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.48', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:87'}
+, 'ipmi-hadoop0007.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:57:95'}
+, 'ipmi-hadoop0006.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:e4:f0'}
+, 'ipmi-blob02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:e8:96'}
+, 'ipmi-graph01.sandbox.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.30', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:5D'}
+, 'ipmi-hadoop0020.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.58', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:de:73'}
+, 'ipmi-app04.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.22', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b2:1e'}
+, 'ipmi-graph05.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.18', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:F3:00'}
+, 'ipmi-test-baccus-postgis.ops.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.151', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:40:7C:C2'}
+, 'ipmi-blob01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.30', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:b5:26'}
+, 'ipmi-lime.corp.sjc1.metaweb.com': {'ip_mac.addr': '172.29.3.153', 'site.domain': 'sjc1', 'mac_port.mac': '00:E0:81:34:0D:F5'}
+, 'ipmi-index02.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.20', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:ad:9b'}
+, 'ipmi-hadoop0018.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.54', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:5e:a2'}
+, 'ipmi-reindex01.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.10.26', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:44:32:8f'}
+, 'ipmi-hadoop0008.inv.sjc1.metaweb.com': {'ip_mac.addr': '172.29.1.30', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:e1:57'}
+, 'ipmi-blob03.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.28', 'site.domain': 'sjc1', 'mac_port.mac': '00:1e:c9:43:66:49'}
+, 'ipmi-graph03.p01.sjc1.metaweb.com': {'ip_mac.addr': '10.2.9.34', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:CC:E0:76'}
+, 'ipmi-app03.qa.sjc1.metaweb.com': {'ip_mac.addr': '10.2.8.16', 'site.domain': 'sjc1', 'mac_port.mac': '00:1E:C9:45:5E:4C'}
+},
+'subnets' :     {'172.29.5.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.10.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.8.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.6.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.1.10.0': {'site.domain': 'sfo1', 'subnet.mask': '255.255.255.0'}
+, '10.2.7.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '172.29.1.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.2.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.1.2.0': {'site.domain': 'sfo1', 'subnet.mask': '255.255.255.0'}
+, '172.29.4.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.1.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '10.2.9.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '172.29.2.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+, '172.29.3.0': {'site.domain': 'sjc1', 'subnet.mask': '255.255.255.0'}
+}
+
+}
+

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+### Status is determined by the state of the primary name.
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_BLESSED_PORT" == "" ]] && declare -x MW_BLESSED_PORT=$($DIR/blessed_port)
+IP=$( $DIR/ip_mac.addr blessed )
+
+# reverse lookup on the primary IP. 
+# if the pod doesn't exist, or is named 'inv', then status is "INVENTORY"
+[[ "$MW_POD_DOMAIN" == "" ]] && declare -x MW_POD_DOMAIN=$($DIR/pod.domain)
+
+if [[ "$MW_POD_DOMAIN" == "inv" || "$MW_POD_DOMAIN" == "" ]]; then
+  echo "INVENTORY"
+else 
+  echo "ACTIVE"
+fi
+

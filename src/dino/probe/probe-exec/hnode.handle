@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -x
+
+# hnode.handle
+# ------------
+# use the local hostname as a handle for hnode records.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+HANDLE=""
+
+# try hostname first. 
+# must be a 4-dot name
+HANDLE=$( hostname -f 2> /dev/null | grep -E '.*\..*\..*\..*\..*' )
+
+# If none, we're probably running from the discover kernel.
+# Use our inventory name.
+if [[ "$HANDLE" == "" ]]; then
+  HANDLE=$($SUDO $DIR/name_ip.name blessed)
+fi
+
+echo "$HANDLE"
+

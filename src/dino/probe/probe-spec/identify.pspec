@@ -1,0 +1,11 @@
+{
+    "probes" : [
+    { "name": "mb_manufacturer", "sequence" : 0  },
+    { "name": "mb_model", "sequence" : 2 },
+    { "name": "cpu_num", "sequence" : 4 },
+    { "name": "cpu_speed", "sequence" : 6 },
+    { "name": "physmem", "sequence" : 8 },
+    { "name": "hdd.controller_dict", "sequence" : 10 },
+    { "name": "hdd_total", "sequence" : 12 }
+    ]
+} 

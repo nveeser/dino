@@ -1,0 +1,42 @@
+{   
+    "Header": 
+    {   
+        "version":   "2", 
+        "type":      "special"
+    },
+    "Device/00A09C001630": 
+    { 
+        "chassis":   "Chassis/lx-4048",
+        "hid":       "00A09C001630",
+        "hw_type":   "lx-4048",
+        "hw_class":  "console",
+        "pdu_port":  "",
+        "rack":      "Rack/sjc1.1.8",
+        "rackpos":   "44",
+        "serialno":  "to be added later", 
+        "status":    "ACTIVE"
+    },
+    "Host/con8s1.mgmt.sjc1": 
+    { 
+        "device":    "Device/00A09C001630",
+        "id":        "516",
+        "name":      "con8s1",
+        "pod":       "Pod/mgmt"
+    },
+    "Port/00:A0:9C:00:16:30_lo0": {   
+        "device":    "Device/00A09C001630",
+        "mac":       "00:A0:9C:00:16:30",
+        "name":      "lo0"
+    },
+    "Interface/con8s1.mgmt.sjc1_lo0": 
+    {
+        "port_name": "lo0",
+        "host" :  "Host/con8s1.mgmt.sjc1"
+    },
+    "IpAddress/10.2.8.10": 
+    {   
+        "subnet": "Subnet/10.2.8.0_24",
+        "interface": "Interface/con8s1.mgmt.sjc1_lo0",
+        "value": "10.2.8.10"
+    }
+}

@@ -1,0 +1,95 @@
+#!/bin/sh --
+
+# hdd.model
+# ---------
+# Discover make/model number of each disk.
+#
+# NOTE: today, this is an imperfect method, as the 3ware controller
+# does not report the necessary make/model info.  If drive info is unavailable, 
+# we report "None", and assume defaults.
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+# total HDDs
+RAID=$( $DIR/hdd.controller_dict)
+
+function get_3Ware {
+  # NOTE: 3Ware controller does not show drive models.
+  # 
+  # number of drives
+  PORTS=$( $SUDO $DIR/bin/tw_cli /c0 show | \
+    grep -E '^p[0-9]+[[:space:]]+OK' | \
+    awk '{print $1}' | perl -p -i -e 's/\n/ /')
+  HDD=$( for p in $PORTS; do \
+          $SUDO $DIR/bin/tw_cli /c0/$p show model | grep -i model | \
+          sed -r -e 's/.*\=//' | sed -r -e 's/[[:space:]]+(WDC)?[[:space:]]+([[:alnum:]]+)(\-.*)/\2/' ;\
+          done \
+       )
+  UNIQ=$(echo "$HDD" | uniq | wc -l)
+  MODEL=$(echo "$HDD" | uniq | head -n 1)
+}
+
+function get_MegaRAID {
+  CMD="$SUDO $DIR/bin/megarc.bin"
+  HDD=$( $CMD -phys -chAll -idAll -a0 | \
+    grep Product: | awk '{ print $2 }')
+  UNIQ=$(echo "$HDD" | uniq | wc -l)
+  AMT=$(echo "$HDD" | wc -l)
+  MODEL=$(echo "$HDD" | head -n 1) 
+}
+
+function get_adaptec_AAC {
+  CMD="$SUDO cat /var/log/dmesg "
+  HDD=$( $CMD |  grep -E '^scsi0' -A 12 |  \
+    grep -E '^scsi 0:1:' |  awk '{print $5}' )
+  UNIQ=$(echo "$HDD" | uniq | wc -l)
+  AMT=$(echo "$HDD" | wc -l)
+  MODEL=$(echo "$HDD" | head -n 1) 
+}
+
+function get_MegaRAID_SAS {
+  CMD="$SUDO cat /var/log/dmesg "
+  HDD=$( $CMD | \
+    grep -E '^scsi.*ATA' | \
+    sed -r -e 's/^scsi.*ATA//' | \
+    sed -r -e 's/.*[[:space:]]+([0-9A-Z]{7,20})[[:space:]]+.*/\1/' )
+  UNIQ=$(echo "$HDD" | uniq | wc -l)
+  AMT=$(echo "$HDD" | wc -l)
+  MODEL=$(echo "$HDD" | head -n 1) 
+}
+
+function get_nonraid {
+  HDD=$( ls /sys/bus/scsi/devices/[0-9]*/scsi_device*/device/model)
+  UNIQ=$(cat $HDD | uniq | wc -l)
+  AMT=$(cat $HDD | wc -l)
+  MODEL=$(cat $HDD | uniq | \
+  sed -r -e 's/[[:space:]]*(WDC)?[[:space:]]+([[:alnum:]]+)(\-.*)/\2/' | \
+  head -n 1)
+}
+
+case "$RAID" in 
+  "3Ware 9500")
+    get_3Ware
+  ;;
+  "MegaRAID SAS")
+    get_MegaRAID_SAS
+  ;;
+  MegaRAID)
+    get_MegaRAID
+  ;;
+  "Adaptec AAC")
+    get_adaptec_AAC
+  ;;
+  None)
+    get_nonraid
+  ;;
+  *)
+  echo "syntax error" && exit 1
+  ;;
+esac
+
+#[[ "$UNIQ" -gt "1" ]] && echo "HDD: $HDD" && exit 1
+[[ "$UNIQ" -gt "1" ]] && echo "Multiple" && exit 1
+
+echo $MODEL

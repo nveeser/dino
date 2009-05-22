@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# borrowed from linuxlive/liblinuxlive
+cmdline_value()
+{
+   CMDLINE=/proc/cmdline
+   RE="((^|[[:space:]]+)$1=([^[:space:]]+))"
+   cat "$CMDLINE" | egrep "$RE" | sed -r "s/.*$RE.*/\\1/" | sed -e 's/^.*=//'
+}
+
+cfg_dino() 
+{
+
+	SEED=`cmdline_value seed`
+	echo "SEED: $SEED"
+
+	cat > /etc/dino.cfg <<EOF
+[db]
+user=dino-probe
+password=dino123
+host=$SEED
+db=dinodb
+EOF
+}
+
+if [[ ! -f /etc/dino.cfg && ! -f /etc/dino/dino.cfg ]]; then
+	echo "CONFIGURE DINO"
+	cfg_dino
+else
+	echo "USING EXISTING CONFIG"
+fi
+
+echo "RUNNING DISCOVER..."
+
+/usr/bin/dino-probe -v -f /tmp/probe.output
+
+/usr/bin/dinoadm jsonimport /tmp/probe.output
+

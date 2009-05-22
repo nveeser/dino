@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Determine row location.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+# RACKs correspond to /24 network numbers, 
+# starting at 1. 
+[[ "$MW_IPMAC_ADDR_BLESSED" == "" ]] && \
+declare -x MW_IPMAC_ADDR_BLESSED="$($DIR/ip_mac.addr blessed)"
+
+RACK=$(echo "$MW_IPMAC_ADDR_BLESSED" | cut -d'.' -f 3 ) 
+
+[[ "$MW_SITE_DOMAIN" == "" ]] && declare -x MW_SITE_DOMAIN=$($DIR/site.domain)
+
+# positional data is only determined in sjc.
+case "$MW_SITE_DOMAIN" in 
+  sjc1 ) echo "$RACK"; exit 0;;
+  *) echo "None"; exit 1;;
+esac
+

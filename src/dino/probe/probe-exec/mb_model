@@ -1,0 +1,24 @@
+#!/bin/sh -
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+### must run as root
+MB=$( $SUDO lshw | \
+  grep -A 6 '\-core' | \
+  grep product: | \
+  cut -d':' -f 2 | \
+  awk '{print $1}'
+  )
+
+MAKE=$( $SUDO $DIR/mb_manufacturer )
+
+if [[ "$MB" == "empty" ]];then
+  echo "None"
+# special case for Dell's, where today 
+# we don't always want to know the Model.
+elif [[ "$MAKE" == "Dell" ]]; then
+  echo "0H268G"
+else
+  echo $MB
+fi

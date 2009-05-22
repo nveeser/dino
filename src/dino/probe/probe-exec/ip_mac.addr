@@ -1,0 +1,67 @@
+#!/bin/bash --
+
+# macIP.addr
+# ----------
+# look for an address, given a port number.
+# also handles the IPMI port, with the argument 'ipmi'.
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+
+ETH=$1
+
+[[ $# -ne 1 ]] && echo "syntax error" && exit 1
+[[ "$1" == "" ]] && echo "syntax error" && exit 1
+
+
+get_ipmi()
+{
+  # only find an IP if there's an ipmi port.
+  if /usr/sbin/ipmitool lan print > /dev/null 2>&1; then
+    IP=$(/usr/sbin/ipmitool lan print | \
+    grep -E '^IP Address[[:space:]]+: ' | \
+    sed -e 's/.*\: //' )
+  else 
+    echo -n -e "None\n" && exit;
+  fi
+  # if we get a result, cache it.
+  [[ "$IP" != "" ]] && declare -x MW_IPMAC_ADDR_IPMI=$(echo $IP)
+}
+
+get_blessed()
+{
+  # get ip
+  [ -z "$MW_BLESSED_PORT" ] && declare -x MW_BLESSED_PORT=$($DIR/blessed_port)
+  IP=$(/sbin/ifconfig -a | \
+    grep -A 6 -Ei ^$MW_BLESSED_PORT[[:space:]]+ | \
+    grep 'inet addr' | \
+    cut -d':' -f2 | \
+    awk '{print $1}' | \
+    head -n 1
+  )
+  # if we get a result, cache it.
+  [[ "$IP" != "" ]] && declare -x MW_IPMAC_ADDR_BLESSED=$(echo $IP)
+}
+
+get_eth()
+{
+  # get ip
+  PORT=$1
+  IP=$(/sbin/ifconfig -a | \
+    grep -A 6 -Ei ^$PORT[[:space:]]+ | \
+    grep 'inet addr' | \
+    cut -d':' -f2 | \
+    awk '{print $1}' | \
+    head -n 1
+  )
+}
+
+if [[ "$1" == "ipmi" ]]; then 
+  get_ipmi
+elif [[ "$1" == "blessed" ]]; then
+  get_blessed
+else
+  get_eth $1
+fi
+
+echo "$IP"

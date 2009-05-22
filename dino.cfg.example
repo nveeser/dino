@@ -1,0 +1,50 @@
+
+[db]
+#uri=mysql://%(user)s:%(password)s@%(host)s/%(db)s
+#uri=sqlite:////path/to/database.db  # absolute path to sqllite, untested
+user=nicholas
+password=moosejaw
+host=172.31.127.11
+db=dinodb
+
+
+[logging]
+#console_format=[%(name)s] %(levelname)s: %(message)s
+console_format=%(message)s
+
+[migrate]
+source_url=mysql://nicholas:moosejaw@172.31.127.11/myisam_opsdb
+#import_dir=
+
+
+[generate]
+site=631h
+domain=metaweb.com
+workdir=/mw/app/dino
+log_dir=/var/log/dino
+lock_dir=/var/lock/dino
+
+# Rapids (also used by DHCP for datacenter info)
+rapids_root=/nfsroot/gentoo/3  
+rapids_state_dir=/nfsroot/gentoo/3/state 
+rapids_svn_path=svn.metaweb.com/svn/rapids/tags/build/
+rapids_force_stage_inherit=True
+
+# PXE
+pxe_conf_dir=/tftpboot/cfg/
+pxe_squash_ver=3.10
+pxe_initrd=ramdisks/initramfs-3.3.cpio.gz
+pxe_rapids_ver=3
+
+# DHCP
+dhcp_conf_loc=/etc/dhcp/dhcpd.conf
+dhcp_init_loc=/etc/init.d/dhcpd
+dhcp_boot_filename=pxelinux.0
+dhcp_rapids_ver=3
+
+# DNS
+dns_internal_uri=https://svn.metaweb.com/svn/is-ops/trunk/configurations/sjc_internal_merge
+dns_shared_uri=https://svn.metaweb.com/svn/is-ops/trunk/configurations/sjc_merge_both
+
+
+

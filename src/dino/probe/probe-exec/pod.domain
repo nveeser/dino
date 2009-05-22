@@ -1,0 +1,30 @@
+#!/bin/bash
+
+### works only for the blessed interface. Other interfaces 
+### have derived names and don't need to be discovered, 
+### or are added by hand at a later phase. 
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+[[ "$MW_BLESSED_PORT" == "" ]] && declare -x MW_BLESSED_PORT=$($DIR/blessed_port)
+IP=$( $DIR/ip_mac.addr $MW_BLESSED_PORT )
+
+# look for a reverse DNS name
+if [[ "$MW_POD_DOMAIN" == "" ]]; then
+  declare -x MW_POD_DOMAIN=$(/usr/bin/dig +short +time=2 +tries=2 -x $IP \
+  | grep -vE '^;;' | head -n 1 | cut -d'.' -f 2 )
+fi
+
+# if none, look in /etc/hosts.
+if [[ "$MW_POD_DOMAIN" == "" ]]; then 
+  declare -x MW_POD_DOMAIN=$(head -n 1 /etc/hosts | grep localhost | grep '\.metaweb\.com' | awk '{print $2}' | cut -d'.' -f 2)
+fi
+
+# If no pod name found, server is in 'inventory'. 
+if [[ "$MW_POD_DOMAIN" == "" ]]; then 
+  declare -x MW_POD_DOMAIN=inv
+fi
+
+echo $MW_POD_DOMAIN
+

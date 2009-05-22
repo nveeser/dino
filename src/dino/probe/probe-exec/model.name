@@ -1,0 +1,19 @@
+#!/bin/bash
+
+DIR=$(dirname $0)
+. $DIR/include.sh
+
+if [[ "$MW_MODEL_NAME" == "" ]]; then
+  echo "unknown" && exit 1
+fi
+
+if [[ "$MW_MODEL_NAME" == "unknown" ]]; then
+  if [[ "$MW_HNODE_STATUS" == "" ]]; then
+    declare -x MW_HNODE_STATUS="$($DIR/hnode.status)"
+  fi
+  if [[ "$MW_HNODE_STATUS" == "ACTIVE" ]]; then
+    declare -x MW_MODEL_NAME="legacy"
+  fi
+fi
+
+echo "$MW_MODEL_NAME"

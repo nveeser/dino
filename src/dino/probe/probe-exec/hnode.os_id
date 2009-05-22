@@ -1,0 +1,31 @@
+#!/bin/sh -
+
+OS=""
+
+if [[ -f /discover-os ]]; then
+  echo "discover" > /etc/motd
+  OS="discover"
+fi
+
+if [[ "$OS" == "" ]]; then
+  OS=$( cat /etc/motd | grep 'Appliance Type' | sed -r -e 's/.*\: (.*)-.*/\1/' )
+fi
+
+if [[ "$OS" == "" ]]; then
+  OS=$( cat /etc/motd | grep -E '\(.*\)' | sed -r -e 's/.*\((.*)\)/\1/' | awk '{print $2}' )
+fi
+
+if [[ "$OS" == "" ]]; then
+  OS=$( cat /etc/motd | grep discover )
+fi
+
+if [[ "$OS" == "" && -e /usr/bin/render ]]; then 
+  OS="$(/usr/bin/render os_codename)"
+fi
+
+if [[ "$OS" == "" ]]; then
+  echo "None"
+fi
+
+echo "$OS"
+

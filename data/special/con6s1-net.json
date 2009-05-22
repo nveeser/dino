@@ -1,0 +1,42 @@
+{   
+    "Header": 
+    {   
+        "version":   "2", 
+        "type":      "special"
+    },
+    "Device/00A09C003D34": 
+    { 
+        "chassis":   "Chassis/lx-4032",
+        "hid":       "00A09C003D34",
+        "hw_type":   "lx-4032",
+        "hw_class":  "console",
+        "pdu_port":  "",
+        "rack":      "Rack/sjc1.1.6",
+        "rackpos":   "44",
+        "serialno":  "to be added later", 
+        "status":    "ACTIVE"
+    },
+    "Host/con6s1.mgmt.sjc1": 
+    { 
+        "device":    "Device/00A09C003D34",
+        "id":        "514",
+        "name":      "con6s1",
+        "pod":       "Pod/mgmt"
+    },
+    "Port/00:A0:9C:00:3D:34_lo0": {   
+        "device":    "Device/00A09C003D34",
+        "mac":       "00:A0:9C:00:3D:34",
+        "name":      "lo0"
+    },
+    "Interface/con6s1.mgmt.sjc1_lo0": 
+    {
+        "port_name": "lo0",
+        "host" : "Host/con6s1.mgmt.sjc1"
+    },
+    "IpAddress/10.2.6.10": 
+    {   
+        "subnet": "Subnet/10.2.6.0_24",
+        "interface": "Interface/con6s1.mgmt.sjc1_lo0",
+        "value": "10.2.6.10"
+    }
+}
