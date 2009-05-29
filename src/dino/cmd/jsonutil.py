@@ -59,7 +59,8 @@ class JsonProcessor(object):
 
     log = logging.getLogger("dino.cmd.json.processor")
 
-    def __init__(self, session):
+    def __init__(self, cmd, session):
+        self.cmd = cmd
         self.session = session
 
 
@@ -231,7 +232,7 @@ class JsonProcessor(object):
                 new_parent = getattr(instance, key)
     
                 if parent is not new_parent: 
-                    raise CommandExecutionError(self, "%s is owned by another %s: %s"
+                    raise CommandExecutionError(self.cmd, "%s is owned by another %s: %s"
                                                 % (instance.element_name, 
                                                    parent_entity, 
                                                    parent.element_name))
@@ -271,13 +272,13 @@ class JsonProcessor(object):
                 self._verify_special(data)
             else: 
                 err = 'Passed in Header that has no update type.\n'
-                CommandExecutionError(self, err)
+                CommandExecutionError(self.cmd, err)
             
             data.pop('Header')
             
         else:
             err = 'Passed in json struct has no v2 header.\n'
-            CommandExecutionError(self, err)
+            CommandExecutionError(self.cmd, err)
     
         return data
                 
@@ -382,7 +383,7 @@ class JsonProcessor(object):
         if critical: 
             err = '''Critical errors were found in the validation process
                     for special device: %s. Please see log for details.\n'''
-            raise CommandExecutionError(self, (err % 'special'))
+            raise CommandExecutionError(self.cmd, (err % 'special'))
     
         return(data)
        
@@ -552,7 +553,7 @@ class JsonProcessor(object):
         if critical: 
             err = '''Critical errors were found in the validation process. 
                             Please see the log for details.\n'''
-            raise CommandExecutionError(self, err)
+            raise CommandExecutionError(self.cmd, err)
     
         return(data)
             
@@ -603,7 +604,6 @@ class JsonProcessor(object):
         # rack
         if  data_v1.has_key('hnode.loc_row') and data_v1.has_key('hnode.loc_rack'):
             rack_spec = 'Rack/' + '.'.join([data_v1['site.domain'], 
-                                            data_v1['hnode.loc_row'], 
                                             data_v1['hnode.loc_rack']])
         else:
             rack_spec = "Rack/%s.unknown" % data_v1['site.domain']
@@ -641,7 +641,7 @@ class JsonProcessor(object):
         #
         handle = data_v1.get('hnode.handle', None)
         if handle is None:
-            raise CommandExceptionError(self, "Could not find an hnode handle" ) 
+            raise CommandExceptionError(self.cmd, "Could not find an hnode handle" ) 
 
         h = handle.split('.')
         short_name = '.'.join(h[:3])
@@ -734,12 +734,12 @@ def get_ip(addr, iface):
     '''
 
     if not addr or not iface:
-        raise CommandExecutionError("Bad params to _get_ip: %s / %s" % (addr, iface))
+        raise CommandExecutionError(self.cmd, "Bad params to _get_ip: %s / %s" % (addr, iface))
         
     reserver = IpCommand(self.db)
     iplist = reserver.sub_avail(addr)
     if len(iplist) < 1:
-        raise CommandExecutionError("No IP delivered by IP reserver!")
+        raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
         # Free IP. 
         # Guaranteed not to be in a range, or already in use.
         addr = ip_list[0]

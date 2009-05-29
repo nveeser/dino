@@ -26,7 +26,7 @@ class JsonExportCommand(MainCommand):
         if len(name) != 3: 
             raise CommandArgumentError(self, 'Host does not have the proper fqdn format.')
             
-        processor = JsonProcessor(session)
+        processor = JsonProcessor(self, session)
     
         oname = ObjectSpec.parse(self.args[0], expected=ElementName)
         

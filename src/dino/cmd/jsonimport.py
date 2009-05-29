@@ -31,9 +31,9 @@ class JsonImportCommand(MainCommand):
     
     @with_session
     def execute(self, session):  
-        proc = JsonProcessor(session)
+        proc = JsonProcessor(self, session)
     
-        for path in self.arg_iterator():        
+        for path in self.arg_iterator():    
             session.open_changeset()
         
             # process record
@@ -46,6 +46,8 @@ class JsonImportCommand(MainCommand):
             else:                                              
                 session.revert_changeset()
                 self.log.info("Not submitting")
+
+            session.expunge_all()    
 
 
     def arg_iterator(self):
