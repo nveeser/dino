@@ -630,7 +630,7 @@ class JsonProcessor(object):
         switch_host_spec = E[1] + '/' + '.'.join(tmp[:3])
         switch_host = is_known(self.session, switch_host_spec)
         if switch_host is None:
-            self.log.info("  Cannot find console host: %s" % switch_host_spec)
+            self.log.info("  Cannot find switch host: %s" % switch_host_spec)
             data_v2[Device]['switch'] = None
         else:
             switch_device = switch_host.device
@@ -653,7 +653,7 @@ class JsonProcessor(object):
             data_v2[Host]['id'] = int(data_v1['hnode.mw_tag']) 
     
         # pod
-        pod_spec = 'Pod/' + data_v1['pod.domain']
+        pod_spec = 'Pod/' + h[1]
         data_v2[Host]['pod'] = pod_spec
     
         # appliance
