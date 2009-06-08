@@ -2,7 +2,7 @@ import logging
 import re
 
 import sqlalchemy.orm as sa_orm
-from sqlalchemy import types as sa_types
+import sqlalchemy.types as sa_types
 import sqlalchemy.orm.properties as sa_props
 
 import elixir
@@ -10,9 +10,10 @@ import elixir
 from exception import *
 from objectspec import *
 from display import FormDisplayProcessor, EntityDisplayProcessor
-from extension import ElementMapperExtension, ElementInstrumentationManager, DerivedField
 
-__all__ = [ 'Element', 'ResourceElement' ]
+import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
+
+__all__ = [ 'Element', 'ResourceElement', 'InstanceName' ]
 
 ###################################################################
 #
@@ -22,10 +23,10 @@ __all__ = [ 'Element', 'ResourceElement' ]
 #
 ###################################################################
 
+
+
 class ElementMeta(elixir.EntityMeta):
     ''' Add logger to all Element classes '''
-    
-    EXTENSION = ElementMapperExtension()
 
     def __init__(cls, name, bases, dict_):
         elixir.EntityMeta.__init__(cls, name, bases, dict_) 
@@ -38,14 +39,12 @@ class ElementMeta(elixir.EntityMeta):
             cls.ALL_ENTITY_LIST = []
             return 
         
-        cls.ALL_ENTITY_LIST.append(cls)
-        
-        if hasattr(cls, '_descriptor'):
-            cls._descriptor.add_mapper_extension(cls.EXTENSION)
-            cls.entity_set = cls._descriptor.collection
-        
+        cls.ALL_ENTITY_LIST.append(cls)        
         cls.INSTANCE_NAME_REGEX = ObjectSpec.create_element_regex(name)        
         cls.NEXT_FORM_ID = 0
+
+        if hasattr(cls, '_descriptor'):
+            cls.entity_set = cls._descriptor.collection
 
 
     def allocate_form_id(cls):
@@ -55,10 +54,11 @@ class ElementMeta(elixir.EntityMeta):
     def entity_display_processor(cls):
         return EntityDisplayProcessor()
 
+
 class Element(object):   
     """ Base Class for 'most' objects in the Dino Model
     
-    This adds the derived Property 'element_name' to all Elements
+    This adds the derived Property 'instance_name' to all Elements
 
     Also collection of common instance methods, some taken from elixir.Entity.
     See:
@@ -68,7 +68,6 @@ class Element(object):
 
     """              
     __metaclass__ = ElementMeta	
-    __sa_instrumentation_manager__ = ElementInstrumentationManager
     
 	# Default Display Processor used for 'show' command
 	# Override in subclasses for different behavior
@@ -77,11 +76,6 @@ class Element(object):
     #
     # All Elements have an InstanceName
     #
-    
-    instance_name = DerivedField(sa_types.String(50), 
-        derive_method='derive_name',
-        getter_method='find_name',
-        nullable=False, unique=True)
 
     @classmethod
     def has_revision_entity(cls):
@@ -90,7 +84,142 @@ class Element(object):
     @classmethod    
     def is_revision_entity(cls):
         return hasattr(cls, '__main_entity__')
+
+    @classmethod
+    def create_empty(cls):
+        return cls()
+                    
+    @classmethod
+    def display_processor(cls):
+        return cls.DISPLAY_PROCESSOR()
+
+    def existing(self):
+        return self.id is not None
     
+    @property
+    def entity(self):
+        return self.__class__
+
+    @property
+    def entity_name(self):
+        return self.__class__.__name__
+
+
+    def __init__(self, **kwargs):
+        object.__setattr__(self, '_form_id', None) # odd syntax to get around __setattr__ method
+        
+        self.set(**kwargs)        
+    
+    def __str__(self):
+        return self.element_name
+        
+    def set(self, **kwargs):
+        for key, value in kwargs.iteritems():            
+            attr = self.__class__.__dict__.get(key)
+            if attr is None:
+                raise RuntimeError("Set() passed Key that is not valid: %s" % key)
+            if not isinstance(attr, sa_orm.attributes.InstrumentedAttribute):
+                raise RuntimeError("Set() passed Key that is not InstrumentedAttribute: %s" % key)
+                
+            setattr(self, key, value)    
+            
+    def validate_element(self):
+        ''' Called just before insert / update.  
+        Used to validate the contents of the element, before allowed into the database
+        '''
+        pass
+
+    def __setattr__(self, name, value):
+        if not hasattr(self, name) and name not in ('_sa_instance_state', '_default_state'):
+            self.log.warning("Assigning to unknown attribute: %s.%s" % (self.__class__.__name__, name))
+        object.__setattr__(self, name, value)
+    
+    
+    def get_path(self, path): 
+        ''' Return a value (object or value) for a path. 
+        
+        Path is either a string of '.' separated property names 
+            Ex. 'device.rack.site' 
+            
+        or tuple of property name strings
+            Ex. ('device', 'rack', 'site')        
+        '''
+        if isinstance(path, basestring):
+            path = tuple(path.split('.'))     
+            
+        def _path_to_value(instance, path):  
+            ''' Recursively resolve the path of attributes, returning the last value'''          
+            if not hasattr(instance, path[0]):
+                raise ElementException("Invalid property name in path: %s" % path[0])            
+            value = getattr(instance, path[0])   
+                
+            if len(path) > 1 and value is not None:         
+                return _path_to_value(value, path[1:])            
+            
+            return value
+               
+        return _path_to_value(self, path)
+
+
+    
+    @classmethod
+    def has_sa_property(cls, property_name):
+        return cls.mapper.has_property(property_name)
+    
+    @classmethod
+    def get_sa_property(cls, name):
+        '''Return the SqlAlchemy property (sqlalchemy.orm.properties.Property)
+            for a given attribute/relation specified by name'''        
+        return cls.mapper.get_property(name, raiseerr=False)                                 
+
+    @classmethod
+    def get_sa_property_type(cls, name):
+        '''Return the type_info for a given property.
+        For Column properties:
+            Return SqlAlchemy type (instance of sqlalchemy.types.AbstractType)
+        For Relation properties:
+            Return 
+            - target class, or 
+            - list with the target class as the single element (for list relations)          
+        '''
+        sa_property = cls.mapper.get_property(name)
+        
+        if isinstance(sa_property, sa_props.ColumnProperty):
+            return sa_property.columns[0].type
+            
+        elif isinstance(sa_property, sa_props.RelationProperty):
+            if isinstance(sa_property.argument, sa_orm.Mapper):            
+                target_cls = sa_property.argument.class_
+            else:
+                target_cls = sa_property.argument
+                
+            return target_cls
+    
+    @classmethod
+    def get_sa_property_by_type(cls, target_type):
+        ''' Find the first property on this class which has a target type of the target entity
+        Host.get_property_by_target_entity(Device) -> 'device'
+        '''        
+        for sa_property in cls.mapper.iterate_properties:
+            if isinstance(sa_property, sa_props.ColumnProperty):
+                if sa_property.columns[0].type == target_type:
+                    return sa_property
+                
+            if isinstance(sa_property, sa_props.RelationProperty):
+                
+                if isinstance(sa_property.argument, sa_orm.Mapper):            
+                    prop_target_class = sa_property.argument.class_
+                else:
+                    prop_target_class = sa_property.argument
+                    
+                if prop_target_class == target_type:
+                    return sa_property
+                    
+        return None
+
+    #
+    # ElementName Related Methods
+    #
     @classmethod
     def is_element_name(cls, string):
         for element in cls.ALL_ENTITY_LIST:
@@ -112,79 +241,10 @@ class Element(object):
         '''
         return cls.INSTANCE_NAME_REGEX
         
-    
-    @classmethod
-    def create_empty(cls):
-        return cls()
-    
-    def __init__(self, **kwargs):
-        self.set(**kwargs)
-        
-    def set(self, **kwargs):
-        for key, value in kwargs.iteritems():            
-            attr = self.__class__.__dict__.get(key)
-            if attr is None:
-                raise RuntimeError("Set() passed Key that is not valid: %s" % key)
-            if not isinstance(attr, sa_orm.attributes.InstrumentedAttribute):
-                raise RuntimeError("Set() passed Key that is not InstrumentedAttribute: %s" % key)
-                
-            setattr(self, key, value)            
-    
-    def __str__(self):
-        return self.element_name
 
-    def __setattr__(self, name, value):
-        if not hasattr(self, name) and name not in ('_sa_instance_state', '_default_state'):
-            self.log.warning("Assigning to unknown attribute: %s.%s" % (self.__class__.__name__, name))
-        object.__setattr__(self, name, value)
-    
-    def get_sa_property(self, name):
-        '''Return the SqlAlchemy property (sqlalchemy.orm.properties.Property)
-            for a given attribute/relation specified by name'''        
-        return self.mapper.get_property(name, raiseerr=False)                                 
-            
-    def get_sa_property_type(self, name):
-        '''Return the type_info for a given property.
-        For Column properties:
-            Return SqlAlchemy type (instance of sqlalchemy.types.AbstractType)
-        For Relation properties:
-            Return 
-            - target class, or 
-            - list with the target class as the single element (for list relations)          
-        '''
-        sa_property = self.mapper.get_property(name)
-        
-        if isinstance(sa_property, sa_props.ColumnProperty):
-            return sa_property.columns[0].type
-            
-        elif isinstance(property, sa_props.RelationProperty):
-            if isinstance(sa_property.argument, sa_orm.Mapper):            
-                target_cls = sa_property.argument.class_
-            else:
-                target_cls = sa_property.argument
-                
-            if property.uselist:
-                return list(target_cls)
-            else:
-                return target_cls
-                
-    def has_sa_property(self, property_name):
-        return self.mapper.has_property(property_name)
-    
     def attribute(self, property_name):
         return Attribute(self, property_name)
 
-    @property
-    def entity(self):
-        return self.__class__
-
-    @property
-    def entity_name(self):
-        return self.__class__.__name__
-
-    @property
-    def element_name(self):
-        return str(ElementName(self.entity_name, self.instance_name))
 
     @property
     def instance_id(self):
@@ -194,29 +254,17 @@ class Element(object):
             return None
     
     @property
+    def element_name(self):
+        return ElementName(self.entity_name, self.find_name()).object_name
+
+    @property
     def element_id(self):
         if self.id:
             return ElementId(self.entity_name, self.id).object_name
         else:
             return None
-    
-    def existing(self):
-        return self.id is not None
 
-    def validate_element(self):
-        ''' Called just before insert / update.  
-        Used to validate the contents of the element, before allowed into the database
-        '''
-        pass
 
-    def update_name(self):
-        derived_name = self.derive_name()
-        if self._instance_name != derived_name:
-            #print "OLD: %s" % self._instance_name
-            #print "NEW: %s" % derived_name
-            self._instance_name = derived_name
-            self.log.info("Updating: %s", self._instance_name)
-    
     def find_name(self):
         ''' Find some unique name by which to refer to this instance
         
@@ -224,42 +272,42 @@ class Element(object):
         2. Create an InstanceId from the id column of the object 
         3. Read the underlying _instance_name Column
         4. Create a temporary FormId unique to all instances of this Element, in this process         
-        '''
-                
-        self.log.finest("  Trying _instance_name")
-        instance_name = self._instance_name  # self.derive_name()                
+        '''        
+            
+        self.log.finest("  Trying instance_name")
+        instance_name = self.instance_name  # self.derive_name()                
 
         if instance_name is None:
             self.log.finest("  Trying instance_id")
             instance_name = self.instance_id
 
         if instance_name is None:
+            self.log.finest("  Trying form_id")
+            instance_name = self._form_id
+
+        if instance_name is None:
             self.log.finest("  Allocating form_id")
-            instance_name = self._instance_name = self.__class__.allocate_form_id()
+            instance_name = self._form_id = self.__class__.allocate_form_id()
         
-        self.log.finest("  Instance_name: %s" % instance_name)
+        self.log.finest("  InstanceName: %s" % instance_name)
         return instance_name
     
-    
+               
+    def derive_name(self):        
+        return self.NAME_PROCESSOR.derive_name(self)
+ 
     def derive_element_name(self):
         return str( ElementName(self.entity_name, self.derive_name()) )
 
-    def derive_name(self):
-        cls = self.__class__
-        if hasattr(cls, "INSTANCE_NAME_ATTRIBUTE"):            
-            attr_name = getattr(cls, "INSTANCE_NAME_ATTRIBUTE")
-            if not hasattr(self, attr_name):
-                raise ElementException("Attribute specified by %s.INSTANCE_NAME_ATTRIBUTE" + 
-                    " does not exist: %s" % (cls.__name__, attr_name))
-                 
-            return getattr(self, attr_name)
+    def update_name(self, override_dict={}):
+        derived_name = self.NAME_PROCESSOR.derive_name(self, override_dict)   
+        self.log.fine("UPDATE: %s %s", repr(self), derived_name)    
+        if self.instance_name != derived_name:
+            self.instance_name = derived_name
+            self.log.info("Updating: %s", self.instance_name)
+            return True
         else:
-            raise ElementException("Undefined InstanceName for %s: " + 
-            "Must define attribute INSTANCE_NAME_ATTRIBUTE or method derive_name(self)", cls)
-
-    @classmethod
-    def display_processor(cls):
-        return cls.DISPLAY_PROCESSOR()
+            return False
 
 
 class ResourceElement(object):
@@ -325,4 +373,5 @@ class Attribute(object):
         elif isinstance(sa_property, sa_props.RelationProperty):
             value_instance = session.resolve_element_spec(value)
             setattr(self.element, self.property_name, value_instance)
+
 

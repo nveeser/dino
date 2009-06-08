@@ -1,3 +1,6 @@
+import logging
+import re
+
 import sqlalchemy
 from sqlalchemy import engine
 
@@ -50,6 +53,10 @@ class DbConfig(object):
         if file_config is None:
             raise DbConfigError("Cannot find file section: %s" % file_section)
         
+        #import pdb;pdb.set_trace()
+        if int(file_config.get('sql_debug', '0')):
+            DbConfig.setup_sql_handler()
+
         
         # check files first  
         for k in opts.keys():  
@@ -179,6 +186,20 @@ class DbConfig(object):
         
         connection.execute("SET FOREIGN_KEY_CHECKS = 1")
     
+    def truncate_all(self):
+        connection = self.engine.connect()
+        connection.execute("SET FOREIGN_KEY_CHECKS = 0")         
+
+        t = connection.begin()
+        
+        tables_stmt = "SHOW TABLES"
+        for row in connection.execute(tables_stmt):
+            self.log.info("Truncate Table: %s" % row[0])
+            connection.execute("TRUNCATE TABLE %s" % row[0])
+
+        t.commit()
+        connection.execute("SET FOREIGN_KEY_CHECKS = 1")
+    
     def dump_schema(self):
         import StringIO
         buf = StringIO.StringIO()        
@@ -189,5 +210,74 @@ class DbConfig(object):
             
         return buf.getvalue()
 
+        
+    @classmethod
+    def setup_sql_handler(cls):
+        engine_logger = logging.getLogger("sqlalchemy.engine")
+        engine_logger.setLevel(logging.INFO)
+        engine_logger.propagate = 0   
+        cls.sql_logging_handler = SqlLoggingHandler()
+        engine_logger.addHandler(cls.sql_logging_handler)
+
 class_logger(DbConfig)
+
+
+
+
+class SqlLoggingHandler(logging.Handler):
+    SQL_REGEX_SET = [ 
+        re.compile("\s*(SELECT).*FROM\s+(\S*)\s+(WHERE.*)?", re.I),
+        re.compile("\s*(UPDATE)\s*(\S*)\s*.*", re.I),
+        re.compile("\s*(INSERT)\s+(?:INTO)?\s*(\S*)\s*.*", re.I),
+        re.compile("\s*(DELETE)\s*(\S*)\s*.*", re.I)
+    ]
+    #PARAM_REGEX = re.compile('([^[]?.*)', re.I)
+    
+    def __init__(self):
+        logging.Handler.__init__(self, level=logging.DEBUG)
+        self._scope = None
+    
+#    def _enable(self):
+#        self.setLevel(logging.INFO)
+#        
+#    def _disable(self):
+#        self.setLevel(logging.WARN)
+
+    def emit(self, record):
+        scope = self.find_app_scope()            
+        if self._scope != scope:
+            self._scope = scope            
+            s = self._scope[-1]
+            print "[sql-listener:scope]: %s[%s].%s" % (s[0], s[1], s[2])
+            
+        text = self.parse_text(record.msg)
+        
+        if text:
+            print "[sql-listener:sql]:      %s" % text
+        
+    def parse_text(self, text):
+        text = text.replace('\n'," ")
+        #print "MESSAGE: ", text            
+        for i,regex in enumerate(self.SQL_REGEX_SET):
+            m = regex.search(text)
+            if m:                
+                values = [ v for v in  m.groups() if v ]
+                return re.sub('\s+', " ", " ".join(values))
+                
+        return None
+
+    def find_app_scope(self):
+        import traceback
+        me = __name__.replace('.','/')
+        root = __file__[:-len(me)+1]
+        stack = traceback.extract_stack()
+        
+        del stack[-3:]  # Remove us from the stack
+        
+        for scope in reversed(stack):
+            if scope[0].startswith(root):
+                idx = stack.index(scope)
+                return stack[0:idx+1]
+
+
 

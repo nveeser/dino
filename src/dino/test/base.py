@@ -8,30 +8,20 @@ from nose.tools import *
 import dino.config
 from dino.db.dbconfig import DbConfig
 from dino.db.schema import *
-from dino.cmd import MainCommand
+from dino.cmd import MainCommand,CommandExecutionError
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 
 class DinoTest(unittest.TestCase):
-    _handler = None
 
     def setUp(self):        
         super(DinoTest, self).setUp() 
-        if not self._handler:
-            formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
 
-            self._handler = logging.StreamHandler(sys.stdout)
-            self._handler.setFormatter(formatter)
-            self._handler.setLevel(logging.DEBUG)
-        
-            l = logging.getLogger("")
-            l.addHandler(self._handler)  
-            l.setLevel(logging.WARNING)
-            
-            dino.config.config_logging()
-        
-        self.log = logging.getLogger("%s.%s" % (self.__class__.__module__, self.__class__))
+        formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
+        dino.config.LogController().console_handler.setFormatter(formatter)
+                        
+        self.log = logging.getLogger("%s.%s" % (self.__class__.__module__, self.__class__.__name__))
         
 class DataTest(DinoTest):
     DATA_DIR = None
@@ -112,7 +102,7 @@ class DatabaseTest(DinoTest):
         
         self.log.info("Teardown database")
         self.db = self.get_database_config(self.ENTITY_SET)
-        self.db.drop_all()
+        self.db.clear_schema()
    
     def get_database_config(self, entity_set): 
         opts = { 
@@ -240,7 +230,11 @@ class CommandTest(DatabaseTest):
         cmd_cls = MainCommand.find_command(cmdname)
         cmd = cmd_cls(self.db, None)
         cmd.parse(args)
-        return cmd.execute()
+        try:
+            return cmd.execute()
+        except CommandExecutionError, e:
+            print e.print_trace()
+            raise
         
         
         

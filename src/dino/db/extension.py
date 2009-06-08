@@ -1,19 +1,389 @@
 '''
 Set of SQL Alchemy Extensions used by element
 '''
+import re
 
 import sqlalchemy.orm as sa_orm
+import sqlalchemy.types as sa_types
 import sqlalchemy.orm.properties as sa_props
 from sqlalchemy.orm.interfaces import AttributeExtension, InstrumentationManager, MapperExtension
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.orm.attributes import manager_of_class
 
 from elixir import Field
+from elixir.properties import EntityBuilder
+from elixir.statements import Statement
 
 from dino.config import class_logger
 from session import ElementSession
-#from element import Element
 import element
-__all__ = ['DerivedField', 'ElementInstrumentationManager', 'name_depends', 'ElementMapperExtension' ]
+
+import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
+
+__all__ = ['DerivedField', 'use_element_name' ]
+
+
+
+
+class ElementNameBuilder(EntityBuilder):    
+    
+    def __init__(self, entity, pattern, *args, **kwargs):       
+        assert '__main_entity__' not in vars(entity), "ElementNameBuilder should not be present on Revision Entity"            
+        
+        self.name_pattern = pattern    
+        self.entity = entity
+        
+        # Create Field
+        #
+        #DerivedField( sa_types.String(50), derive_method='derive_name', getter_method='find_name', nullable=False, unique=True)
+        Field( sa_types.String(50), nullable=False, unique=True ).attach(self.entity, 'instance_name')
+
+        # Create NameProcessor (and for Revision Entity too)
+        #
+        self.entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(self.name_pattern)
+            
+        if hasattr(self.entity, 'Revision'):
+            revision_pattern = "%s@{revision}" % self.name_pattern
+            self.entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(revision_pattern) 
+        
+        
+    def finalize(self):
+        # Compile so that all properties are created on the mapper
+        self.entity.mapper.compile()
+
+        if self.entity.NAME_PROCESSOR.attribute_names:
+            self.log.fine("Process DEPENDENCIES: %s", self.entity.__name__)
+            
+        for instance_name_key in self.entity.NAME_PROCESSOR.attribute_names:            
+            parser = ElementNameBuilder.DependParser(self.entity, instance_name_key)   
+
+            for (listener_entity, listener_attr, listener) in parser.depend_list:
+                listener_manager = manager_of_class(listener_entity)
+                listener_manager[listener_attr].impl.extensions.insert(0, listener)
+    
+
+
+    class InstanceNameExtension(MapperExtension):
+            
+        def before_insert(self, mapper, connection, instance):
+            assert isinstance(instance, element.Element)
+            if instance.instance_name is None:
+                raise ElementInstanceNameError("InstanceName cannot be None: %s" % mapper.class_ )
+            return sa_orm.EXT_CONTINUE
+        
+        before_update = before_insert     
+ 
+ 
+    class ValidateElementMapperExtension(MapperExtension):
+        def before_insert(self, mapper, connection, instance):
+            instance.validate_element()
+            return sa_orm.EXT_CONTINUE
+    
+        before_update = before_insert
+
+
+    class ElementNameCacheMapperExtension(MapperExtension):    
+        def append_result(self, mapper, selectcontext, row, instance, result, **flags):
+            self._session(instance).cache_add(instance, "append")
+            return sa_orm.EXT_CONTINUE
+                                            
+        def after_insert(self, mapper, connection, instance):
+            self._session(instance).cache_add(instance, "insert")
+            return sa_orm.EXT_CONTINUE
+                        
+        def after_update(self, mapper, connection, instance):
+            self._session(instance).cache_add(instance,"update")
+            return sa_orm.EXT_CONTINUE      
+                  
+        def after_delete(self, mapper, connection, instance):
+            self._session(instance).cache_delete(instance)
+            return sa_orm.EXT_CONTINUE
+    
+    
+        def _session(self, instance):
+            session = sa_orm.object_session(instance)
+            assert isinstance(instance, element.Element), "Cannot use ElementNameCacheMapperExtension with non Element Entity"
+            assert isinstance(session, ElementSession), "Found Element instances with session not derived from ElementSession"                    
+            return session
+      
+    class_logger(ElementNameCacheMapperExtension)
+
+ 
+     
+    class DependParser(object):
+        '''
+        For a give spec, more than one AttributeListener may be applied / relevant
+        
+        Example 1: Host -> 'name' 
+            - Host / name / ()
+        
+        Example 2: Host -> 'site.name'
+            
+            Adds DependentAttributeListener:  ( Class / Attribute / JoinClause )  
+            - Site / name / ( Site, )    
+                                  
+        Example 3: Host -> 'device.rack.site.name'
+            
+            Add DependentAttributeListener(s):  ( Class / Attribute / JoinClause )
+               
+            - Host  / device / ()
+                     
+            - Device / rack /  ( Device )                                        
+            
+            - Rack   / site /  ( Device, Rack  )
+            
+            - Site   / name /  ( Device, Rack, Site )
+    
+            ie. When update Site.name of Site(id=12), find hosts that are affected.
+            The query to find those hosts is specified like:
+            session.query(Host).join(Device).join(Rack).join(Site).filter_by(id=site.id)
+        '''
+              
+        def __init__(self, target_entity, instance_name_key):
+            self.target_entity = target_entity
+            self.instance_name_key = instance_name_key
+              
+            value_path = tuple(instance_name_key.split('.'))
+                
+            self.depend_list = self.process_spec(self.target_entity, value_path, ())
+            
+        def process_spec(self, listener_entity, value_path, join_tuple):
+            self.log.info("  Process: %s %s %s", listener_entity.__name__, value_path, tuple(x.__name__ for x in join_tuple))
+            
+            if len(value_path) == 1:
+                listener_attr_name = value_path[0]
+                listener = self._create_listener( listener_entity, listener_attr_name, join_tuple)                            
+                return ((listener_entity, listener_attr_name, listener), )
+                
+            else:
+                (listener_attr_name, next_path) = value_path[0], value_path[1:]
+    
+                listener = self._create_listener( listener_entity, listener_attr_name, join_tuple, next_path)
+                            
+                next_class = listener_entity.get_sa_property_type(listener_attr_name)
+                next_join_tuple = (join_tuple + ( next_class,)) 
+                    
+                next_depends = self.process_spec( next_class, next_path, next_join_tuple )                
+                return ((listener_entity, listener_attr_name, listener),) + next_depends
+                         
+              
+        def _create_listener(self, listener_entity, listener_attr_name, join_list, listener_value_path=None): 
+            self.log.fine("     Listener: %s.%s updates %s value:%s join%s ", 
+                listener_entity.__name__, listener_attr_name, 
+                self.target_entity.__name__,  
+                listener_value_path,
+                tuple(x.__name__ for x in join_list)) 
+                           
+            return ElementNameBuilder.InstanceNameAttributeListener(self.target_entity, join_list, self.instance_name_key, listener_value_path)               
+     
+    class_logger(DependParser)     
+
+
+    class InstanceNameAttributeListener(AttributeExtension):
+        '''
+        Listens to the attribute (used in another Element's InstanceName).
+        
+        The Target Entity whose InstanceName needs to be updated.
+        
+        The join_entity_path is the list of intermediary Entities to join to, to
+        build a query which will specify which specific Elements (instances) need to be updated       
+        
+        target_name_key is the key used in the InstanceName pattern which has changed
+        
+        listener_attr_path is the attribute path (if any) to retrieve the actually value 
+        used in the InstanceName.   
+        '''
+        def __init__(self, target_entity, join_entity_path, target_name_key, listener_attr_path):            
+            self.target_entity = target_entity            
+            self.join_entity_path = join_entity_path
+            self.target_key_name = target_name_key
+            self.value_path = listener_attr_path
+
+             
+        def set(self, state, newvalue, oldvalue, initiator):
+                       
+            # Find the right value to send to Element.update_name     
+            if self.value_path is not None and newvalue is not None:  
+                assert isinstance(newvalue, element.Element), "assigned value of unexpected type: %s" % type(newvalue)              
+                update_value = newvalue.get_path(self.value_path)
+            else:
+                update_value = newvalue
+            
+            if self.join_entity_path is ():
+                self.update_self(state, update_value, initiator)
+            else:                
+                self.update_dependents(state, update_value, initiator)
+                
+            return newvalue
+                                
+        def update_self(self, state, update_value, initiator):
+            self.log.finer("TRIGGER SELF: %s.%s -> %s", initiator.class_.__name__, initiator.key, 
+                self.target_entity.__name__)                  
+                
+            self.log.finer("   Passed Value: { %s : %s }", self.target_key_name, update_value)                
+
+            state.obj().update_name(override_dict={ self.target_key_name : update_value })
+
+
+        def update_dependents(self, state, update_value, initiator):
+            self.log.fine("TRIGGER: %s.%s -> %s via %s %s", initiator.class_.__name__, initiator.key, 
+                self.target_entity.__name__, tuple(x.__name__ for x in self.join_entity_path), self.value_path)     
+
+            session = object_session(state.obj())  
+            if session is None:
+                self.log.finer("   No session on Source Entity: not updating dependent objects")
+                return
+                
+            self.log.finer("   Passed Value: { %s : %s }", self.target_key_name, update_value)                
+            for element in self.find_dependent_elements(session, state.obj()):
+                element.update_name(override_dict={ self.target_key_name : update_value })
+
+
+        def find_dependent_elements(self, session, match_instance):
+            q = session.query(self.target_entity)
+            for join_entity in self.join_entity_path:
+                q = q.join(join_entity)                                                                        
+        
+            # Find Elements in the DB
+            #
+            for element in q.filter_by(id=match_instance.id).all():
+                self.log.finer("   Update(DB): %s", repr(element))
+                yield element
+                
+
+            # Find (new) Elements in the Session
+            #     
+            def entity_to_attribute_path(entity, entity_path):
+                value_path = (entity.get_sa_property_by_type(entity_path[0]).key,)
+                
+                if len(entity_path) > 1:
+                    value_path = value_path + entity_to_attribute_path(entity_path[0], entity_path[1:])
+                
+                return value_path
+                
+            # Change ('Device', 'Rack') into ('device', 'rack') which can be used with get_value()
+            join_attribute_path = entity_to_attribute_path(self.target_entity, self.join_entity_path)
+            
+            for element in session.new:
+                if isinstance(element, self.target_entity) and element.get_path(join_attribute_path) == match_instance:                                                    
+                    self.log.fine("   Update(Session): %s", repr(element))
+                    yield element
+                        
+        
+
+    class_logger(InstanceNameAttributeListener)
+    
+    
+                
+    class InstanceNameProcessor(object):
+        NAME_RE = re.compile('{(\w[^}]+)}')    
+        OPTIONAL_RE = re.compile('(?<!%)\(([^{]*){(\w+)}([^)]*)\)(?!s)')
+        
+        def __init__(self, pattern):
+            self.pattern = pattern
+            self.attribute_names = set( self._attribute_names(self.pattern) )
+            self.optional_names = set()
+            
+            left = self.pattern.count('(')
+            right = self.pattern.count(')')
+            if left != right:
+                self.log.warn("Parentheses mismatch?: %s", self.pattern)
+            
+            self.pattern_list = self._split_conditional_keys( (), self.pattern ) 
+            self.pattern_list = list( self.pattern_list )
+            self.pattern_list.sort(key=lambda x: -len(x[0])) # sort by length of key tuple
+    
+                             
+        @staticmethod
+        def _attribute_names(pattern):    
+            for m in ElementNameBuilder.InstanceNameProcessor.NAME_RE.finditer(pattern):
+                yield m.group(1)
+        
+        def _split_conditional_keys(self, key_tuple, pattern):
+            '''
+            Look for contitional keys and split the pattern into two patterns, 
+                one with the conditional supplied 
+                one without the contitional supplied.
+                
+            (),           'FOO(:{optional})' 
+            becomes
+            (),           'FOO'
+            ('optional'), 'FOO:%(optional)s'  
+                
+            '''
+            m = ElementNameBuilder.InstanceNameProcessor.OPTIONAL_RE.search(pattern)
+            if m:    
+                (before, optional_key, after) = m.groups()      
+                      
+                self.optional_names.add(optional_key)
+                
+                text = before + "%(" + optional_key + ")s" + after            
+    
+                pattern_with = pattern[:m.start()] + text + pattern[m.end():] 
+                pattern_without = pattern[:m.start()] + "" + pattern[m.end():]
+                
+                result1 = self._split_conditional_keys(key_tuple + (optional_key, ), pattern_with)            
+                result2 = self._split_conditional_keys(key_tuple, pattern_without)
+                
+                return result1 + result2  
+                
+            else:
+                return ( ( key_tuple , self._replace_keys(pattern) ), ) 
+        
+        @staticmethod
+        def _replace_keys(pattern):
+            ''' replace any remaining non-conditional keys in the pattern string with python str refs
+            'FOO-{key}' -> 'FOO-%(key)s' 
+            '{key1}_{key2} -> '%(key1)s_%(key2)s'
+            '''
+            m = ElementNameBuilder.InstanceNameProcessor.NAME_RE.search(pattern)
+            while m:
+                pattern = pattern[:m.start()] + "%(" + m.group(1) + ")s" + pattern[m.end():]
+                m = ElementNameBuilder.InstanceNameProcessor.NAME_RE.search(pattern)                    
+            return pattern
+        
+    
+        def make_name(self, value_dict):
+            ''' Look up the correct pattern based on which keys are available
+            in the dict, and evaluate that string with the value dictionary
+            ''' 
+            value_key_set = set(value_dict.keys())
+            if len(self.attribute_names - value_key_set) > 0:
+                raise RuntimeError("Value_dict missing attribute names: %s" % self.attribute_names - value_key_set)
+                         
+            for name in self.attribute_names - self.optional_names:
+                if value_dict[name] is None:
+                    return None
+    
+            pattern = self._find_pattern(value_dict)
+                    
+            return pattern % value_dict
+                
+                    
+        def _find_pattern(self, value_dict):
+            for key_tuple, pattern in self.pattern_list:
+                availables = [ key for key in key_tuple if value_dict[key] is not None ]
+                  
+                if len(availables) == len(key_tuple):
+                    return pattern
+            
+            raise RuntimeError("No Pattern was available.  This should never happen")            
+        
+        def derive_name(self, instance, override_dict={}):        
+            values = [ (n, instance.get_path(n)) for n in self.attribute_names ]
+            value_dict = dict(values)            
+            value_dict.update(override_dict)             
+            return self.make_name(value_dict)
+            
+            
+            
+
+            
+class_logger(ElementNameBuilder)        
+                                                
+use_element_name = Statement(ElementNameBuilder)
+
+
 
 
 class IndexedList(list):
@@ -34,8 +404,7 @@ class IndexedList(list):
         ...
         value = Field(types.String() )
         ...
-    
-    
+ 
     port = Port(name='name1')
     host.ports.append(port)
     host.ports['name1']
@@ -46,8 +415,6 @@ class IndexedList(list):
         children = relation(Child, collection_class=IndexedList.factory('child_attribute'))
     })
 
-    
-     
     '''
     
     @staticmethod
@@ -108,290 +475,4 @@ class IndexedList(list):
         
 class_logger(IndexedList)
 
-class DerivedField(Field):
-    
-    """ Like elixir.Field, used to create a property of <name> 
-    on an elixir.Entity class.  Unlike elixir.Field, the value 
-    is derived from a method specified by the derive_method argument.
-    
-    Usage:
-    class Foo(elixir.Entity):
-        <name> = DerivedField( <type>, derive_method=<method_name>, **kwargs)
-      
-    Like Field, this creates a sqlalchemy.orm.Property 
-    on the class called <name>. However, the original 
-    sqlalchemy.orm.Property is moved to "_<name>" to be accessed 
-    by the mapper extension.  The field value is then stored in the 
-    database as a column. The original property is replaced with a python 
-    property() instance which derives the value via a defined method.
-        
-    The schema.Table object (which each Entity has) still contains 
-    column called <name>.  This means the original name can still 
-    be used in queries with this Entity. 
-    """
-       
-    def __init__(self, type, *args, **kwargs):       
-        self.derive_method_name = kwargs.pop('derive_method', None)
-        self.getter_method_name = kwargs.pop('getter_method', None)
-        self.alt_name = kwargs.pop('alt_name', None)
-        super(DerivedField, self).__init__(type, *args, **kwargs)
-             
-    def before_mapper(self):
-        if self.alt_name is None:
-            self.alt_name = '_%s' % self.name        
-        self.add_mapper_extension(self.DerivedFieldExtension(self.derive_method_name, self.alt_name))
-        
-    def finalize(self):   
-        # !!!!! COMPILE !!!!!
-        # Make sure the "mapper" does its magic to the Entity(Class) methods before you 
-        # try to override it.  Otherwise the "mapper" will "overwrite" the change.               
-        self.entity.mapper.compile()   
-        
-        derive_method = getattr(self.entity, self.derive_method_name)
-            
-        if self.getter_method_name:
-            public_getter_method = getattr(self.entity, self.getter_method_name) 
-        else:             
-            public_getter_method = self._create_public_getter(derive_method, self.alt_name)
-            
-        sa_prop = getattr(self.entity, self.name)
-        
-        setattr(self.entity, self.name, property(public_getter_method))
-        setattr(self.entity, self.alt_name, sa_prop)        
-    
-    def _create_public_getter(self, derive_method, sa_attr_name):
-        def public_getter(self):                        
-            value = derive_method(self)
-            
-            if value is None:
-                return getattr(self, sa_attr_name)
-            else:                
-                return value    
-            
-        return public_getter
 
-    class DerivedFieldExtension(MapperExtension):
-    
-        def __init__(self, derive_method_name, sa_field_name):        
-            self.derive_method_name = derive_method_name
-            self.sa_field_name = sa_field_name
-            
-        def before_insert(self, mapper, connection, instance):
-            derive_method = getattr(instance, self.derive_method_name)             
-            setattr(instance, self.sa_field_name, derive_method())            
-            return sa_orm.EXT_CONTINUE
-        
-        before_update = before_insert       
- 
-class_logger(DerivedField)
-
-def name_depends(*args):
-    '''
-    Establish dependency between this objects name, and other fields.
-    name_depends('<dependant_spec>', ...)
-    
-    dependant_spec := <Class>.<Field>[;<JoinClass>[;<JoinClass> ...]]
-    
-    Spec specifes the field to Attribute to watch, and optionally the
-    join clause used to find the instances that needs to be updated.
-    
-    
-    Example: 
-    
-    class Person(Element):
-        name = Field(String(60), ...)
-        ...
-    
-    class Address(Element):
-        
-        @name_depends('Person.name')
-        def derive_name(self):
-            ...
-    
-    This means:
-      - when *a* Person.name is updated
-      - find all *related* Address elements
-      - execute address.update_name()    
-    '''
-    def wrap(func):
-        func.__name_depends__ = args
-        return func            
-    return wrap
-
-
-class ElementInstrumentationManager(InstrumentationManager):
-    MANAGERS = []
-    DEP_MAPPING = {}
-      
-    def __init__(self, class_):
-        self.MANAGERS.append(self)
-        
-        self.class_ = class_
-        
-        derive_name_func = getattr(class_, "derive_name").im_func        
-        self.depend_specs = list(getattr(derive_name_func, '__name_depends__', ()))        
-
-    
-    def old_post_configure_attribute(self, class_, key, instr_attr):
-        """Add an event listener to an InstrumentedAttribute."""        
-        pass
-        
-    def post_configure_attribute(self, class_, key, instr_attr):
-        
-        # Process all the dependencies in all managers first.
-        # If any other class depends on this one, make sure that class
-        # gets its info into DEP_MAPPING, before this class starts
-        # looking on that list for attributes
-        for manager in self.MANAGERS:
-            manager.process_all_depend_specs()
-        
-        
-        if class_.__name__ in self.DEP_MAPPING:
-            if key in self.DEP_MAPPING[class_.__name__]:
-                self.log.fine("Found key for attribute: ")
-                dep_list = self.DEP_MAPPING[class_.__name__].pop(key)
-                for class_, join_list in dep_list:
-                    listener = self.DependentAttributeListener(self, class_, join_list=join_list)
-                    instr_attr.impl.extensions.insert(0, listener)
-               
-
-
-    def process_all_depend_specs(self):        
-        while self.depend_specs:
-            self._process_depend_spec(self.depend_specs.pop())     
-
-
-    def _process_depend_spec(self, dep_spec):
-        '''
-        For a give spec, more than one AttributeListener may be applied / relevant
-        
-        Example 1: 'Site.name'
-            
-            Adds Listener:  ( Class / Attribute / JoinClause )  
-            - Site / name / ()    
-                                  
-        Example 2: 'Device;Rack;Site.name'
-            
-            Add Listener(s):  ( Class / Attribute / JoinClause )            
-            - Device / rack /  ()                                        
-            
-            - Rack / site /  ( Device )
-            
-            - Site / name /  ( Device, Rack )
-        '''
-
-        #print self.log.getEffectiveLevel()
-        
-        #import pdb;pdb.set_trace()
-        self.log.debug("PROCESS: %s", dep_spec)
-        
-        (join_str, final_attr) = dep_spec.split('.')
-        join_names = join_str.split(';')
-                
-        all_joins = [ self.class_._descriptor.collection.resolve(name) for name in join_names ]
-        
-        for i, listener_cls in enumerate(all_joins):
-            self.log.fine( "  LISTENER CLASS: (%s) %s", i, listener_cls)
-                
-            if i+1 < len(all_joins):
-                next_class = all_joins[i+1] 
-                attr_name = self._find_attr_name(listener_cls, next_class)
-            else:
-                attr_name = final_attr
-
-            join_list = tuple(all_joins[:i])
-                
-            self.log.fine( "  ADD: %s %s %s", listener_cls, attr_name, join_list)
-            self._add_dependency(listener_cls, attr_name, join_list)
-
-    def _find_attr_name(self, listener_cls, next_cls): 
-        '''Find the first property name on the listener_cls, 
-        that points to the next_class (has next_cls as a target)
-        '''        
-        for sa_property in listener_cls.mapper.iterate_properties:
-            
-            if not isinstance(sa_property, sa_props.RelationProperty):
-                continue
-        
-            if isinstance(sa_property.argument, sa_orm.Mapper):            
-                prop_target_cls = sa_property.argument.class_
-            else:
-                prop_target_cls = sa_property.argument
-            
-            if prop_target_cls == next_cls:
-                return sa_property.key
-                
-       
-    def _add_dependency(self, dep_cls, dep_attr, join_list=None): 
-        self.DEP_MAPPING.setdefault(dep_cls, {})
-        self.DEP_MAPPING[dep_cls].setdefault(dep_attr, [])
-        self.DEP_MAPPING[dep_cls][dep_attr].append((self.class_, join_list))        
-    
-    
-
-            
-    class DependentAttributeListener(AttributeExtension):
-    
-        def __init__(self, manager, target_cls, join_list=None):
-            self.manager = manager            
-            self.target_cls = target_cls
-            
-            if join_list is None:
-                self.join_list = ()
-            else:
-                self.join_list = join_list
-            
-        def set(self, state, value, oldvalue, initiator):
-            session = object_session(state.obj())
-               
-            q = session.query(self.target_cls)
-            
-            for join_cls in self.join_list:
-                q = q.join(join_cls)
-                                        
-            q = q.join(state.class_).filter_by(id=state.obj().id)
-            
-            for target in q:
-                session.rename_elements.append(target) 
-                
-            return value
-
-class_logger(ElementInstrumentationManager)
-
-
-
-class ElementMapperExtension(MapperExtension):
-
-    
-    def append_result(self, mapper, selectcontext, row, instance, result, **flags):
-        self._session(instance).cache_add(instance, "append")
-        return sa_orm.EXT_CONTINUE
-                    
-    def before_insert(self, mapper, connection, instance):
-        instance.validate_element()
-        return sa_orm.EXT_CONTINUE
-        
-    def before_update(self, mapper, connection, instance):
-        instance.validate_element()
-        return sa_orm.EXT_CONTINUE
-                    
-    def after_insert(self, mapper, connection, instance):
-        self._session(instance).cache_add(instance, "insert")
-        return sa_orm.EXT_CONTINUE
-                    
-    def after_update(self, mapper, connection, instance):
-        self._session(instance).cache_add(instance,"update")
-        return sa_orm.EXT_CONTINUE      
-              
-    def after_delete(self, mapper, connection, instance):
-        self._session(instance).cache_delete(instance)
-        return sa_orm.EXT_CONTINUE
-
-
-    def _session(self, instance):
-        session = sa_orm.object_session(instance)
-        assert isinstance(instance, element.Element), "Cannot use ElementMapperExtension with non Element Entity"
-        assert isinstance(session, ElementSession), "Found Element instances with session not derived from ElementSession"                    
-        return session
-  
-class_logger(ElementMapperExtension)

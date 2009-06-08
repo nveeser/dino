@@ -60,8 +60,10 @@ class PxeGenerator(Generator):
         dc_info = self.pull_rapids_datacenter(self.settings, self.settings.site)
         
         for host in session.query(Host)\
-            .join(Device).join(Rack).join(Site).filter_by(name=self.settings.site).all():
+            .join(Device).filter_by(hw_class='server')\
+            .join(Rack).join(Site).filter_by(name=self.settings.site).all():
             
+            self.log.info("Process Host: %s", host)
             data = dict(self.data)
             data['kernel'] = data['os_codename'] = host.appliance.os.name
             data['fqdn'] = host.hostname() + "." + self.settings.domain            
@@ -82,8 +84,7 @@ class PxeGenerator(Generator):
                 
             if host.device.hw_type == "vm":
                 data['extra_console'] = VGA_CONSOLE    
-#            if debug:
-#                data['options'] += ' debug=1'                                
+                              
             yield data
             
         session.close()
@@ -91,21 +92,24 @@ class PxeGenerator(Generator):
     def generate(self):
     
         self.log.info("generate: started")        
-
-        dict_list = list(self.query())
-
-        # if we've made it this far, it's valid data. wipe the target dir
+        
         self.setup_dir(self.workdir)
            
-        for data in dict_list:
+        for data in self.query():
             self.log.info("  Host: %s" % data['fqdn'])
           
             # goofy pattern admittedly, but this is what pxe requires; 01-mac
-            fp = pjoin(self.workdir, '01-%s' % data['mac'].lower().replace(':', '-'))
+            filename = '01-%s' % data['mac'].lower().replace(':', '-')
+            fp = pjoin(self.workdir, filename)
+            
             self.log.fine("      Filename: %s", fp)        
             f = open(fp, 'w')
             f.write(HOST_TEMPLATE % data)
             f.close()
+
+            sympath = pjoin(self.workdir, "host-%s" % data['fqdn'])
+            self.log.fine("      Symlink : %s", sympath)
+            os.symlink(filename, sympath)
     
         self.log.info("generate: completed")
     

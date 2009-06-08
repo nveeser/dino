@@ -6,7 +6,12 @@ configuration and utility information
 
 import sys,os
 import atexit
-import simplejson
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+    
 import operator
 import re
 import time
@@ -79,7 +84,7 @@ class ProbeSpecLoader(LogObject):
             data = f.read()
             f.close()
     
-            return simplejson.loads(data)
+            return json.loads(data)
 
         except IOError, ex:
             raise LoaderError(ex)

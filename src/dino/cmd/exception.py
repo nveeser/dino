@@ -38,7 +38,7 @@ class CommandExecutionError(CommandError):
         if self.__cause__:
             return "CommandExecutionError: %s" % self.__cause__
         else:
-            return"CommandExecutionError: ", self.msg
+            return"CommandExecutionError: %s" % self.msg
     
 class CommandArgumentError(CommandExecutionError):
     ''' Error in an argument passed to a command'''

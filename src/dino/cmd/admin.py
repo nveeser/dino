@@ -62,7 +62,17 @@ ClassSubCommand.set_subcommand(AdminCommand, AdminSubCommand)
 # Sub Commands
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-        
+
+    
+class CreateAllCommand(AdminSubCommand):
+    """create all tables listed"""   
+    NAME = 'createall'
+    USAGE = ''
+
+    def execute(self):                
+        self.log.info("CREATE Tables")
+        self.db_config.create_all()
+           
 class DropAllCommand(AdminSubCommand):
     '''drop all tables listed in the current metadata (entity_set)'''
     
@@ -73,8 +83,7 @@ class DropAllCommand(AdminSubCommand):
     def execute(self, connection):
         """drop all tables listed in the current metadata (entity_set)"""
         
-        self.db_config.assert_unprotected()
-      
+        self.db_config.assert_unprotected()      
         self.log.info("DROP Tables")  
         self.db_config.drop_all()
      
@@ -86,23 +95,10 @@ class ClearSchemaCommand(AdminSubCommand):
        
     @with_connection
     def execute(self, connection):
-        self.db_config.assert_unprotected()
-         
+        self.db_config.assert_unprotected()         
         self.db_config.clear_schema()
-    
+
         
-
-
-class CreateAllCommand(AdminSubCommand):
-    """create all tables listed"""   
-    NAME = 'createall'
-    USAGE = ''
-
-    def execute(self):                
-        self.log.info("CREATE Tables")
-        self.db_config.create_all()
-        
-
 class TruncateCommand(AdminSubCommand):
     """truncate each table listed """
     NAME = 'truncate'
@@ -112,15 +108,8 @@ class TruncateCommand(AdminSubCommand):
     def execute(self, connection): 
         
         self.db_config.assert_unprotected()    
-        connection.execute("SET FOREIGN_KEY_CHECKS = 0")
-        
-        self.log.info("Truncating Tables")
-        for md in self.db_config.metadata_set:
-            for t in self.db_config.metadata.tables:
-                self.log.info("Truncate Table: " + t)
-                connection.execute('TRUNCATE TABLE %s' % t)
-        
-        connection.execute("SET FOREIGN_KEY_CHECKS = 1")        
+        self.db_config.truncate_all()      
+    
     
 class SchemaDumpCommand(AdminSubCommand):
     """ Print full Schema DDL for model"""
@@ -445,19 +434,19 @@ class ExportCommand(AdminSubCommand):
         if len(self.args) > 0:
             onames = [ ObjectSpec.parse(arg, expected=ElementName) for arg in args ]
             
-            element_classes = [ session.resolve_entity(oname.entity_name) for oname in onames if oname.instance_name is None ]
-            elements = [ session.find_element(oname) for onames in oname if oname.instance_name is not None ]  
+            entities = [ session.resolve_entity(oname.entity_name) for oname in onames if oname.instance_name is None ]
+            elements = [ session.find_element(oname)               for onames in oname if oname.instance_name is not None ]  
                                                        
         else:
-            element_classes = list(self.db_config.entity_set)
+            entities = list(self.db_config.entity_set)
             elements = []
         
-        for element_class in element_classes:
-            if issubclass(element_class, Element):
-                if element_class.is_revision_entity():
+        for entity in entities:
+            if issubclass(entity, Element):
+                if entity.is_revision_entity():
                     continue
                                
-            for element in session.query(element_class).all():
+            for element in session.query(entity).all():
                 self._write_instance(outdir, element)
     
         for element in elements:

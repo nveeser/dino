@@ -16,7 +16,7 @@ from elixir import Field, ManyToOne, OneToMany, ManyToMany, OneToOne
 from element import Element, ResourceElement
 from exception import *
 from changeset import using_changeset
-from extension import name_depends, IndexedList
+from extension import IndexedList, use_element_name
 import collection
 import model
 from model import IpType
@@ -97,11 +97,10 @@ class Device(Element, model.Device):
     '''
     This is the main device Element
     '''
-    INSTANCE_NAME_ATTRIBUTE = "hid"
-
     #
     # Metadata Options
     #    
+    use_element_name("{hid}")
     elixir.using_options(tablename='device')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -145,10 +144,10 @@ class Device(Element, model.Device):
 
 
 class Port(Element):
-    #INSTANCE_NAME_ATTRIBUTE = "mac"
     #
     # Metadata Options
     #
+    use_element_name("{mac}_{name}")
     elixir.using_options(tablename='port')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -180,9 +179,6 @@ class Port(Element):
         
         return None
 
-    def derive_name(self):
-        return "%s_%s" % (self.mac, self.name)
-
 #
 #class Link(Element):
 #    #
@@ -194,7 +190,7 @@ class Port(Element):
 #
 #    ports = OneToMany('Ports')
 #
-#    def derive_name(self):
+#    def _derive_name(self):
 #        if len(self.ports) == 2:
 #            return "%s_%s" % (self.ports[0].instance_name, self.ports[1].instance_name)
 #        else:
@@ -206,13 +202,12 @@ class Port(Element):
 #  Configuration
 # # # # # # # # # # # # # # # # # # # 
     
-        
-class Host(Element):
-    INSTANCE_NAME_ATTRIBUTE = "name"
 
+class Host(Element):
     #
     # Metadata Options
     #    
+    use_element_name("{name}.{pod.name}.{device.rack.site.name}")
     elixir.using_options(tablename='host')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()    
@@ -241,21 +236,18 @@ class Host(Element):
 
     def hostname(self):
         return "%s.%s.%s" % (self.name, self.pod.name, self.site.name)
+        
 
-    @name_depends( 'Pod.name', 'Device;Rack;Site.name' )
-    def derive_name(self):
-        if self.pod is not None and self.site is not None:
-            return "%s.%s.%s" % (self.name, self.pod.name, self.site.name)
-
-    
-    
 class Interface(Element): 
+    
     #
     # Metadata Options
     #
+    use_element_name("{host.instance_name}_{port_name}(_{ifindex})")
     elixir.using_options(tablename='interface')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
+
     
     #
     # Fields
@@ -273,18 +265,6 @@ class Interface(Element):
     #
     # Methods
     #
-    @name_depends( 'Host.instance_name' ) 
-    def derive_name(self):
-        if self.host is not None:
-            if self.ifindex:                
-                return "%s_%s_%s" % (self.host.derive_name(), self.port_name, self.ifindex)
-            else:
-                return "%s_%s" % (self.host.derive_name(), self.port_name)
-
-#    @property
-#    def host(self):
-#        return self.port.device.host
-    
     @property
     def port(self):
         if self.host.device:
@@ -293,7 +273,7 @@ class Interface(Element):
                     return port
                     
         return None        
-        
+    
     def name(self):
         if self.ifindex:
             return "%s:%s" % (self.port.name, self.ifindex)
@@ -302,14 +282,14 @@ class Interface(Element):
         
 
 class DnsRecord(Element):
-    INSTANCE_NAME_ATTRIBUTE = "data"
-    
     #
     # Metadata Options
     #
+    use_element_name("{data}")
     elixir.using_options(tablename='dns_record')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
+
    
     #
     # Fields
@@ -328,6 +308,7 @@ class SshKeyInfo(Element):
     #
     # Metadata Options
     #
+    use_element_name("KEYS-{host.instance_name}")
     elixir.using_options(tablename='ssh_key_info')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -345,13 +326,6 @@ class SshKeyInfo(Element):
     #
     host = ManyToOne("Host", required=True)
     
-    #
-    # Methods
-    # 
-    @name_depends( 'Host.instance_name' ) 
-    def derive_name(self):
-        if self.host:
-            return "KEYS-%s" % self.host.derive_name()
            
 # # # # # # # # # # # # # # # # # # # 
 #  Network 
@@ -359,10 +333,10 @@ class SshKeyInfo(Element):
 
 
 class IpAddress(Element, model.IpAddress, ResourceElement):
-    INSTANCE_NAME_ATTRIBUTE = "value"
     #
     # Metadata Options
     #
+    use_element_name("{value}")
     elixir.using_options(tablename='ip')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -418,9 +392,11 @@ class Subnet(Element, model.Subnet):
     #
     # Metadata Options
     #    
+    use_element_name("{addr}_{mask_len}")
     elixir.using_options(tablename='subnet')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
+
 
     #
     # Fields
@@ -465,18 +441,14 @@ class Subnet(Element, model.Subnet):
         self.set(**kwargs)                
         self.naddr = (self.naddr & self.nmask) & 0xFFFFFFFF
         
-    def derive_name(self):
-        if self.addr is not None and self.mask_len is not None:
-            return "%s_%d" % (self.addr, self.mask_len) 
-    
         
     
 
 class SubnetAdminInfo(Element):
-
     #
     # Metadata Options
     #
+    use_element_name("INFO-{subnet.instance_name}")
     elixir.using_options(tablename='subnet_admin_info')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -492,13 +464,6 @@ class SubnetAdminInfo(Element):
     #
     subnet = ManyToOne('Subnet')
     
-    #
-    # Methods
-    #
-    @name_depends( 'Subnet.instance_name' )
-    def derive_name(self):
-        if self.subnet is not None:
-            return "INFO-%s" % (self.subnet.derive_name()) 
                   
 
 class Range(Element, model.Range, ResourceElement):
@@ -506,10 +471,11 @@ class Range(Element, model.Range, ResourceElement):
     #
     # Metadata Options
     #
+    use_element_name("{subnet.instance_name}-{start}-{end}")
     elixir.using_options(tablename='range', inheritance='single')
     elixir.using_table_options(mysql_engine='InnoDB')       
     using_changeset()
-
+    
     #
     # Fields
     #     
@@ -522,9 +488,7 @@ class Range(Element, model.Range, ResourceElement):
     # Relationships
     #
     subnet = ManyToOne("Subnet")
-
-
-           
+      
     #
     # Methods
     #
@@ -532,11 +496,7 @@ class Range(Element, model.Range, ResourceElement):
     def create_empty(cls):
         return cls(None, None, None, None)
     
-    @name_depends( 'Subnet.instance_name' )
-    def derive_name(self):
-        if self.subnet is not None:
-            return "%s-%s-%s" % (self.subnet.derive_name(), self.start, self.end) 
-    
+
     def __init__(self, subnet=None, start=None, end=None, range_type=None, **kwargs):
         kwargs['subnet'] = subnet
         kwargs['start'] = start
@@ -632,15 +592,14 @@ class Property(elixir.Entity):
 #  Lookup Tables (better name)
 # # # # # # # # # # # # # # # # # # # 
             
-class Site(Element):
-    INSTANCE_NAME_ATTRIBUTE = "name"
-    
+class Site(Element):    
     #
     # Metadata Options
     #
     elixir.using_options(tablename='site')
     elixir.using_table_options(mysql_engine='InnoDB')
-    
+    use_element_name("{name}")
+
     #
     # Fields
     # 
@@ -658,12 +617,12 @@ class Site(Element):
 
 
 class Rack(Element):    
-    INSTANCE_NAME_ATTRIBUTE = "name"
     DISPLAY_PROCESSOR = RackDisplayProcessor
-    
+
     #
     # Metadata Options
     #
+    use_element_name("{site.name}.{name}")
     elixir.using_options(tablename='rack')
     elixir.using_table_options(mysql_engine='InnoDB')
     using_changeset()
@@ -684,18 +643,13 @@ class Rack(Element):
     #
     # Methods
     # 
-    @name_depends( 'Site.instance_name' )   
-    def derive_name(self):
-        if self.site is not None:
-            return "%s.%s" % (self.site.derive_name(), self.name)
 
 class Pod(Element):
-    ''' Logical Grouping of Hosts '''
-    INSTANCE_NAME_ATTRIBUTE = "name"
-    
+    ''' Logical Grouping of Hosts '''    
     #
     # Metadata Options
     #
+    use_element_name("{name}")
     elixir.using_options(tablename='pod')
     elixir.using_table_options(mysql_engine='InnoDB')
     
@@ -708,11 +662,10 @@ class Pod(Element):
  
  
 class OperatingSystem(Element):
-    INSTANCE_NAME_ATTRIBUTE = "name"
-    
     #
     # Metadata Options
     #
+    use_element_name("{name}")
     elixir.using_options(tablename='os')
     elixir.using_table_options(mysql_engine='InnoDB')
 
@@ -727,6 +680,7 @@ class Appliance(Element):
     #
     # Metadata Options
     #
+    use_element_name("{name}[{os.instance_name}]")
     elixir.using_options(tablename='appliance')
     elixir.using_table_options(mysql_engine='InnoDB')
 
@@ -743,19 +697,13 @@ class Appliance(Element):
     #
     # Methods
     #    
-    @name_depends( 'OperatingSystem.instance_name' )
-    def derive_name(self):
-        if self.os is not None:
-            return "%s(%s)" % (self.name, self.os.derive_name())
         
 
-
 class Chassis(Element):
-    INSTANCE_NAME_ATTRIBUTE = "name"
-    
     #
     # Metadata Options
     #
+    use_element_name("{name}")
     elixir.using_options(tablename='chassis')
     elixir.using_table_options(mysql_engine='InnoDB')
     

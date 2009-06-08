@@ -212,7 +212,7 @@ class DhcpGenerator(Generator):
 
     def generate(self):
                  
-        write_loc = pjoin(self.workdir, 'dhcp.conf')
+        write_loc = pjoin(self.workdir, 'dhcpd.conf')
         self.setup_dir(self.workdir)
         
         session = self.db_config.session()

@@ -14,9 +14,10 @@ class GenerateCommand(MainCommand):
     GROUP = "data"
     
     OPTIONS = ( 
-        Option('-g', dest='generate', action='store_true', default=False), 
-        Option('-a', dest='activate', action='store_true', default=False), 
-        Option('-l', dest='list', action='store_true', default=False), 
+        Option('-g', '--generate', dest='generate', action='store_true', default=False), 
+        Option('-c', '--compare', dest='compare', action='store_true', default=False),
+        Option('-a', '--activate', dest='activate', action='store_true', default=False), 
+        Option('-l', '--list',     dest='list', action='store_true', default=False), 
     )
         
     @classmethod
@@ -59,11 +60,15 @@ class GenerateCommand(MainCommand):
                 for gen in gen_list:
                     gen.generate()
                     
-            elif self.option.activate:
+            if self.option.compare:
+                for gen in gen_list:
+                    gen.compare()
+
+            if self.option.activate:
                 for gen in gen_list:
                     gen.activate()
                                     
-            else:
+            if not self.option.generate and not self.option.compare and not self.option.activate:
                 for gen in gen_list:
                     gen.generate()
                 

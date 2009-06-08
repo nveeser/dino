@@ -13,7 +13,7 @@ for p in sys.path[:]:
         if os.path.exists(fullname):
             sys.path.insert(sys.path.index(p), fullname)
 
-#sys.path.insert(0, "/u/nicholas/mac/Documents/workspace/SQLAlchemy-0.5.3/lib/")
+sys.path.insert(0, "/mnt/hgfs/nicholas/Documents/workspace/SQLAlchemy-0.5.3/lib/")
 
 import sqlalchemy
 if sqlalchemy.__version__ != "0.5.3":

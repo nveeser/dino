@@ -90,9 +90,11 @@ class RapidsGenerator(Generator):
     def query(self):
         session = self.db_config.session()
         
-        query = session.query(Host).join(Device).join(Rack).join(Site).filter_by(name=self.settings.site)
-        
-        for host in query:
+        for host in session.query(Host)\
+            .join(Device).filter_by(hw_class='server')\
+            .join(Rack).join(Site).filter_by(name=self.settings.site).all():
+            
+            self.log.fine("Process Host: %s", host)
             d = copy.deepcopy(data_base)
             d['host_no'] = host.id
             d['fqdn'] = d['host'] = host.hostname() + "." + self.settings.domain
@@ -156,6 +158,7 @@ class RapidsGenerator(Generator):
     def generate(self):
         self.setup_dir(self.workdir)
         
+        self.log.info("generate rapids for datacenter %s", self.settings.site)
         for d in self.query():
             hid = d['host_no']
 

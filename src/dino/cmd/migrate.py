@@ -62,14 +62,15 @@ class MigrateCommand(MainCommand):
     NAME = 'migrate'
     USAGE = '''[ -s <source_url> ] 
                [ -i|--import-dir <import-dir> ] 
-               [ -p|--special-dir <special-dir> ]'''
+               [ -p|--special-dir <special-dir> ]
+               [ --cleardb ]'''
     GROUP = "system"    
     OPTIONS = ( 
         Option('-s', '--src', dest='source_url', default=None),  
         Option('-i', '--import-dir', dest='import_dir', default=None),
         Option('-p', '--special-dir', dest='special_dir', default=None),
         Option('--no-import', dest='doimport', action='store_false', default=True),
-        Option('--cleardb', dest='cleardb', action='store_true', default=True),
+        Option('--cleardb', dest='cleardb', action='store_true', default=False),
     )
 
     
@@ -82,7 +83,7 @@ class MigrateCommand(MainCommand):
         import_dir = self.option.import_dir or self.settings.import_dir
         source_url = self.option.source_url or self.settings.source_url
         
-        src_db = DbConfig(url=self.settings.src_uri)        
+        src_db = DbConfig(url=source_url)        
         src_conn = src_db.connection()  
         
         self.db_config.assert_unprotected()
@@ -120,8 +121,7 @@ class MigrateCommand(MainCommand):
     
     def clear_schema(self, session):
         self.log.info( "--------- [ Empty schema and create tables ] --------")        
-        self.db_config.drop_all()                
-        self.db_config.create_all()
+        self.db_config.truncate_all()            
     
     
     def split_property_tables(self, session, src_conn):
@@ -237,19 +237,19 @@ class MigrateCommand(MainCommand):
         # sjc1
         site = session.query(schema.Site).filter_by(name='sjc1').first()
         for rnum in range(1, 6):
-            rack_name = '1.' + str(rnum)
+            rack_name = str(rnum)
             rack = schema.Rack(name=rack_name, site=site, location='corp net')
             session.add(rack)
             
         for rnum in range(6, 12):
-            rack_name = '1.' + str(rnum)
+            rack_name = str(rnum)
             rack = schema.Rack(name=rack_name, site=site, location='prod net')
             session.add(rack)
     
         # 631h, row1
         site = session.query(schema.Site).filter_by(name='631h').first()
         for rnum in range(1,4):
-            rack_name = '1.' + str(rnum)
+            rack_name = "1." + str(rnum)
             rack = schema.Rack(name=rack_name, site=site, size=45, location='office closet')
             session.add(rack)
             
@@ -327,7 +327,7 @@ class MigrateCommand(MainCommand):
         session.open_changeset()
 
         # Add a few more subnets
-        site   = session.query(schema.Site).filter_by(instance_name='sjc1').first()
+        site   = session.query(schema.Site).filter_by(name='sjc1').first()
         #parent = session.query(schema.Subnet).filter_by(instance_name='172.29.0.0_16').first()
         parent = None
         slash_24s = ['172.29.253.0','172.29.250.0','172.29.254.0','172.29.255.0', 

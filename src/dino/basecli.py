@@ -29,45 +29,17 @@ class CommandLineInterface(LogObject):
 
 
     def __init__(self):
-        format = dino.config.load_config("logging").console_format        
-        self._basicformatter = logging.Formatter(format)
-                        
-        self._console_handler = logging.StreamHandler(sys.stdout)
-        self._console_handler.setFormatter(self._basicformatter)
-        self._console_handler.setLevel(logging.WARNING)        
-                
-        root = logging.getLogger("")
-        root.setLevel(logging.WARNING)
-        root.addHandler(self._console_handler)
-        
+        self._log_controller = dino.config.LogController()
+        self._log_controller.reset()
         
     def increase_verbose_cb(self, option, opt, value, parser):
-        self.increase_verbose()
+        self._log_controller.increase_verbose()
         
     def increase_verbose(self):
-        level_map = { 
-            logging.WARNING : logging.INFO, 
-            logging.INFO : logging.FINE,
-            logging.FINE : logging.FINER, 
-            logging.FINER : logging.FINEST, 
-            logging.FINEST : logging.DEBUG, 
-            logging.DEBUG : logging.DEBUG
-        }
-
-        curr_level = self._console_handler.level   
-        for level in level_map.keys():
-            if curr_level >= level:
-                next_level = level_map[level]
-                
-        self._console_handler.setLevel(next_level)
-        
-            
-    def setup_base_logger(self, logger_name=""):        
-        l = logging.getLogger(logger_name)
-        l.propagate = False
-        l.addHandler(self._console_handler)
-        l.setLevel(logging.DEBUG)
-        return l        
+        self._log_controller.increase_verbose()
+    
+    def setup_base_logger(self, logger_name=""):
+        return self._log_controller.setup_base_logger(logger_name)          
             
     def setup_parser(self):
         parser = OptionParser()

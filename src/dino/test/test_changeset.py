@@ -3,6 +3,8 @@
 import os,sys
 import unittest
 
+import dino   
+
 import sqlalchemy
 from sqlalchemy import types
 import elixir
@@ -16,8 +18,7 @@ import dino.db.collection
 from dino.test.base import *
 
 
-import pprint
-pp = pprint.PrettyPrinter(indent=2).pprint
+import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 
 __session__ = None

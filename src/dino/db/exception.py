@@ -52,6 +52,8 @@ class UnknownEntityError(ElementException):
 class UnknownElementError(ElementException):
     MSG_STR = "Could not find specified object: %s"
 
+class ElementInstanceNameError(ElementException):
+    pass
 
 class ElementAttributeError(ElementException):
     pass

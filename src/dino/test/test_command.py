@@ -242,8 +242,7 @@ class ImportCommandTest(CommandTest, DataTest):
         sess.add(Appliance(name='mwdeploy', os=OperatingSystem(name='baccus')))    
 
         site = Site(name='sjc1', address1="", address2="", city="", state="", postal="", description="")
-        rack = Rack(name="1.10", site=site)        
-
+        rack = Rack(name="10", site=site)        
         sess.add(Subnet(addr="10.2.10.27", mask_len=24, site=site))
 
         chassis = Chassis(name='util', vendor='yourmom', product='yourmom')      
@@ -257,13 +256,13 @@ class ImportCommandTest(CommandTest, DataTest):
 
         sess.close()
         
+        
     def test_basic_import(self):    
         sess = self.db.session()
          
         path = self.get_datafile("host1.json")        
         
         self.runCommand('jsonimport', path)
-      
         devices = sess.query(Device).filter_by(hw_class="server").all() # filter_by(hid="001EC943AF41")
 
         self.assertEqual(len(devices), 1)
@@ -276,6 +275,7 @@ class ImportCommandTest(CommandTest, DataTest):
         self.assertNotEqual( device.host, None )
 
         sess.close()
+    
     
     def test_update(self):
         sess = self.db.session()   

@@ -8,7 +8,10 @@ import os,sys
 from optparse import OptionParser, OptionError
 import logging
 import getpass
-import simplejson as json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 if __name__ == "__main__":
     sys.path[0] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

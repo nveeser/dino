@@ -54,7 +54,7 @@ class AdminCli(CommandLineInterface):
             command.execute()
         
         except cmd.CommandArgumentError, e:
-            print "CommandArgumentError: ", e.message
+            print "CommandArgumentError: ", e.msg
             print
             e.command.print_usage()
             if options.exception_trace: e.print_trace()
@@ -71,7 +71,7 @@ class AdminCli(CommandLineInterface):
             sys.exit(e.code)
             
         except cmd.CommandError, e:
-            print "ERROR: ", e.message
+            print "ERROR: ", e.msg
               
             if options.exception_trace: e.print_trace()
             sys.exit(e.code)

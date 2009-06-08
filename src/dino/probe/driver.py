@@ -7,7 +7,10 @@ and data export information, runs the tests and exports the results.
 
 import os
 import logging
-import simplejson as json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from dino import LogObject
 from dino.probe.processor import Processor

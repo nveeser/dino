@@ -139,13 +139,13 @@ class JsonProcessor(object):
         # asserts new format, then verifies.
             
         # if no header, assume v1 format.
+        
         if not data.has_key('Header'): 
             data = self.v1_transform(data)
             
         data = self.verify(data)    
     
         #pp.pprint(data)
-
 
         self.instances = {}
         
@@ -161,6 +161,8 @@ class JsonProcessor(object):
                 self.log.info("  Updating %s" % spec)
 
             self.instances[spec] = instance
+
+        
         
         for spec in data.keys():
             instance = self.instances[spec]            
@@ -169,91 +171,10 @@ class JsonProcessor(object):
                     value = self.instances[value]
                                         
                 setattr(instance, key, value)
-
+            
+            #print spec, instance.instance_name
         return 
         
-        
-        # process elements in order 
-        for e in elements:
-            speclist = [s for s in data.keys() if s.startswith(e)]
-            for spec in speclist: 
-                # If each element is unknown to dino, create it.
-                # Otherwise, update the existing element.
-                instance = is_known(self.session, spec)
-                if instance is None: 
-                    instance = self._create(spec, data)
-                    self.session.add(instance)
-                    
-                else:
-                    instance = self._update(instance, data)
-                # As we process each record, cache it
-                # in the data struct at the same point 
-                # where its dictionary used to be.                
-                data[spec] = instance 
-    
-            
-    # # # # # # # # # # # # # #
-    # local methods
-    # # # # # # # # # # # # # #
-
-    def _create(self, spec, data):
-
-        # return an empty instance of the passed in object spec.
-        oname = ObjectSpec.parse(spec, expected=ElementName)
-        self.log.info("  Adding new %s" % oname) 
-        instance = self.session.resolve_entity(oname.entity_name).create_empty()
-
-        # Copy the cached ref for my parent element 
-        # into the current object dict.
-        for key, val in data[spec].items():
-            if data.has_key(val): 
-                data[spec][key] = data[val]
-
-         # populate the attributes of the newly created 
-         # object instance with keys from the current object dict.
-        for key, val in data[spec].items(): 
-            #print 'key: %s, val: %s' % (key, val)
-            setattr(instance, key, val)
-
-        return instance
-
-
-    def _update(self, instance, data):
-
-        # find the parent element
-        for key, val in data[instance.element_name].items():
-            if data.has_key(val):  # must be my parent object
-                oname = ObjectSpec.parse(val, expected=ElementName)
-                # element type of my parent element
-                parent_entity = oname.entity_name.lower()
-                # existing parent object from db
-                parent = getattr(instance, parent_entity) 
-                # cached parent object from json data
-                new_parent = getattr(instance, key)
-    
-                if parent is not new_parent: 
-                    raise CommandExecutionError(self.cmd, "%s is owned by another %s: %s"
-                                                % (instance.element_name, 
-                                                   parent_entity, 
-                                                   parent.element_name))
-
-        # update instance
-        self.log.info("  Updating: %s" % instance.element_name)
-
-        # clear parent key (now that we know it is set correctly.)
-        for key, val in data[instance.element_name].items():
-            if data.has_key(val): 
-                x = data[instance.element_name].pop(key)
-
-        # update instance with remaining keys.
-        for key, val in data[instance.element_name].items(): 
-            setattr(instance, key, val)
-
-        # remove any dangling attributes left from 
-        # the old version of the instance. 
-        return instance
-
-    
                    
     
     
@@ -658,7 +579,7 @@ class JsonProcessor(object):
     
         # appliance
         appliance_spec = 'Appliance/' + data_v1['appliance.name'] + \
-                         '(' + data_v1['hnode.os_id'] + ')'
+                         '[' + data_v1['hnode.os_id'] + ']'
         data_v2[Host]['appliance'] = appliance_spec
     
         #
@@ -711,8 +632,7 @@ class JsonProcessor(object):
                     # find my subnet
                     subnet = find_subnet(self.session, ip)
                     if subnet: 
-                        data_v2[IpAddress]['subnet'] = 'Subnet/' \
-                        + subnet.instance_name
+                        data_v2[IpAddress]['subnet'] = 'Subnet/' + subnet.instance_name
                     data_v2[IpAddress]['interface'] = Interface
                     data_v2[IpAddress]['value'] = ip
     
@@ -724,8 +644,7 @@ class JsonProcessor(object):
         return data_v2
     
       
-def get_ip(addr, iface):
-    
+def get_ip(addr, iface):    
     '''
     Get an IP.  Tries to return the IP passed-in, 
     but will retrun a valid IP in any case, one 
