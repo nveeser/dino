@@ -193,14 +193,10 @@ class UpdateNamesCommand(AdminSubCommand):
  
         session.begin()
         
-        for entity in session.entity_iterator():
-            self.log.info("Processing: %s" % entity.__name__)
-            
-            for instance in session.query(entity).all():
-                instance.update_name()
-                                    
+        Element.update_all_names(session)
+        
         desc = session.create_change_description()
-
+         
         session.commit()
 
         for change in desc:

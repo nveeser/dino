@@ -7,11 +7,7 @@ from dino.cmd.command import with_session
 from dino.cmd.maincmd import MainCommand
 from dino.cmd.exception import *
 from dino.db import *
-#from dino.db.objectspec import *
-#from dino.db.element_form import ElementFormProcessor
-#from dino.db.exception import *
 
-#import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 
 class ElementCommand(MainCommand):
@@ -47,49 +43,51 @@ class ElementCommand(MainCommand):
         except UnknownElementError, e:
             raise CommandExecutionError(self, str(e)) 
 
-    def _create_instances(self, session):
-        try:
-            return [ session.resolve_entity(a).create_empty() for a in self.args ]                     
 
-        except UnknownEntityError, e:
-            raise CommandArgumentError(self, str(e)) 
 
 
             
 class ElementFormCommand(ElementCommand):                   
     NAME = None
 
+    def create_processor(self, session):
+        raise NotImplementedError()
+
+    def process_form(self, processor, form):
+        raise NotImplementedError()
+                
     @with_session
     def execute(self, session):
-        processor = ElementFormProcessor.create(session)
-               
-        # Outfile: -o
-        # 
-        if self.option.out:   
-            form = self.create_form(session, processor)
-            self.write_form(form)
-            
+        processor = self.create_processor(session)
+                       
         # Infile: -i
         #      
-        elif self.option.input:
+        if self.option.input:
             form = self.read_form()
             self.process_form(session, processor, form)
         
         # Editor: (not -i or -o)
         #
-        else:       
-            form = self.create_form(session, processor)                   
-            new_form = self.edit_form(form) 
-            
-            if new_form == form:
-                self.log.info("Form unchanged: Not Submitting")
-                return
-            try:            
-                self.process_form(session, processor, new_form)
-            except Exception, e:
-                self.log.error("Error Processing form: %s", e)
-                self.error_dump_form(new_form)
-                raise
+        else:                   
+            elements = self._find_elements(session)
+            processor.show_headers = len(elements) == 1
+            form = processor.to_form(elements)
+        
+            if self.option.out:
+                self.write_form(form)
+
+            else:    
+                new_form = self.edit_form(form) 
+                
+                if new_form == form:
+                    self.log.info("Form unchanged: Not Submitting")
+                    return
+                try:            
+                    self.process_form(session, processor, new_form)
+                except Exception, e:
+                    self.log.error("Error Processing form: %s", e)
+                    self.error_dump_form(new_form)
+                    raise
             
     
     def write_form(self, form):                    
@@ -143,13 +141,8 @@ class ElementFormCommand(ElementCommand):
         self.log.info("Writing current form to file: %s", filename)
         
         
-    def create_form(self, session, processor): 
-        raise NotImplementedError()
 
-    def process_form(self, processor, form):
-        raise NotImplementedError()
                     
-
             
         
 class EditCommand(ElementFormCommand):    
@@ -174,18 +167,35 @@ class EditCommand(ElementFormCommand):
         if len(self.args) < 1 and not self.option.input:
             raise CommandArgumentError(self, "Must specify an ElementName (<EntityName>/<InstanceName>)")  
 
-    def create_form(self, session, processor):                
-        instances = self._find_elements(session)
+
+    def create_processor(self, session):
+        return MultiUpdateFormProcessor(session)
         
-        processor.show_headers = len(instances) == 1
-
-        return processor.to_form(instances)
-
-
 
     def process_form(self, session, processor, form):
-        desc = processor.update_all(form, force_rollback=self.option.no_commit)
+                     
+        session.begin()    
         
+        processor.process(form)
+        
+        desc = session.create_change_description()
+        
+        try:
+            if self.option.no_commit:
+                self.log.info("Forced Rollback")
+                session.rollback()
+                
+            else:
+                self.log.info("Committing")  
+                session.commit()  
+                
+        except Exception, e:
+            self.log.info("Error: %s" % e)
+            session.rollback() 
+            raise
+        
+        # Tell the user about what changed
+        #
         for change in desc:
             self.log.info(str(change))
         
@@ -225,16 +235,41 @@ class CreateCommand(ElementFormCommand):
         for a in self.args:
             if ObjectSpec.SEPARATOR in a:
                 raise CommandArgumentError(self, "Argument looks like a ElementName, not EntityName: %s" % a)
+                
+    def create_processor(self, session):
+        return MultiCreateFormProcessor(session)
+     
 
-    def create_form(self, session, processor):       
-        instances = self._create_instances(session)
-        processor.show_headers = len(instances) == 1
-        return processor.to_form(instances)
-       
+    def _find_elements(self, session):
+        try:
+            return [ session.resolve_entity(a).create_empty() for a in self.args ]                     
 
-    def process_form(self, session, processor, form):               
-        desc = processor.create_all(form, force_rollback=self.option.no_commit)      
+        except UnknownEntityError, e:
+            raise CommandArgumentError(self, str(e))
+
+
+    def process_form(self, session, processor, form):
+
+        session.begin()
+                                           
+        is_modified = processor.process(form)      
         
+        desc = session.create_change_description()
+
+        if self.option.no_commit:
+            self.log.info("Forced Rollback")
+            session.rollback()
+                    
+        elif is_modified:
+            self.log.fine("Element(s) Modified: Commit")                                            
+            session.commit()
+            
+        else:
+            self.log.fine("Element(s) Unchanged: Rollback")                                            
+            session.rollback()
+        
+        # Tell the user about what changed
+        #
         for change in desc:
             self.log.info(str(change))
         
@@ -267,12 +302,13 @@ class DumpCommand(EditCommand):
 
     @with_session
     def execute(self, session): 
-        processor = ElementFormProcessor.create(session, show_read_only=True)
-        instances = self._find_elements(session)
+        processor = MultiUpdateFormProcessor(session, show_read_only=True)
+        elements = self._find_elements(session)
         
-        processor.show_headers = len(instances) == 1
+        processor.show_headers = len(elements) == 1
         
-        form = processor.to_form(instances)                                
+        form = processor.to_form(elements)     
+                                   
         self.write_form(form)
             
      

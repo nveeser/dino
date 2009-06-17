@@ -75,6 +75,20 @@ class NameParseTest(DinoTest):
             actual = n.make_name(value_dict)
             eq_(expected, actual, "Issue with test set %d" % i)
 
+    def test_optional_name2(self):
+        pattern = "({optional.name}:){value1}"
+        match_list = (  
+            ({'value1' : None, 'optional.name' : None,  },  None),        
+            ({'value1' : None, 'optional.name' : 'ABC',  },  None ),        
+            ({'value1' : 'FOO', 'optional.name' : None, },  "FOO"),        
+            ({'value1' : 'FOO', 'optional.name' : 'ABC', },  "ABC:FOO"),
+        )     
+                
+        for i, (value_dict, expected) in enumerate(match_list):
+            n = ElementNameBuilder.InstanceNameProcessor(pattern)    
+            actual = n.make_name(value_dict)
+            eq_(expected, actual, "Issue with test set %d  %s was %s" % (i, expected, actual))
+
 class ObjectSpecTest(DinoTest):    
     
     def test_element_name_parse(self):

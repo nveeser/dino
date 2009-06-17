@@ -94,13 +94,12 @@ class EntityDisplayProcessor(DisplayProcessor):
 
 
 class FormDisplayProcessor(DisplayProcessor):
-    ''' Default DisplayProcessor using an ElementFormProcessor '''
+    ''' Default DisplayProcessor using an MultiElementFormProcessor '''
     
     def show(self, instance):
-        from dino.db.element_form import ElementFormProcessor
+        from dino.db.element_form import MultiElementFormProcessor
         session = object_session(instance)
-        processor = ElementFormProcessor.create(session, show_headers=True)                            
-        return processor.to_form(instance)
+        return MultiElementFormProcessor(session, show_headers=True).to_form(instance)
         
 class_logger(FormDisplayProcessor)
 

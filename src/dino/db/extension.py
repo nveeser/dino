@@ -27,24 +27,27 @@ __all__ = ['DerivedField', 'use_element_name' ]
 
 class ElementNameBuilder(EntityBuilder):    
     
-    def __init__(self, entity, pattern, *args, **kwargs):       
-        assert '__main_entity__' not in vars(entity), "ElementNameBuilder should not be present on Revision Entity"            
+    def __init__(self, entity, format, *args, **kwargs): 
         
-        self.name_pattern = pattern    
+        assert '__main_entity__' not in vars(entity), "ElementNameBuilder should not be present on Revision Entity: %s" % entity                     
+        assert issubclass(entity, element.Element), "builder only valid on Entity derived from %s: %s" % (element.Element, entity)
+        
         self.entity = entity
         
         # Create Field
         #
-        #DerivedField( sa_types.String(50), derive_method='derive_name', getter_method='find_name', nullable=False, unique=True)
-        Field( sa_types.String(50), nullable=False, unique=True ).attach(self.entity, 'instance_name')
+        Field( sa_types.String(50), nullable=False, unique=True ).attach(entity, 'instance_name')
 
         # Create NameProcessor (and for Revision Entity too)
         #
-        self.entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(self.name_pattern)
+        #if entity.__name__ == 'PropertySet':
+        #  import pdb;pdb.set_trace()
             
-        if hasattr(self.entity, 'Revision'):
-            revision_pattern = "%s@{revision}" % self.name_pattern
-            self.entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(revision_pattern) 
+        entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(format)
+            
+        if hasattr(entity, 'Revision'):
+            revision_pattern = "%s@{revision}" % format
+            entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(revision_pattern) 
         
         
     def finalize(self):
@@ -72,15 +75,6 @@ class ElementNameBuilder(EntityBuilder):
             return sa_orm.EXT_CONTINUE
         
         before_update = before_insert     
- 
- 
-    class ValidateElementMapperExtension(MapperExtension):
-        def before_insert(self, mapper, connection, instance):
-            instance.validate_element()
-            return sa_orm.EXT_CONTINUE
-    
-        before_update = before_insert
-
 
     class ElementNameCacheMapperExtension(MapperExtension):    
         def append_result(self, mapper, selectcontext, row, instance, result, **flags):
@@ -276,8 +270,8 @@ class ElementNameBuilder(EntityBuilder):
     
                 
     class InstanceNameProcessor(object):
-        NAME_RE = re.compile('{(\w[^}]+)}')    
-        OPTIONAL_RE = re.compile('(?<!%)\(([^{]*){(\w+)}([^)]*)\)(?!s)')
+        NAME_RE = re.compile('{(\w[^}]*)}')    
+        OPTIONAL_RE = re.compile('(?<!%)\(([^{]*){(\w[^}]*)}([^)]*)\)(?!s)')
         
         def __init__(self, pattern):
             self.pattern = pattern
@@ -290,6 +284,7 @@ class ElementNameBuilder(EntityBuilder):
                 self.log.warn("Parentheses mismatch?: %s", self.pattern)
             
             self.pattern_list = self._split_conditional_keys( (), self.pattern ) 
+            
             self.pattern_list = list( self.pattern_list )
             self.pattern_list.sort(key=lambda x: -len(x[0])) # sort by length of key tuple
     
@@ -347,9 +342,10 @@ class ElementNameBuilder(EntityBuilder):
             ''' Look up the correct pattern based on which keys are available
             in the dict, and evaluate that string with the value dictionary
             ''' 
+            
             value_key_set = set(value_dict.keys())
             if len(self.attribute_names - value_key_set) > 0:
-                raise RuntimeError("Value_dict missing attribute names: %s" % self.attribute_names - value_key_set)
+                raise RuntimeError("Value_dict missing attribute names: %s" % str(self.attribute_names - value_key_set))
                          
             for name in self.attribute_names - self.optional_names:
                 if value_dict[name] is None:
@@ -383,6 +379,15 @@ class_logger(ElementNameBuilder)
                                                 
 use_element_name = Statement(ElementNameBuilder)
 
+
+ 
+ 
+class ValidateElementMapperExtension(MapperExtension):
+    def before_insert(self, mapper, connection, instance):
+        instance.validate_element()
+        return sa_orm.EXT_CONTINUE
+
+    before_update = before_insert
 
 
 

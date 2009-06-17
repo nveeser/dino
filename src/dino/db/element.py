@@ -308,8 +308,20 @@ class Element(object):
             return True
         else:
             return False
-
-
+    
+    @classmethod
+    def update_all_names(cls, session):
+        if cls is Element:
+            entity_list = session.entity_iterator()
+        else:
+            entity_list = (cls, )
+            
+        for entity in entity_list:
+            cls.log.info("Processing: %s" % entity.__name__)
+            
+            for instance in session.query(entity).all():
+                instance.update_name()
+                                
 class ResourceElement(object):
     '''  What is a 'ResourceElement'?
     A ResourceElement is an Element that can be created completely

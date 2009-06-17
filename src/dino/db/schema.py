@@ -9,6 +9,7 @@ from sqlalchemy import func, types
 from sqlalchemy import orm, engine
 from sqlalchemy.schema import Table, Column, MetaData, ForeignKey
 from sqlalchemy.orm import ColumnProperty, validates
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 import elixir
 from elixir import Field, ManyToOne, OneToMany, ManyToMany, OneToOne
@@ -30,7 +31,7 @@ __entity_collection__ = entity_set = collection.EntityCollection()
 __metadata__ = metadata = MetaData()
 
 
-SCHEMA_VERSION = 0x020110 # 020109 == 2.1.9
+SCHEMA_VERSION = 10 
 
 class SchemaInfo(elixir.Entity):    
     #
@@ -43,29 +44,33 @@ class SchemaInfo(elixir.Entity):
     #
     # Fields
     # 
-    version = Field(types.Integer())
+    database_version = Field(types.Integer(), colname='version')
     protected = Field(types.Boolean())
     model_version = SCHEMA_VERSION
     
     #
     # Methods
     #
-    def __init__(self):
-        self.version = self.model_version
+    def __init__(self, version=None):
+        if version:
+            self.database_version = version
+        else:
+            self.database_version = self.model_version
+            
         self.protected = False
         
     def version_match(self):
-        return self.version == self.model_version
+        return self.database_version == self.model_version
 
     def assert_version_match(self):
-        if self.version != self.model_version:
+        if self.database_version != self.model_version:
             raise SchemaVersionMismatch(self)
     
     def real(self):
         return self.id is not None
         
     @classmethod
-    def find(cls, session, schema_name):
+    def find(cls, session, schema_name, expunge=True):
         stmt = '''SELECT COUNT(*) FROM information_schema.tables 
                     WHERE table_schema = '%s' 
                     AND table_name = 'schema_info' 
@@ -74,18 +79,16 @@ class SchemaInfo(elixir.Entity):
         info = None
         if session.execute(stmt).scalar() > 0:
             info = session.query(cls).first()
-            
-        if info:
+        
+        if info and expunge:
             session.expunge(info)
-        else:
-            info = cls() 
             
         return info
         
     @classmethod
-    def create(cls, session):
+    def create(cls, session, version=SCHEMA_VERSION):
         session.open_changeset()
-        session.add(cls())
+        session.add( SchemaInfo(version=version) )
         session.submit_changeset()
         
 
@@ -544,32 +547,33 @@ class Range(Element, model.Range, ResourceElement):
 #  Property Set  
 # # # # # # # # # # # # # # # # # # # 
 
-class PropertySet(elixir.Entity):
-
+class PropertyClass(Element):    
     #
     # Metadata Options
     #
-    elixir.using_options(tablename='property_set')
+    use_element_name("{name}")
+    elixir.using_options(tablename='property_class')
     elixir.using_table_options(mysql_engine='InnoDB')
     
     #
     # Fields
     # 
     name = Field(types.String(32))
-    value = Field(types.String(32))
     description = Field(types.String(255))
     
     #
     # Relationships
     #
-    properties = OneToMany("Property", cascade='all, delete-orphan')
+    property_sets = OneToMany('PropertySet', cascade='all')    
+    property_class_values = OneToMany("PropertyClassValue", cascade='all, delete-orphan', 
+        collection_class=attribute_mapped_collection('name'))  
 
-        
-class Property(elixir.Entity):
+class PropertyClassValue(Element):
     #
     # Metadata Options
-    #    
-    elixir.using_options(tablename='property')
+    # 
+    use_element_name("{property_class.instance_name}.{name}")   
+    elixir.using_options(tablename='property_class_value')
     elixir.using_table_options(mysql_engine='InnoDB')
 
     #
@@ -582,9 +586,49 @@ class Property(elixir.Entity):
     #
     # Relationships
     #
+    property_class = ManyToOne('PropertyClass', required=True)
+
+class PropertySet(Element):    
+    #
+    # Metadata Options
+    #
+    use_element_name("{property_class.name}.{name}")
+    elixir.using_options(tablename='property_set')
+    elixir.using_table_options(mysql_engine='InnoDB')
+    
+    #
+    # Fields
+    # 
+    name = Field(types.String(32))
+    description = Field(types.String(255))
+    
+    #
+    # Relationships
+    #
+    property_class = ManyToOne('PropertyClass')
+    properties = OneToMany("Property", cascade='all, delete-orphan',  
+        collection_class=attribute_mapped_collection('name'))
+
+
+class Property(Element):
+    #
+    # Metadata Options
+    # 
+    use_element_name("{property_set.instance_name}.{name}")   
+    elixir.using_options(tablename='property')
+    elixir.using_table_options(mysql_engine='InnoDB')
+
+    #
+    # Fields
+    #     
+    name = Field(types.String(32))
+    value = Field(types.String(32))
+    
+    #
+    # Relationships
+    #
     property_set = ManyToOne('PropertySet', required=True)
 
-       
        
        
 

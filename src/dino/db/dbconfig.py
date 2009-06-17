@@ -87,6 +87,7 @@ class DbConfig(object):
         
         self.use_changesets = self.entity_set.has_entity("ChangeSet") 
         
+        self._schema_info_queried = False
         self._schema_info = None
     
     def __str__(self):
@@ -111,24 +112,27 @@ class DbConfig(object):
             
         return DbConfig.URI % kwargs
 
-    def session(self):
-        if self.entity_set.has_entity("SchemaInfo") and self.schema_info is not None:
-            self.schema_info.assert_version_match()
+    def session(self, check_version=True):
+        if check_version:
+            if self.entity_set.has_entity("SchemaInfo") and self.schema_info is not None:
+                self.schema_info.assert_version_match()
     
-        return self._session()
-        
-    def _session(self):
         return ElementSession(bind=self.engine, autocommit=True, autoflush=False, entity_set=self.entity_set)
+        
     
     @property
     def schema_info(self):
         if not self.entity_set.has_entity("SchemaInfo"):
             return None
             
-        if not self._schema_info:
-            session = self._session()
+        if not self._schema_info_queried:
+            session = self.session(check_version=False)
             self._schema_info = self.entity_set.resolve("SchemaInfo").find(session, self.db)                        
-            session.close()
+            session.close()                        
+            self._schema_info_queried = True
+            
+            if self._schema_info is None:
+                self.log.warning("No schema version is present")
             
         return self._schema_info
                                         
@@ -209,8 +213,7 @@ class DbConfig(object):
             md.create_all(engine)
             
         return buf.getvalue()
-
-        
+       
     @classmethod
     def setup_sql_handler(cls):
         engine_logger = logging.getLogger("sqlalchemy.engine")

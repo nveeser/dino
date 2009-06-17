@@ -110,6 +110,7 @@ class ElementSession(changeset.ChangeSetSession):
         
         try:
             return element_spec.resolve(self).next()
+            
         except UnknownElementError:
             return None
             

@@ -5,7 +5,7 @@ from dino.cmd.command import with_session
 from dino.cmd.maincmd import MainCommand
 from dino.cmd.exception import *
 
-from dino.db import ( Element, ElementFormProcessor, ObjectSpec, 
+from dino.db import ( Element, MultiElementFormProcessor, ObjectSpec, 
     EntityName, EntityQuery, ElementName, ElementQuery, AttributeName,
      UnknownEntityError, UnknownElementError )
        
@@ -79,8 +79,7 @@ class ShowCommand(MainCommand):
 
         # ElementQuery, EntityQuery - Optionally dump as a set of forms
         if object_spec_type in (EntityQuery, ElementQuery) and self.option.form_output:                        
-            processor = ElementFormProcessor.create(session, show_headers=False)                            
-            result = processor.to_form(result)
+            result = MultiElementFormProcessor(session, show_headers=False).to_form(result)
                 
         
         # ElementName - display using Element Specific method

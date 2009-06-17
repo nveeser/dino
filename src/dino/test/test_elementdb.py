@@ -18,7 +18,7 @@ import elixir
 from elixir import Field, ManyToOne, OneToMany, ManyToMany
 from nose.tools import *
 
-from dino.db import Element, ResourceElement, ElementFormProcessor
+from dino.db import Element, ResourceElement, MultiElementFormProcessor, MultiCreateFormProcessor, MultiUpdateFormProcessor
 #from dino.db.extension import InstanceNameProcessor 
 from dino.db.objectspec import *
 from dino.db import collection
@@ -165,39 +165,52 @@ class AddressTest(DatabaseTest):
         
         eq_('ADDR-eddieex-Home', a.instance_name )
         
+        
+        
 class FormDbTest(DataTest, SingleSessionTest):
     ENTITY_SET = entity_set
     DATA_DIR = "element_form"
       
     def test_create_form(self):
-        proc = ElementFormProcessor.create(self.sess)
+        proc = MultiCreateFormProcessor(self.sess)
                 
-        form = self.read_form("person")      
-        proc.create_all(form)
-                
+        form = self.read_form("person")     
+        self.sess.begin() 
+        proc.process(form)
+        self.sess.commit()
+        
         p = self.sess.find_element("Person/eddie")
         assert p is not None, "could not find Person/eddie"
         eq_(p.age, 12)
 
         ##################
 
-        form = self.read_form("address")        
-        proc.create_all(form)
-                
+        form = self.read_form("address")     
+        self.sess.begin()   
+        proc.process(form)
+        self.sess.commit()
+        
         a = self.sess.find_element("Address/ADDR-eddie-Work")
         eq_(a.person, p)
         
         ##################
         
+        proc = MultiUpdateFormProcessor(self.sess)
         form = self.read_form("person_update")
-        proc.update_all(form)        
+        
+        self.sess.begin() 
+        proc.process(form)
+        self.sess.commit()
+                
         eq_(len(p.addresses), 0)
 
 
     def test_multi_form(self):
-        proc = ElementFormProcessor.create(self.sess)
+        proc = MultiCreateFormProcessor(self.sess)
         form = self.read_form("multi")
-        proc.create_all(form)
+        self.sess.begin() 
+        proc.process(form)
+        self.sess.commit()
         
         p = self.sess.find_element("Person/eddie")
         assert p is not None, "could not find Person/eddie"
@@ -207,13 +220,18 @@ class FormDbTest(DataTest, SingleSessionTest):
         eq_(a.person, p)
 
     def test_update_resource(self):
-        proc = ElementFormProcessor.create(self.sess)
+        proc = MultiCreateFormProcessor(self.sess)
         
         form = self.read_form("multi")      
-        proc.create_all(form)
+        self.sess.begin() 
+        proc.process(form)
+        self.sess.commit()
         
+        proc = MultiUpdateFormProcessor(self.sess)
         form = self.read_form("update_resource")      
-        proc.update_all(form)
+        self.sess.begin() 
+        proc.process(form)
+        self.sess.commit()
         
         p = self.sess.find_element("Person/eddie")
         assert p is not None, "could not find Person/eddie"
@@ -225,11 +243,12 @@ class FormDbTest(DataTest, SingleSessionTest):
 
 
     def test_dump_form(self):        
-        proc = ElementFormProcessor.create(self.sess, show_read_only=False) 
+        proc = MultiCreateFormProcessor(self.sess, show_read_only=False) 
 
         form = self.read_form("multi")
-        proc.create_all(form)
-        
+        self.sess.begin()
+        proc.process(form)
+        self.sess.commit()
         p = self.sess.find_element("Person/eddie")
         
         actual_form = proc.to_form(p)

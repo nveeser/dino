@@ -13,5 +13,8 @@ class InfoCommand(MainCommand):
         
         info = self.db_config.schema_info
         print "DB API URL: %s" % self.db_config.uri 
-        print "DB Version:    %02X" % info.version
-        print "Model Version: %02X" % info.model_version
+        if info is None:
+            print "No Database Version information could be found"
+        else:
+            print "DB Version:    %02X" % info.database_version
+            print "Model Version: %02X" % info.model_version
