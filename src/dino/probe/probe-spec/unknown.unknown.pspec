@@ -1,7 +1,7 @@
 {
   "parent": "full",
   "probes": [
-    { "name": "ip_mac.addr", "args": "ipmi", "cache_result": "MW_IPMAC_ADDR_IPMI" },
+    { "name": "ip_mac.addr", "args": "ipmi", "cache_result": "MW_IPMAC_ADDR_IPMI", "sequence": "3" },
     { "name": "model.name", "cache_result": "MW_MODEL_NAME" },
     { "name": "mac_port.mac", "sequence": "28" },
     { "name": "mac_port.mac", "args": "eth1", "sequence": "29" },

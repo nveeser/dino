@@ -480,4 +480,3 @@ class IndexedList(list):
         
 class_logger(IndexedList)
 
-

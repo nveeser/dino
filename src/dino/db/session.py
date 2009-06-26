@@ -83,7 +83,6 @@ class ElementSession(changeset.ChangeSetSession):
         Resolve the instance specified by the ObjectSpec object
         If not found, throw an exception 
         '''
-
         element_spec = self._get_element_spec(object_spec)
         
         self.log.fine("Resolve Instance: %s" % element_spec.object_name)
@@ -172,74 +171,74 @@ class_logger(ElementSession)
 
 class ChangeDescription(list):    
     def __init__(self, session):
-        for inst in session.new:
-            if session.is_changeset(inst):
+        for element in session.new:
+            if session.is_changeset(element):
                 continue
-            self.append(AddInstance(inst))
+            self.append(AddElement(element))
             
-        for inst in session.deleted:
-            self.append(DeleteInstance(inst))
+        for element in session.deleted:
+            self.append(DeleteElement(element))
                         
-        for inst in session.dirty:    
-            for attr in inst.mapper.class_manager.attributes:  
-                self._read_attr(inst, attr)   
+        for element in session.dirty:    
+            for attr in element.mapper.class_manager.attributes:  
+                self._read_attr(element, attr)   
  
-    def _read_attr(self, inst, attr):
-        (added, unchanged, deleted) = attr.get_history(inst, passive=False)
+    def _read_attr(self, element, attr):
+        (added, unchanged, deleted) = attr.get_history(element, passive=False)
         
         if isinstance( attr.property, sa_props.ColumnProperty) and added:
-            self.append(UpdateColumn(inst, attr.key, added[0]))
+            self.append(UpdateColumn(element, attr.key, added[0]))
             
         elif isinstance( attr.property, sa_props.RelationProperty):
             if attr.property.uselist:
                 for x in added:
-                    self.append(UpdateRelationManyAdd(inst, attr.key, x))
+                    self.append(UpdateRelationManyAdd(element, attr.key, x))
                 for x in deleted:                            
-                    self.append(UpdateRelationManyDelete(inst, attr.key, x))
+                    self.append(UpdateRelationManyDelete(element, attr.key, x))
                                      
             elif added:
-                self.append(UpdateRelationOne(inst, attr.key, added[0]))
+                self.append(UpdateRelationOne(element, attr.key, added[0]))
 
 class Change(object):
-    def __init__(self, instance):
-        self.instance = instance
+    def __init__(self, element):
+        self.element = element
         
         
-class AddInstance(Change):
+class AddElement(Change):
     def __str__(self):
-        return "Add: %s" % str(self.instance)
+        return "Add: %s" % str(self.element)
     
-class DeleteInstance(Change):
+class DeleteElement(Change):
     def __str__(self):
-        return "Delete: %s" % str(self.instance)
+        return "Delete: %s" % str(self.element)
     
-class UpdateInstance(Change):
-    def __init__(self, instance, name, value):
-        Change.__init__(self, instance)
+class UpdateElement(Change):
+    def __init__(self, element, name, value):
+        Change.__init__(self, element)
         self.attrname = name 
         self.value = value
                
-class UpdateColumn(UpdateInstance):        
+class UpdateColumn(UpdateElement):        
     def __str__(self):
-        return "Update: %s/%s: %s" % (self.instance, self.attrname, self.value)
+        return "Update: %s/%s: %s" % (self.element, self.attrname, self.value)
         
-class UpdateRelation(UpdateInstance):
-    def __init__(self, instance, name, value):
+class UpdateRelation(UpdateElement):
+    def __init__(self, obj, name, value):
         if isinstance(value, element.Element):
             value = value.element_name
-        UpdateInstance.__init__(self, instance, name, value)
+        UpdateElement.__init__(self, obj, name, value)
         
 class UpdateRelationOne(UpdateRelation):
     def __str__(self):
-        return "Update: %s/%s: %s" % (self.instance, self.attrname, self.value)
+        return "Update: %s/%s: %s" % (self.element, self.attrname, self.value)
 
 class UpdateRelationManyAdd(UpdateRelation):
     def __str__(self):
-        return "Update: %s/%s: add %s" % (self.instance, self.attrname, self.value)
+        return "Update: %s/%s: add %s" % (self.element, self.attrname, self.value)
 
 class UpdateRelationManyDelete(UpdateRelation):
     def __str__(self):
-        return "Update: %s/%s: del %s" % (self.instance, self.attrname, self.value)
+        return "Update: %s/%s: del %s" % (self.element, self.attrname, self.value)
 
                     
             

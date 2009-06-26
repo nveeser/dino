@@ -119,6 +119,7 @@ class ObjectSpec(object):
         ''' Parse a object_spec and return an appropriate object'''   
         
         assert object_spec is not None, "object_spec cannot be empty"   
+
         if not isinstance(object_spec, basestring): 
             raise ObjectSpecError(object_spec, "ObjectSpec.parse() argument must be string. Got %s" % type(object_spec))
                 
@@ -128,12 +129,17 @@ class ObjectSpec(object):
                 cls.check_expected(object_spec, result.__class__, expected)
                 return result
                 
-        return None
+        raise InvalidObjectSpecError(object_spec)
         
         
     @classmethod
-    def _process(cls, element_spec, expected=None):        
-        for class_ in cls.spec_types():
+    def _process(cls, element_spec, expected=None):
+        '''Process used by sub-classes (sub-types) 
+        to check for matches of their sub-types'''
+          
+        #import pdb;pdb.set_trace()
+                    
+        for class_ in cls.sub_types():
             if class_.matches(element_spec):
                 return class_.create(element_spec, expected)
                     
@@ -142,6 +148,8 @@ class ObjectSpec(object):
 
     @classmethod
     def matches(cls, object_spec):
+        ''' Default matches method which uses the 
+        REGEX object specified in the class'''
         if hasattr(cls, 'REGEX'):
             return cls.REGEX.match(object_spec) is not None                       
         else:
@@ -171,7 +179,7 @@ class ObjectSpec(object):
         if hasattr(cls, 'REGEX'):            
             return cls.REGEX.match(str_arg) is not None
 
-        for c in cls.spec_types():
+        for c in cls.sub_types():
             if c.is_spec(str_arg):
                 return True
         
@@ -212,11 +220,14 @@ class ObjectSpec(object):
         
 class_logger(ObjectSpec)       
 
+class BaseSubSpec(object):
+    pass
+
 class EntitySpec(ObjectSpec):
     ENTITY_NAME = '([A-Za-z]+)'
 
     @staticmethod
-    def spec_types():
+    def sub_types():
         return (EntityQuery, EntityName)
 
         
@@ -278,11 +289,12 @@ class ElementSpec(ObjectSpec):
     INSTANCE_NAME = '([^/\s,\'\<\{][^/\s,\']*[^/\s,\'\>\}]?)'
     INSTANCE_ID = '\{(\d+)\}'
     INSTANCE_FORM_ID = '\<(\d+)\>'
-    QUERY_CLAUSE = '([\w;_.=]*)'
+    #QUERY_CLAUSE = '([\w;_.=/]*)'
+    QUERY_CLAUSE = '([^]]*)'
 
 
     @staticmethod
-    def spec_types():
+    def sub_types():
         return (ElementName, ElementId, ElementFormId, ElementQuery)
 
     @classmethod
@@ -417,7 +429,7 @@ class ElementQuery(ElementSpec):
                 continue
             
             # JoinFilter
-            (property_name, value) = clause.split('=')            
+            (property_name, value) = clause.split('=', 1)            
             if '.' in property_name:
                 (join_entity_name, property_name) = property_name.split('.')
                 join_entity = session.resolve_entity(join_entity_name)
@@ -465,7 +477,7 @@ class AttributeSpec(ObjectSpec):
     PROPERTY_NAME = '([^/\s,\']+)'
     
     @staticmethod
-    def spec_types():
+    def sub_types():
         return (AttributeName,)
         
     @classmethod

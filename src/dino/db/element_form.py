@@ -139,7 +139,7 @@ class ElementFormProcessor(object):
             self._append_key_value(name, str_value)
             
         def _append_block_list(self, name, values):
-            assert isinstance(values, list)
+            assert isinstance(values, (list, set, types.GeneratorType)), "TYPE: %s" % type(values)
             self.buf += "%s: \n" % name
             for value in sorted(values):
                 self.buf += self.INDENT + "- %s\n" % value

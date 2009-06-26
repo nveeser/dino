@@ -130,7 +130,9 @@ class ObjectSpecTest(DinoTest):
     def test_element_query_type(self):        
         for spec in [ 'person[name=foo]', 
                     'person[name=foo;car=bar]', 
-                    'person[;]' ]:        
+                    'person[;]',
+                    'host[name=unknown-2q1u1co]' ]: 
+                               
             x = ObjectSpec.parse(spec)
             eq_(type(x), ElementQuery)
 

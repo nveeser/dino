@@ -1,3 +1,5 @@
+from optparse import Option
+
 import sqlalchemy.orm.properties as sa_props
 
 from dino.config import class_logger
@@ -46,7 +48,9 @@ class SetCommand(AttributeCommand):
     NAME = "set"
     USAGE = "<ElementName>/<PropertyName> <Value>"
     GROUP = "element"
-    
+    OPTIONS = ( 
+        Option('-n', '--no-commit',  dest='no_commit', action='store_true', default=False), 
+    )
     def validate(self):
         if len(self.args) < 2:
             raise CommandArgumentError(self, "command must have one object argument and one value argument")            
@@ -58,15 +62,16 @@ class SetCommand(AttributeCommand):
         value = self.args[1] 
 
         session.begin()
-
         
         for attr in spec.resolve(session):                    
             attr.set(value)
-        
+            
         desc = session.create_change_description()
-        
 
-        session.commit()
+        if self.option.no_commit:
+            self.log.info("no-commit specified: nothing submitted")
+        else:
+            session.commit()
         
         for change in desc:
             self.log.info(str(change))

@@ -56,7 +56,7 @@ class SchemaInfo(elixir.Entity):
             self.database_version = version
         else:
             self.database_version = self.model_version
-            
+
         self.protected = False
         
     def version_match(self):
@@ -82,7 +82,7 @@ class SchemaInfo(elixir.Entity):
         
         if info and expunge:
             session.expunge(info)
-            
+
         return info
         
     @classmethod
@@ -367,7 +367,6 @@ class IpAddress(Element, model.IpAddress, ResourceElement):
         assert isinstance(parent_iface, Interface), "Parent Object must be an Inteface"
         # Create IP
         ip = IpAddress(value=value)
-        session.add(ip)
         
         # Check for existing IP
         existing_ip = session.find_element(ip.derive_element_name())        
@@ -376,6 +375,8 @@ class IpAddress(Element, model.IpAddress, ResourceElement):
                 return existing_ip
             else:
                 raise ResourceCreationError("Ip already assigned: %s (to %s)" % (value, existing_ip.interface))
+
+        session.add(ip)
  
         # Check if IP exists on Range
         subnet = ip.query_subnet()

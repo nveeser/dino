@@ -58,14 +58,17 @@ class DnsGenerator(Generator):
             self.log.fine("    FQDN: %s", rec.fqdn)
             yield rec
             
-            rec = ForwardARecord()            
-            (rack_name, count) = self.CHAR_REGEX.subn('-', device.rack.name)
-            if count > 0:
-            	self.log.fine(" Replaced %d chars", count)  
-            rec.fqdn = "slot%s.rack%s.%s.%s" % (device.rackpos, rack_name, device.site.name, self.settings.domain)
-            rec.ip = port.interface.address.value
-            self.log.fine("    FQDN: %s", rec.fqdn)
-            yield rec
+            if port.device.hw_class == 'server':
+                rec = ForwardARecord()            
+                (rack_name, count) = self.CHAR_REGEX.subn('-', device.rack.name)
+                if count > 0:
+                	self.log.fine(" Replaced %d chars", count)  
+                rec.fqdn = "slot%s.rack%s.%s.%s" % (device.rackpos, rack_name, device.site.name, self.settings.domain)
+                rec.ip = port.interface.address.value
+                self.log.fine("    FQDN: %s", rec.fqdn)
+                yield rec
+
+            
             
             
         self.log.info("Looking for IPMI interfaces")
@@ -82,21 +85,24 @@ class DnsGenerator(Generator):
                 continue
                 
             host = port.device.host            
-            rec = FullARecord()
+            #rec = FullARecord()
+            rec = ForwardARecord()
             rec.fqdn = "ipmi-%s.%s.%s.%s" % (host.name, host.pod.name, host.site.name, self.settings.domain) 
             rec.ip = port.interface.address.value
             self.log.fine("    FQDN: %s", rec.fqdn)
             yield rec
             
             device = port.device
-            rec = ForwardARecord()
-            (rack_name, count) = self.CHAR_REGEX.subn('-', device.rack.name)
-            if count > 0:
-            	self.log.fine(" Replaced %d chars", count)  
-            rec.fqdn = "ipmi-slot%s.rack%s.%s.%s" % (device.rackpos, rack_name, device.site.name, self.settings.domain)
-            rec.ip = port.interface.address.value
-            self.log.fine("    FQDN: %s", rec.fqdn)
-            yield rec
+            if device.hw_class == 'server':
+                rec = ForwardARecord()
+                (rack_name, count) = self.CHAR_REGEX.subn('-', device.rack.name)
+                if count > 0:
+                	self.log.fine(" Replaced %d chars", count)  
+                rec.fqdn = "ipmi-slot%s.rack%s.%s.%s" % (device.rackpos, rack_name, device.site.name, self.settings.domain)
+                rec.ip = port.interface.address.value
+                self.log.fine("    FQDN: %s", rec.fqdn)
+                yield rec
+
             
         sess.close()
     

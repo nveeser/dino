@@ -122,8 +122,9 @@ def with_session(func):
         finally:     
             if session:        
                 self.log.finer("close session")   
-                session.close()
+                session.close()                
     session_func.__doc__ = func.__doc__
+    session_func.__orig__ = func
     return session_func
 
 def with_connection(func):

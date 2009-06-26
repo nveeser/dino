@@ -7,6 +7,7 @@ import sqlalchemy.orm.properties as sa_props
 
 import elixir
 
+from dino.config import class_logger
 from exception import *
 from objectspec import *
 from display import FormDisplayProcessor, EntityDisplayProcessor
@@ -192,7 +193,7 @@ class Element(object):
                 target_cls = sa_property.argument.class_
             else:
                 target_cls = sa_property.argument
-                
+
             return target_cls
     
     @classmethod
@@ -372,18 +373,36 @@ class Attribute(object):
         ElementNames to a live Object Reference
         '''  
         session = sa_orm.object_session(self.element)
-        assert session is not None, "Instance must be attached to session to use set"
+        assert session is not None, "Element must be attached to session to use set"
     
         if not self.element.has_sa_property(self.property_name):
-            raise ElementAttributeError("Attribute not found on instance: %s : %s" % (self.element, self.property_name) )
+            raise ElementAttributeError("Attribute not found on Element: %s : %s" % (self.element, self.property_name) )
             
         sa_property = self.element.get_sa_property(self.property_name)   
-                 
+                
+        # Column
+        #
         if isinstance(sa_property, sa_props.ColumnProperty):                                                                
             setattr(self.element, self.property_name, value)      
-              
+         
+        # Relation
+        #     
         elif isinstance(sa_property, sa_props.RelationProperty):
-            value_instance = session.resolve_element_spec(value)
+            if sa_property.uselist:
+                ElementAttributeError("Cannot call set on 1toN or NtoN Relationship: %s" % self.property_name)
+
+            if not ElementSpec.is_spec(value):
+                target_cls = self.element.get_sa_property_type(self.property_name)
+
+                if issubclass(target_cls, ResourceElement):
+                    self.log.finer("Create Resource from value: %s" % value)  
+                    value_instance = target_cls.create_resource(session, value, self.element)
+                else:
+                    self.log.error("Must specify ElementName for attribute. Argument is not ObjectSpec: %s", value)
+                     
+            else:
+                value_instance = session.resolve_element_spec(value)
+                            
             setattr(self.element, self.property_name, value_instance)
 
-
+class_logger(Attribute)

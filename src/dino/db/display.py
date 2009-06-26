@@ -20,7 +20,6 @@ class DisplayProcessor(object):
         raise NotImplemented()
 
 class EntityDisplayProcessor(DisplayProcessor):
-    
     def show(self, entity):               
         yield ""
         yield "Description:"
@@ -92,6 +91,14 @@ class EntityDisplayProcessor(DisplayProcessor):
         else:
             return target_cls.__name__
 
+    def _print_doc(self, docstr, indent=""):
+        ''' Print out the docstring, removing any whitespace begining or ending the line
+            Add specified indentation.
+        '''
+        for line in docstr.split('\n'):
+            line = line.strip()
+            print indent + line
+            
 
 class FormDisplayProcessor(DisplayProcessor):
     ''' Default DisplayProcessor using an MultiElementFormProcessor '''

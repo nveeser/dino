@@ -45,7 +45,7 @@ class ShowCommand(MainCommand):
             for object_spec in specs:
                 for o in object_spec.resolve(session, print_sql=self.option.print_sql):
                     yield o
-                    
+        
         except UnknownEntityError, e:
             raise CommandExecutionError(self, str(e))
         except UnknownElementError, e:
@@ -54,10 +54,14 @@ class ShowCommand(MainCommand):
 
     @with_session
     def execute(self, session):
-    
-        specs = [ ObjectSpec.parse(arg) for arg in self.args ]
+        
+        try:
+            specs = [ ObjectSpec.parse(arg) for arg in self.args ]
             
-        spec_types = set([ type(spec) for spec in specs ])
+        except ObjectSpecError, e:
+            raise CommandArgumentError(self, str(e))
+            
+        spec_types = set(( type(spec) for spec in specs ))
             
         # make sure all the ObjectSpecs are of the same type. 
         if len(spec_types) > 1:

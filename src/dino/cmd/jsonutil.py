@@ -175,7 +175,6 @@ class JsonProcessor(object):
             #print spec, instance.instance_name
         return 
         
-                   
     
     
     def verify(self, data):
@@ -517,7 +516,12 @@ class JsonProcessor(object):
         data_v2[Device]['rackpos'] = data_v1.get('hnode.loc_rackpos', None)
         data_v2[Device]['serialno'] = data_v1.get('hnode.serialno', None)            
         data_v2[Device]['status']   =  data_v1.get('hnode.status', None)
-        data_v2[Device]['hw_type']  =  data_v1.get('hnode.type_dict', None)  
+        data_v2[Device]['hw_type']  =  data_v1.get('hnode.type_dict', None)
+        if data_v2[Device]['hw_type'] == 'vm':  
+            data_v2[Device]['hw_class'] = 'vm'
+        else:
+            data_v2[Device]['hw_class'] = 'server'
+              
         data_v2[Device]['pdu_port'] =  data_v1.get('hnode.pdu_port', None)
    
         # related objects (stored as object specs)

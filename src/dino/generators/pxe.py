@@ -76,12 +76,15 @@ class PxeGenerator(Generator):
             for p in host.device.ports:
                 if p.is_blessed:
                     data['mac'] = p.mac                
-                
-                if p.is_ipmi:
-                    data['extra_console'] = IPMI_CONSOLE
-                else:
-                    data['extra_console'] = NONIPMI_CONSOLE
-                
+            
+            
+            ipmi_ports = [ p for p in host.device.ports if p.is_ipmi ]            
+            if len(ipmi_ports) > 0:
+                data['extra_console'] = IPMI_CONSOLE
+            else:
+                data['extra_console'] = NONIPMI_CONSOLE
+            
+            
             if host.device.hw_type == "vm":
                 data['extra_console'] = VGA_CONSOLE    
                               
@@ -92,7 +95,6 @@ class PxeGenerator(Generator):
     def generate(self):
     
         self.log.info("generate: started")        
-        
         self.setup_dir(self.workdir)
            
         for data in self.query():

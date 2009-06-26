@@ -139,7 +139,12 @@ class IpAddress(object):
     def __int__(self):
         return self.nvalue
   
-      
+    
+    def __cmp__(self, o):
+        if isinstance(o, schema.IpAddress):
+            return self.nvalue - o.nvalue        
+        return 0
+        
     def query_subnet(self):
         session = object_session(self)
         assert session is not None, "Object must have session to perform query"

@@ -60,7 +60,6 @@ data_base = {
         'pod': None,
     },
     'nic' : {
-        0 : { 'ip' : None, 'bc' : None, 'gw' : None, 'nm' : None}
     },
     
     'os_codename' : None,
@@ -122,18 +121,15 @@ class RapidsGenerator(Generator):
             d['tmpl_data']['ssh-dsa-key'] = host.ssh_key_info.dsa_key
             d['tmpl_data']['ssh-dsa-pub'] = host.ssh_key_info.dsa_pub
 
-
+            if host.id == 
             
             for p in host.device.ports:
                 if not p.interface:
                     continue
                     
-                if p.is_blessed: 
-                    name = 0
-                else:
-                    name = p.interface.name()                
-                    if name.startswith('eth'):
-                        name = int(name[3])
+                name = p.interface.name()                
+                if name.startswith('eth'):
+                    name = int(name[3])
                         
                 if p.interface.address is None:
                     self.log.error("Inteface have no Address: %s", p.interface)
@@ -148,8 +144,8 @@ class RapidsGenerator(Generator):
                 d['nic'][name]['nm'] = p.interface.address.subnet.mask
                 d['nic'][name]['bc'] = IpType.ntoa(p.interface.address.subnet.broadcast)
             
-            if d['nic'][0]['ip'] is None:
-                raise GeneratorExecutionError("Host has no blessed interface: %s" % host)
+#            if d['nic'][0]['ip'] is None:
+#                raise GeneratorExecutionError("Host has no blessed interface: %s" % host)
             
             yield d 
             
@@ -162,7 +158,7 @@ class RapidsGenerator(Generator):
         for d in self.query():
             hid = d['host_no']
 
-            self.log.info("updating hid %i", hid)
+            self.log.fine("updating hid %i", hid)
             
             filename = pjoin(self.workdir, HID_YAML_PATTERN % hid)
         
@@ -184,8 +180,6 @@ class RapidsGenerator(Generator):
         if state_dir is None:
             state_dir = pjoin(self.settings.rapids_root, 'state')
             
-        #self.setup_dir(state_dir, wipe=False)
-        
         if self.option.hostid is not None:
             filenames = [ HID_YAML_PATTERN % self.option.hostid ]
         else:
@@ -193,7 +187,7 @@ class RapidsGenerator(Generator):
 
             
         for filename in filenames:
-            self.log.info('activating: %s', filename)
+            self.log.fine('activating: %s', filename)
                      
             f = open(pjoin(self.workdir, filename), 'r')
             data = f.read()

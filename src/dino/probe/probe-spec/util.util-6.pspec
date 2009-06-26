@@ -1,8 +1,8 @@
 {
   "parent": "full",
   "probes": [
-    { "name": "ip_mac.addr", "args": "ipmi", "cache_result": "MW_IPMAC_ADDR_IPMI" },
-    { "name": "model.name", "cache_result": "MW_MODEL_NAME" },
+    { "name": "ip_mac.addr", "args": "ipmi", "cache_result": "MW_IPMAC_ADDR_IPMI", "sequence": "3" },
+	{ "name": "model.name", "cache_result": "MW_MODEL_NAME" },
     { "name": "mb_manufacturer", "result_expected": "Dell" },
     { "name": "mb_model", "result_expected": "0DP246" },
     { "name": "cpu_num", "result_expected": "2" },

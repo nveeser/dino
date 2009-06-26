@@ -26,12 +26,8 @@ option pxelinux.magic      code 208 = string;
 option pxelinux.configfile code 209 = text;
 option pxelinux.pathprefix code 210 = text;
 option pxelinux.reboottime code 211 = unsigned integer 32;
+vendor-option-space pxelinux;  
 
-option pxelinux.magic f1:00:74:7e;
-if exists dhcp-parameter-request-list {
-        # Always send the PXELINUX options (specified in hexadecimal)
-        option dhcp-parameter-request-list = concat(option dhcp-parameter-request-list,d0,d1,d2,d3);
-}
 
 option domain-name "%(domain-name)s";
 option domain-name-servers %(domain-name-servers)s;
@@ -57,6 +53,14 @@ SUBNET_TEMPLATE = \
 }
 """
 
+HOST_FEDORA_TEMPLATE = \
+'''host %(hostname)s {
+    hardware ethernet %(mac)s;
+    fixed-address %(ip)s;
+    option pxelinux.pathprefix "%(path_prefix)s/";
+    option pxelinux.configfile "%(config_file)s";
+}
+'''
 
 HOST_TEMPLATE = \
 """host %(hostname)s {
@@ -92,6 +96,7 @@ class DhcpGenerator(Generator):
             'next-server' : None,
             'server-name' : None,          
         }
+        seed_ip = socket.gethostbyname(socket.gethostname())
         
         dc_info = self.pull_rapids_datacenter(self.settings, self.settings.site)
         data['domain-name-servers'] = ", ".join(dc_info['ns'])
@@ -99,7 +104,7 @@ class DhcpGenerator(Generator):
         data['ntp-servers'] = ", ".join(dc_info['ntp'])
         data['domain-name'] = self.settings.domain
         data['def_filename'] = self.settings.dhcp_boot_filename
-        data['def_next-server'] = dc_info['seed'][0]
+        data['def_next-server'] = seed_ip
         data['def_server-name'] = socket.getfqdn()
         
         return data
@@ -254,7 +259,7 @@ class DhcpGenerator(Generator):
     
         self.log.info("activate: starting transfer")
     
-        f = open(pjoin(self.workdir, 'dhcp.conf'), 'r')
+        f = open(pjoin(self.workdir, 'dhcpd.conf'), 'r')
         data = f.read()
         f.close()
         

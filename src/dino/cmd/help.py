@@ -8,7 +8,6 @@ from dino.db import schema, ObjectSpec, Element, ResourceElement
 
 
 
-
 class HelpCommand(MainCommand):
     ''' Specify the help string (doc string) for a given command or schema object'''
     
@@ -57,7 +56,7 @@ class HelpCommand(MainCommand):
     def list_entities():
         print "<EntityName> :="
         for entity in schema.entity_set:
-            if issubclass(entity, element.Element):
+            if issubclass(entity, Element):
                 if entity.is_revision_entity():
                     continue
                 if entity.has_revision_entity():                

@@ -32,6 +32,11 @@ class ProbeSpecLoader(LogObject):
 
     def find_probe_set(self, name):        
         specs = self._load_probe_dict(name)
+        self.log.fine("Total Probes: %d", len(specs))
+        for s in specs:
+            if not s.has_key('sequence'):
+                raise LoaderError("Probe has no sequence: %s[%s]" % (s['name'], s['args']))
+                
         specs.sort(key=operator.itemgetter('sequence'))
         return [ProbeSpec(self._probe_root, p) for p in specs]
     
@@ -53,47 +58,48 @@ class ProbeSpecLoader(LogObject):
         return None
             
     def _load_probe_dict(self, name):        
-        filename = os.path.join(self._spec_root, "%s.pspec" % name)
-        
-        if not os.path.exists(filename):
-            raise LoaderError("Could not find probe spec: %s (%s)" % (name,filename) )
-        
-        self.log.info("Loading: %s" % filename)
-                 
-        data = self._read_data(filename)
+
+        data = self._read_data(name)
              
         my_probes = data['probes']            
-        
+        self.log.fine("   Probes: %d", len(my_probes))
         if data.has_key("parent"):
-            base_probes = self._load_probe_dict(data['parent'])
+            base_probes = self._load_probe_dict(data['parent'])            
             
-            for base_probe in base_probes:
-                my_probe = self.find_match(base_probe, my_probes)
+            for my_probe in my_probes:
+                base_probe = self.find_match(my_probe, base_probes)
                 
-                if my_probe is not None:
-                    self._copy_over_probe(my_probe, base_probe)                    
-                   
+                if base_probe is None:
+                    base_probes.append(my_probe)
+                else:
+                    for (k,v) in my_probe.items():
+                        base_probe[k] = v
+            
             return base_probes
         else: 
             return my_probes
     
     
-    def _read_data(self, filename):
+    def _read_data(self, name):
         try:
+            filename = os.path.join(self._spec_root, "%s.pspec" % name)
+            
+            if not os.path.exists(filename):
+                raise LoaderError("Could not find probe spec: %s (%s)" % (name,filename) )
+            
+            self.log.info("Loading: %s" % filename)        
+
+
             f = open(filename)
             data = f.read()
             f.close()
-    
+
             return json.loads(data)
+
 
         except IOError, ex:
             raise LoaderError(ex)
    
-    def _copy_over_probe(self, src, dest):
-        for (k, v) in src.items():
-            #if k == 'name': continue             
-            dest[k] = v
-        
  
 
 # container object to model a probe

@@ -34,6 +34,7 @@ class ProbeCli(CommandLineInterface):
         parser.add_option('-p', '--probe-root', dest='probe_root')
         parser.add_option('-t', '--type-map', dest='type_map')
         parser.add_option('-f', '--filename', dest='filename', default=None)
+        parser.add_option('-T', '--force-type', dest='force_type', default=None)
         parser.add_option('-v', '--verbose', action='callback', callback=self.increase_verbose_cb)
         parser.add_option('-d', '--debug', action='store_true', default=False, help='debug output')
         return parser
@@ -75,7 +76,7 @@ class ProbeCli(CommandLineInterface):
     
         try:
             driver = Driver(opts.type_map, opts.probe_root)
-            results = driver.probe()
+            results = driver.probe(opts.force_type)
             
             
             output = json.dumps(results, sort_keys=True, indent=2) + "\n"

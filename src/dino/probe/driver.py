@@ -36,20 +36,24 @@ class Driver(LogObject):
         self._loader = ProbeSpecLoader(probe_root)        
 
 
-    def probe(self):
+    def probe(self, hw_info=None):
         
-        probe_specs = self._loader.find_probe_set("identify")
-        
-        result = Processor(probe_specs, check_result=False).run()
-        
-        result = self._identify_hw_type(result)
+        if hw_info:
+            if ':' not in hw_info:
+                raise UnknowHardwareError("Could not determine hardware from forced spec: %s" % hw_info)
+            (hw_type, hw_sub_type) = hw_info.split(':')
+            
+        else:
+            probe_specs = self._loader.find_probe_set("identify")
+            
+            result = Processor(probe_specs, check_result=False).run()
+            
+            result = self._identify_hw_type(result)
+            if len(result) == 0:
+                raise UnknowHardwareError('Could not determine hardware type')
     
-        self.log.debug('Driver: check result = %s' % result)
-        if len(result) == 0:
-            raise UnknowHardwareError('Could not determine hardware type')
-        
-        self.log.info('check results %s' % result)
-        (hw_type, hw_sub_type) = result.split()
+            self.log.info('check results %s' % result)
+            (hw_type, hw_sub_type) = result.split()
         
         
         (os.environ['MW_MODEL_NAME'], os.environ['MW_HNODE_TYPE_DICT']) = (hw_type,hw_sub_type)
