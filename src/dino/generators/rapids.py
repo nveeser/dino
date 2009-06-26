@@ -121,8 +121,6 @@ class RapidsGenerator(Generator):
             d['tmpl_data']['ssh-dsa-key'] = host.ssh_key_info.dsa_key
             d['tmpl_data']['ssh-dsa-pub'] = host.ssh_key_info.dsa_pub
 
-            if host.id == 
-            
             for p in host.device.ports:
                 if not p.interface:
                     continue

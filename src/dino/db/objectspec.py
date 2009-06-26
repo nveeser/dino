@@ -113,6 +113,9 @@ class ObjectSpec(object):
     def spec_types():
         return (AttributeSpec, ElementSpec, EntitySpec)
          
+    @staticmethod
+    def sub_types():
+        return (AttributeSpec, ElementSpec, EntitySpec)
          
     @classmethod
     def parse(cls, object_spec, expected=None):
