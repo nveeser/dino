@@ -90,6 +90,7 @@ class RapidsGenerator(Generator):
         session = self.db_config.session()
         
         for host in session.query(Host)\
+        .join(Appliance).join(OperatingSystem).filter(OperatingSystem.name.in_(['chronos', 'baccus']))\
             .join(Device).filter_by(hw_class='server')\
             .join(Rack).join(Site).filter_by(name=self.settings.site).all():
             

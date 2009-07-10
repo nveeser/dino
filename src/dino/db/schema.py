@@ -96,7 +96,7 @@ class SchemaInfo(elixir.Entity):
 #  Inventory
 # # # # # # # # # # # # # # # # # # # 
 
-class Device(Element, model.Device):
+class Device(model.Device, Element):
     '''
     This is the main device Element
     '''
@@ -335,7 +335,7 @@ class SshKeyInfo(Element):
 # # # # # # # # # # # # # # # # # # # 
 
 
-class IpAddress(Element, model.IpAddress, ResourceElement):
+class IpAddress( model.IpAddress, ResourceElement, Element ):
     #
     # Metadata Options
     #
@@ -382,6 +382,8 @@ class IpAddress(Element, model.IpAddress, ResourceElement):
         subnet = ip.query_subnet()
         if subnet is None:
             raise ResourceCreationError("No Subnet found to assign IP to: %s" % ip)
+                        
+        ip.subnet = subnet
 
         for range in subnet.ranges:
             if range.contains(ip):
@@ -390,7 +392,7 @@ class IpAddress(Element, model.IpAddress, ResourceElement):
         return ip
     
         
-class Subnet(Element, model.Subnet):
+class Subnet( model.Subnet, Element ):
     DISPLAY_PROCESSOR = SubnetDisplayProcessor
 
     #
@@ -470,7 +472,7 @@ class SubnetAdminInfo(Element):
     
                   
 
-class Range(Element, model.Range, ResourceElement):
+class Range( model.Range, ResourceElement, Element ):
     
     #
     # Metadata Options
@@ -738,13 +740,10 @@ class Appliance(Element):
     # Relationships
     #
     os = ManyToOne('OperatingSystem', lazy=False)
-
-    #
-    # Methods
-    #    
+ 
         
 
-class Chassis(Element):
+class Chassis(model.Chassis, Element ):
     #
     # Metadata Options
     #
@@ -762,7 +761,7 @@ class Chassis(Element):
     description = Field(types.String(255), nullable=False, default="")
 
 
-
+        
 elixir.setup_entities(__entity_collection__)  
 
 

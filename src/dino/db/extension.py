@@ -40,9 +40,6 @@ class ElementNameBuilder(EntityBuilder):
 
         # Create NameProcessor (and for Revision Entity too)
         #
-        #if entity.__name__ == 'PropertySet':
-        #  import pdb;pdb.set_trace()
-            
         entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(format)
             
         if hasattr(entity, 'Revision'):
@@ -376,15 +373,19 @@ class ElementNameBuilder(EntityBuilder):
 
             
 class_logger(ElementNameBuilder)        
-                                                
+
 use_element_name = Statement(ElementNameBuilder)
 
-
- 
  
 class ValidateElementMapperExtension(MapperExtension):
-    def before_insert(self, mapper, connection, instance):
-        instance.validate_element()
+    def __new__(cls, *args, **kwargs):
+        if '_single' not in vars(cls):
+            cls._single = object.__new__(cls, *args, **kwargs)
+        return cls._single
+        
+    def before_insert(self, mapper, connection, element):
+        if hasattr(element, 'validate_element'):
+            element.validate_element()
         return sa_orm.EXT_CONTINUE
 
     before_update = before_insert

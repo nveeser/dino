@@ -198,15 +198,19 @@ class EditCommand(ElementFormCommand):
         #
         for change in desc:
             self.log.info(str(change))
+
         
         if self.option.no_commit:
             self.log.info("no-commit specified: nothing submitted")
+
+        elif len(desc) == 0:
+            self.log.info("No Change: Not Submitted")
             
         elif session.last_changeset:
             self.log.info("Submitted: %s", session.last_changeset)
             
         else:
-            self.log.info("No Change: Not Submitted")
+            self.log.info("Submitted")
         
             
             
@@ -272,12 +276,18 @@ class CreateCommand(ElementFormCommand):
         #
         for change in desc:
             self.log.info(str(change))
-        
+     
         if self.option.no_commit:
             self.log.info("no-commit specified: nothing submitted")
+
+        elif len(desc) == 0:
+            self.log.info("No Change: Not Submitted")
             
-        else:
+        elif session.last_changeset:
             self.log.info("Submitted: %s", session.last_changeset)
+        
+        else:
+            self.log.info("Submitted")
     
 
             

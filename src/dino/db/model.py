@@ -349,8 +349,12 @@ class Range(object):
 
         
         
-        
-        
+class Chassis(object):
+    #
+    # Methods
+    #   
+    def validate_element(self):
+        pass      
         
         
         

@@ -148,26 +148,33 @@ class DeleteCommand(MainCommand):
     @with_session
     def execute(self, session):              
 
-            session.begin() 
+        session.begin() 
+    
+        for instance in self.find_elements(session):
+            session.delete(instance)
         
-            for instance in self.find_elements(session):
-                session.delete(instance)
-            
-            desc = session.create_change_description()
-            
-            for change in desc:
-                self.log.info(str(change))
-
-            if self.option.no_commit:
-                session.rollback()
-                self.log.info("no-commit specified: nothing submitted")
-            else:
-                session.commit()
-                self.log.info("Submitted %s", str(session.last_changeset))
-
-
-            
+        desc = session.create_change_description()
         
+        for change in desc:
+            self.log.info(str(change))
+
+        if self.option.no_commit:
+            session.rollback()
+        else:
+            session.commit()
+
+            
+        if self.option.no_commit:
+            self.log.info("no-commit specified: nothing submitted")
+
+        elif len(desc) == 0:
+            self.log.info("No Change: Not Submitted")
+            
+        elif session.last_changeset:
+            self.log.info("Submitted: %s", session.last_changeset)
+            
+        else:
+            self.log.info("Submitted")
                 
 
         

@@ -8,7 +8,7 @@ import socket
 from os.path import join as pjoin
 
 from dino.generators.base import Generator
-from dino.db import (Host, Rack, Device, Site)
+from dino.db import (Host, Rack, Device, Site, Appliance, OperatingSystem)
 
 HOST_TEMPLATE = \
 """ipappend 1
@@ -58,11 +58,12 @@ class PxeGenerator(Generator):
         session = self.db_config.session() 
      
         dc_info = self.pull_rapids_datacenter(self.settings, self.settings.site)
-        
-        for host in session.query(Host)\
+        query = session.query(Host)\
+            .join(Appliance).join(OperatingSystem).filter(OperatingSystem.name.in_(['chronos', 'baccus']))\
             .join(Device).filter_by(hw_class='server')\
-            .join(Rack).join(Site).filter_by(name=self.settings.site).all():
-            
+            .join(Rack).join(Site).filter_by(name=self.settings.site)
+        
+        for host in query:            
             self.log.info("Process Host: %s", host)
             data = dict(self.data)
             data['kernel'] = data['os_codename'] = host.appliance.os.name
@@ -78,16 +79,15 @@ class PxeGenerator(Generator):
                     data['mac'] = p.mac                
             
             
-            ipmi_ports = [ p for p in host.device.ports if p.is_ipmi ]            
-            if len(ipmi_ports) > 0:
-                data['extra_console'] = IPMI_CONSOLE
-            else:
-                data['extra_console'] = NONIPMI_CONSOLE
-            
-            
             if host.device.hw_type == "vm":
                 data['extra_console'] = VGA_CONSOLE    
-                              
+            else:
+                ipmi_ports = [ p for p in host.device.ports if p.is_ipmi ]            
+                if len(ipmi_ports) > 0:
+                    data['extra_console'] = IPMI_CONSOLE
+                else:
+                    data['extra_console'] = NONIPMI_CONSOLE
+                                                          
             yield data
             
         session.close()

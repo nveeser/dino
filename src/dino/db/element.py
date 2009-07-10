@@ -11,6 +11,7 @@ from dino.config import class_logger
 from exception import *
 from objectspec import *
 from display import FormDisplayProcessor, EntityDisplayProcessor
+import extension
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
@@ -34,8 +35,10 @@ class ElementMeta(elixir.EntityMeta):
                 
         cls.log = logging.getLogger("dino.db.schema." + name)    
 
-        base_class_type = type(bases[0])
-        if not issubclass( base_class_type, ElementMeta ): 
+        element_bases = [ b for b in bases if isinstance(b, ElementMeta) ]
+        # If none of the base classes are 'derived' from ElementMeta, 
+        # this class is Element
+        if len(element_bases) == 0:  
             # is 'base' class of the Metaclass tree (ie Element)
             cls.ALL_ENTITY_LIST = []
             return 
@@ -46,7 +49,7 @@ class ElementMeta(elixir.EntityMeta):
 
         if hasattr(cls, '_descriptor'):
             cls.entity_set = cls._descriptor.collection
-
+            cls._descriptor.add_mapper_extension(extension.ValidateElementMapperExtension())
 
     def allocate_form_id(cls):
         cls.NEXT_FORM_ID += 1
@@ -58,10 +61,8 @@ class ElementMeta(elixir.EntityMeta):
 
 class Element(object):   
     """ Base Class for 'most' objects in the Dino Model
-    
-    This adds the derived Property 'instance_name' to all Elements
 
-    Also collection of common instance methods, some taken from elixir.Entity.
+    A collection of common instance methods, some taken from elixir.Entity.
     See:
     http://elixir.ematia.de/trac/wiki/FAQ#HowdoIaddfunctionalitytoallmyentitiestothebaseclass
     and

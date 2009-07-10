@@ -276,6 +276,7 @@ class MultiCreateFormProcessor(MultiElementFormProcessor):
         for (ename, form_dict) in tuple_list:            
             self.create_empty_element(ename)
        
+        is_modified = False
         for (ename, form_dict) in tuple_list:
              
             if ename.object_name in self.element_cache:
@@ -283,9 +284,11 @@ class MultiCreateFormProcessor(MultiElementFormProcessor):
             else:
                 element = self.session.resolve_element_spec(ename)
                                 
-            ElementUpdater(element, element_cache=self.element_cache).update_dict(form_dict)            
-        
-
+            ElementUpdater(element, element_cache=self.element_cache).update_dict(form_dict)
+                        
+            is_modified = is_modified or self.session.is_modified(element)
+            
+        return is_modified 
         
         
 class MultiUpdateFormProcessor(MultiElementFormProcessor):

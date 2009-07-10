@@ -8,11 +8,13 @@ import sys
 import socket 
 from os.path import join as pjoin
 
+from sqlalchemy import not_
+
 if __name__ == "__main__":
     sys.path[0] = os.path.join(os.path.dirname(__file__), "..", "..")
 
 from dino.generators.base import Generator, GeneratorQueryError
-from dino.db import (Rack, Device, Port, Site, Subnet, IpType)
+from dino.db import (Rack, Device, Port, Site, Subnet, Host, Appliance, OperatingSystem, IpType)
  
 GLOBAL_TEMPLATE = \
 """allow booting;
@@ -62,7 +64,7 @@ HOST_FEDORA_TEMPLATE = \
 }
 '''
 
-HOST_TEMPLATE = \
+HOST_GENTOO_TEMPLATE = \
 """host %(hostname)s {
     hardware ethernet %(mac)s;
     fixed-address %(ip)s;
@@ -145,7 +147,7 @@ class DhcpGenerator(Generator):
 
 
             
-    def query_hosts(self, session):
+    def query_gentoo_hosts(self, session):
                       
         base_data = {
             'hostname' : None,
@@ -158,11 +160,15 @@ class DhcpGenerator(Generator):
         
         data = dict(base_data)
         
-        ports = session.query(Port).filter_by(is_blessed=True)\
+        query = session.query(Port).filter_by(is_blessed=True)\
             .join(Device).join(Rack).join(Site)\
             .filter_by(name=self.settings.site)\
-            .filter(Device.host!=None).all()
-        for port in ports:    
+            .join(Host).join(Appliance).join(OperatingSystem)\
+            .filter(Host.appliance!=None)\
+            .filter(OperatingSystem.name.in_(['baccus', 'chronos']))\
+            .filter(Device.host!=None)
+            
+        for port in query:    
             if port.interface is None:
                 self.log.info("Skipping Port with no Interface: " % port)
                 continue
@@ -178,7 +184,50 @@ class DhcpGenerator(Generator):
             yield self.check_data(data)
             
     
+    def query_fedora_hosts(self, session):
+        base_data = {
+            'hostname' : None,
+            'mac' : None,
+            'ip' : None,
+            'path_prefix' : None,
+            'config_file' : None,
+        }
+           
+        data = dict(base_data)
+        
+        query = session.query(Port).filter_by(is_blessed=True)\
+            .join(Device).join(Rack).join(Site)\
+            .filter_by(name=self.settings.site)\
+            .join(Host).join(Appliance).join(OperatingSystem)\
+            .filter(OperatingSystem.name.like("fedora%"))\
+            .filter(Device.host!=None)
+        
+        for port in query:    
+            if port.interface is None:
+                self.log.info("Skipping Port with no Interface: " % port)
+                continue  
+                
+            data['hostname'] = port.device.host.hostname() + "." + self.settings.domain            
+            data['ip'] = port.interface.address.value
+            data['mac'] = port.mac
+            data['path_prefix'] = port.device.host.appliance.os.name 
 
+            ipmi_ports = [ p for p in port.device.ports if p.is_ipmi ]            
+            if port.device.host.device.hw_type == "vm":
+                data['config_file'] = "main.cfg"
+                
+            else:
+                if len(ipmi_ports) > 0:
+                    data['config_file'] = "serial1.cfg"
+                else:
+                    data['config_file'] = "serial0.cfg"
+
+            self.log.fine("   Host: %s", data['hostname'])
+            
+            
+            
+            yield self.check_data(data)
+            
     def query_ipmi_hosts(self, session):    
         
         base_data = {
@@ -233,8 +282,12 @@ class DhcpGenerator(Generator):
         sections = [ SUBNET_TEMPLATE % d for d in self.query_subnets(session) ] 
         generated_config.extend(sections)
         
-        self.log.info("generate: reading hosts")
-        sections = [ HOST_TEMPLATE % d for d in self.query_hosts(session) ] 
+        self.log.info("generate: reading gentoo hosts")
+        sections = [ HOST_GENTOO_TEMPLATE % d for d in self.query_gentoo_hosts(session) ] 
+        generated_config.extend(sections)
+
+        self.log.info("generate: reading fedora hosts")
+        sections = [ HOST_FEDORA_TEMPLATE % d for d in self.query_fedora_hosts(session) ] 
         generated_config.extend(sections)
         
         self.log.info("generate: reading ipmi hosts")
