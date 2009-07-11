@@ -10,7 +10,7 @@ if [[ ${REVISION} == "99999" ]]; then
 	REVISION=HEAD
 fi
 
-ESVN_REPO_URI="https://svn.metaweb.com/svn/se-packages/dino/2.1"
+ESVN_REPO_URI="https://svn.metaweb.com/svn/se-packages/dino/dev/2.1"
 ESVN_OPTIONS="-r $REVISION"
 ESVN_PROJECT="dino-2.1"
 
