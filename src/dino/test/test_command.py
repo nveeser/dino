@@ -16,10 +16,10 @@ import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 # UnitTest 
 #
 
-class ShowCommandTest(CommandTest, SingleSessionTest):
+class TestShowCommand(CommandTest, SingleSessionTest):
     
     def setUp(self):
-        super(ShowCommandTest, self).setUp()
+        super(TestShowCommand, self).setUp()
         self.sess.begin()
         
         for i in range(0,10):            
@@ -61,9 +61,9 @@ class ShowCommandTest(CommandTest, SingleSessionTest):
         self.runCommand('show', 'OtherThing')
 
 
-class GetSetCommandTest(CommandTest, ObjectTest, SingleSessionTest):
+class TestGetSetCommand(CommandTest, ObjectTest, SingleSessionTest):
     def setUp(self):
-        super(GetSetCommandTest, self).setUp()
+        super(TestGetSetCommand, self).setUp()
         
         self.sess.begin()
 
@@ -104,11 +104,11 @@ class GetSetCommandTest(CommandTest, ObjectTest, SingleSessionTest):
         eq_(rack.site, site2)
     
     
-class ShowRackTest(CommandTest, ObjectTest, SingleSessionTest, DataTest):
+class TestShowRack(CommandTest, ObjectTest, SingleSessionTest, DataTest):
     DATA_DIR = "command"
     
     def setUp(self):
-        super(ShowRackTest, self).setUp()
+        super(TestShowRack, self).setUp()
         
         r = self.create_rack(self.sess)    
             
@@ -141,9 +141,9 @@ class ShowRackTest(CommandTest, ObjectTest, SingleSessionTest, DataTest):
         self.compare_lines(expected_lines, actual_lines)
         
         
-class AvailIpCommandTest(CommandTest, SingleSessionTest):
+class TestAvailIpCommand(CommandTest, SingleSessionTest):
     def setUp(self):
-        super(AvailIpCommandTest, self).setUp()
+        super(TestAvailIpCommand, self).setUp()
         
         self.sess.open_changeset()
         
@@ -164,8 +164,8 @@ class AvailIpCommandTest(CommandTest, SingleSessionTest):
         
         assert ip_list is not None
         assert len(ip_list) == 2
-        self.assertEquals(ip_list[0], "127.0.0.11")
-        self.assertEquals(ip_list[1], "127.0.0.17")
+        eq_(ip_list[0], "127.0.0.11")
+        eq_(ip_list[1], "127.0.0.17")
 
     @raises(dino.cmd.CommandExecutionError)
     def test_fail_too_many(self): 
@@ -178,10 +178,10 @@ class AvailIpCommandTest(CommandTest, SingleSessionTest):
         
         
         
-class SetIpCommandTest(CommandTest, ObjectTest, SingleSessionTest):
+class TestSetIpCommand(CommandTest, ObjectTest, SingleSessionTest):
     
     def setUp(self):
-        super(SetIpCommandTest, self).setUp()
+        super(TestSetIpCommand, self).setUp()
         
         d = self.create_devices(self.sess)[0]
         self.create_hosts(self.sess)
@@ -226,15 +226,15 @@ class SetIpCommandTest(CommandTest, ObjectTest, SingleSessionTest):
         self.runCommand('ip', 'set', self.name1, '127.0.0.30')            
         addr = self.sess.query(IpAddress).filter_by(value='127.0.0.20').first()
         
-        self.assertEquals(addr, None)
+        eq_(addr, None)
                 
         
 
-class ImportCommandTest(CommandTest, DataTest):
+class TestImportCommand(CommandTest, DataTest):
     DATA_DIR = "jsonimport"
 
     def setUp(self):
-        super(ImportCommandTest, self).setUp()
+        super(TestImportCommand, self).setUp()
         sess = self.db.session()
                 
         sess.open_changeset()  
@@ -265,14 +265,14 @@ class ImportCommandTest(CommandTest, DataTest):
         self.runCommand('jsonimport', path)
         devices = sess.query(Device).filter_by(hw_class="server").all() # filter_by(hid="001EC943AF41")
 
-        self.assertEqual(len(devices), 1)
+        eq_(len(devices), 1)
         
         device = devices[0]
         
-        self.assertEqual( device.hid, "001EC943AF41" )
-        self.assertEqual( device.serialno,  "..CN7082184700NF.")
-        self.assertEqual( device.rackpos,  13)
-        self.assertNotEqual( device.host, None )
+        eq_( device.hid, "001EC943AF41" )
+        eq_( device.serialno,  "..CN7082184700NF.")
+        eq_( device.rackpos,  13)
+        assert_not_equal( device.host, None )
 
         sess.close()
     
@@ -287,14 +287,14 @@ class ImportCommandTest(CommandTest, DataTest):
         self.runCommand('jsonimport', path)
         
         devices = sess.query(Device).filter_by(hw_class="server").all()
-        self.assertEqual(len(devices), 1)
+        eq_(len(devices), 1)
         
         device = devices[0]
         
-        self.assertEqual( device.hid, "001EC943AF41" )
-        self.assertEqual( device.serialno,  "..CN7082184700NF")
-        self.assertEqual( device.rackpos,  16)
-        self.assertEqual( device.pdu_port,  '3')      
+        eq_( device.hid, "001EC943AF41" )
+        eq_( device.serialno,  "..CN7082184700NF")
+        eq_( device.rackpos,  16)
+        eq_( device.pdu_port,  '3')      
         
 
 

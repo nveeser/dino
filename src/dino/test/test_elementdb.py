@@ -87,24 +87,187 @@ elixir.setup_entities(entity_set)
 #
 # UnitTest 
 #
-class ElementTest(DinoTest):
+from dino.db.objectresolver import *
+
+class TestObjectResolver(DinoTest):
+        
+    def setUp(self):
+        super(TestObjectResolver, self).setUp()        
+        self.parser = ObjectSpecParser(entity_set)
+       
     
+
+        
+    def test_name_type_generator(self):   
+               
+        def name_type_test(resolver_class, spec):
+            parser = ObjectSpecParser(entity_set)
+            resolver = parser.parse(spec)            
+            ok_(isinstance(resolver, resolver_class))
+            
+        arg_list = (
+            (EntityNameResolver, 'Person'),
+            (EntityNameResolver, 'Person/'),
+            (EntityNameResolver, 'PhoneNumber'),
+            
+            (ElementNameResolver, 'Person:name'),
+            (ElementNameResolver, 'Person:name/'),
+            (ElementQueryResolver, 'Person[foo=bar]'),
+            (ElementQueryResolver, 'Person[foo=bar]/'),
+            (ElementFormIdResolver, 'Person:<1>'),
+            (ElementFormIdResolver, 'Person:<1>/'),
+            (ElementIdResovlver, 'Person:{1}'),
+            (ElementIdResovlver, 'Person:{1}/'),
+            
+            (AttributeSpecResolver, 'Person:name/phone_number'),
+            (AttributeSpecResolver, 'Person:name/phone_number/number'),
+            (AttributeSpecResolver, 'Person[foo=bar]/phone_number'),
+            (AttributeSpecResolver, 'Person[foo=bar]/phone_number/number'),
+        )
+        
+        for args in arg_list: 
+            yield (name_type_test,) + args   
+        
+    def test_name_mismatch_generator(self):   
+         
+        @raises(SpecMatchError)        
+        def name_mismatch_test(class_, spec):
+            parser = ObjectSpecParser(entity_set)
+            class_(parser, spec)
+            
+        args_list = (         
+            (EntityNameResolver, 'Person:name/phone_number'),            
+            (EntityNameResolver, 'Person:{1}'),
+            (EntityNameResolver, 'Person:<1>'),
+            (EntityNameResolver, 'Person:name'),
+            (EntityNameResolver, 'Person[foo=bar]'),
+            (EntityNameResolver, 'Person[foo=bar]/phone_number'),
+            (EntityNameResolver, 'Person[foo]/phone_number/hello2'),
+            
+            (ElementNameResolver, 'Person'),                    
+            (ElementNameResolver, 'Person:name/nothing'),            
+            (ElementNameResolver, 'Person:{1}'),
+            (ElementNameResolver, 'Person:<1>'),
+            (ElementNameResolver, 'Person[foo=bar]'),
+            (ElementNameResolver, 'Person[foo=bar]/phone_number'),
+            (ElementNameResolver, 'Person[foo=bar]/phone_number/hello2'),
+
+            (ElementIdResovlver, 'Person'),                    
+            (ElementIdResovlver, 'Person:name/nothing'),            
+            (ElementIdResovlver, 'Person:name'),
+            (ElementIdResovlver, 'Person:<1>'),
+            (ElementIdResovlver, 'Person[foo=bar]'),
+            (ElementIdResovlver, 'Person[foo=bar]/phone_number'),
+            (ElementIdResovlver, 'Person[foo=bar]/phone_number/hello2'),
+
+        
+            (ElementFormIdResolver, 'Person'),            
+            (ElementFormIdResolver, 'Person:name/nothing'),            
+            (ElementFormIdResolver, 'Person:instance_name'),
+            (ElementFormIdResolver, 'Person:{1}'),
+            (ElementFormIdResolver, 'Person[foo=bar]'),
+            (ElementFormIdResolver, 'Person[foo=bar]/phone_number'),
+            (ElementFormIdResolver, 'Person[foo=bar]/phone_number/hello2'),
+        
+            (AttributeSpecResolver, 'Person'),            
+            (AttributeSpecResolver, 'Person:instance_name'),
+            (AttributeSpecResolver, 'Person:<1>'),
+            (AttributeSpecResolver, 'Person:{1}'),
+            (AttributeSpecResolver, 'Person[foo=bar]'),
+        )        
+        for args in args_list:  
+            yield (name_mismatch_test, ) + args    
+            
+            
+                  
+    def test_entity_name_1(self):
+        r = self.parser.parse('Person')
+        ok_(isinstance(r, EntityNameResolver))    
+        eq_(r.get_entity().next(), Person)
+        ok_(not r.resolve_instance)
+    
+    def test_entity_name_2(self):
+        r = self.parser.parse('Person/')
+        ok_(isinstance(r, EntityNameResolver))    
+        eq_(r.get_entity().next(), Person)
+        ok_(r.resolve_instance)
+                
+    @raises(InvalidObjectSpecError)
+    def test_entity_name_3(self):
+        EntityNameResolver(self.parser, 'NoObject/')
+    
+    
+    def test_element_name_1(self):
+        r = self.parser.parse('Person:instance')
+        ok_(isinstance(r, ElementNameResolver))        
+        ok_(isinstance(r.parent_resolver, EntityNameResolver))
+                
+        eq_(r.get_entity().next(), Person)
+        eq_(r.instance_name, "instance")
+        ok_(not r.resolve_instance)
+
+        
+    def test_element_name_2(self):
+        r = self.parser.parse('Person:instance/')
+        ok_(isinstance(r, ElementNameResolver))        
+        ok_(isinstance(r.parent_resolver, EntityNameResolver))
+                
+        eq_(r.get_entity().next(), Person)
+        eq_(r.instance_name, "instance")        
+        ok_(r.resolve_instance)
+
+
+    def test_attribute_spec_1(self):
+        r = self.parser.parse('Person:instance/age')
+        ok_(isinstance(r, AttributeSpecResolver)) 
+        eq_(r.get_entity().next(), None)
+
+    @raises(InvalidObjectSpecError)
+    def test_attribute_spec_2(self):
+        r = self.parser.parse('Person:instance/age/')
+
+    def test_attribute_spec_3(self):
+        r = self.parser.parse('Person:instance/addresses')
+        ok_(isinstance(r, AttributeSpecResolver)) 
+        eq_(r.get_entity().next(), Address)
+        
+    def test_attribute_spec_4(self):
+        r = self.parser.parse('Person:instance/addresses/value1')
+        ok_(isinstance(r, AttributeSpecResolver)) 
+        eq_(r.get_entity().next(), None)       
+
+    @raises(InvalidAttributeError)
+    def test_attribute_spec_5(self):
+        r = self.parser.parse('Person:instance/fake_relation')
+        ok_(isinstance(r, AttributeSpecResolver)) 
+        eq_(r.get_entity().next(), Address)
+
+    
+    def test_entity_spec_special(self):
+        r = self.parser.parse('Element')        
+        eq_( set((Person, Address, PhoneNumber)), set(r.get_entity()) )
+        
+        
+
+class TestElement(DinoTest):
+    
+    @raises(RuntimeError)
     def test_invalid_attr(self):    
-        self.failUnlessRaises(RuntimeError, lambda: Person(foo="123"))
+        Person(foo="123")
             
         
     def test_regex(self):        
         m = Person.element_name_re().match("Person/foo")
     
-        self.assertEquals( m.group(1), "Person/foo")
-        self.assertEquals( m.group(2), "Person")
-        self.assertEquals( m.group(3), "foo")
+        eq_( m.group(1), "Person/foo")
+        eq_( m.group(2), "Person")
+        eq_( m.group(3), "foo")
     
         m = Person.element_name_re().match("Address/foo")
         eq_(m, None)
         
 
-class PersonTest(DatabaseTest):
+class TestPerson(DatabaseTest):
     ENTITY_SET = entity_set    
     NAME = "eddie"
 
@@ -131,7 +294,8 @@ class PersonTest(DatabaseTest):
         p.name = "Bob"        
         assert p.instance_name == "Bob"
         
-class AddressTest(DatabaseTest):
+        
+class TestAddress(DatabaseTest):
     ENTITY_SET = entity_set        
     PERSON = 'eddie'
     ADDRESS = "Home"
@@ -148,7 +312,7 @@ class AddressTest(DatabaseTest):
         sess.flush()
         
         a2 = sess.query(Address).filter_by(instance_name=self.ADDRESS_INSTANCE_NAME).first()
-        self.assertEqual(a2, a)
+        eq_(a2, a)
 
     def test_address_name_dependency(self):
         #print 
@@ -167,7 +331,7 @@ class AddressTest(DatabaseTest):
         
         
         
-class FormDbTest(DataTest, SingleSessionTest):
+class TestFormDb(DataTest, SingleSessionTest):
     ENTITY_SET = entity_set
     DATA_DIR = "element_form"
       

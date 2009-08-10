@@ -13,15 +13,16 @@ from dino.cmd import MainCommand,CommandExecutionError
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 
-class DinoTest(unittest.TestCase):
+class DinoTest(object):
 
-    def setUp(self):        
-        super(DinoTest, self).setUp() 
-
+    def setUp(self):           
         formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
-        dino.config.LogController().console_handler.setFormatter(formatter)
-                        
+        #import pdb;pdb.set_trace()
+        dino.config.LogController().console_handler.setFormatter(formatter)            
         self.log = logging.getLogger("%s.%s" % (self.__class__.__module__, self.__class__.__name__))
+        
+    def tearDown(self):
+        pass
         
 class DataTest(DinoTest):
     DATA_DIR = None
@@ -137,7 +138,7 @@ class SingleSessionTest(DatabaseTest):
 class DoubleSessionTest(DatabaseTest):
     '''currently unused'''    
     def setUp(self):
-        super(SingleSessionTest, self).setUp()
+        super(DoubleSessionTest, self).setUp()
         self.sess1 = self.db.session()
         self.sess2 = self.db.session()
                 
@@ -230,11 +231,11 @@ class CommandTest(DatabaseTest):
         cmd_cls = MainCommand.find_command(cmdname)
         cmd = cmd_cls(self.db, None)
         cmd.parse(args)
-        try:
-            return cmd.execute()
-        except CommandExecutionError, e:
-            print e.print_trace()
-            raise
+        #try:
+        return cmd.execute()
+        #except CommandExecutionError, e:
+        #    #print e.print_trace()
+        #    raise
         
         
         

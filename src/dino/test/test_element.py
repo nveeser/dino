@@ -18,7 +18,7 @@ import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 
 
-class NameParseTest(DinoTest):
+class TestNameParse(DinoTest):
 
     def test_attribute_names(self):
         values = {
@@ -89,7 +89,9 @@ class NameParseTest(DinoTest):
             actual = n.make_name(value_dict)
             eq_(expected, actual, "Issue with test set %d  %s was %s" % (i, expected, actual))
 
-class ObjectSpecTest(DinoTest):    
+
+
+class TestObjectSpec(DinoTest):    
     
     def test_element_name_parse(self):
         x = ObjectSpec.parse('person/foo')

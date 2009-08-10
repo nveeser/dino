@@ -122,6 +122,10 @@ class InvalidAttributeError(ObjectSpecError):
 class QueryClauseError(ObjectSpecError):
     pass
 
+class ObjectSpecParserError(Exception):
+    pass
+
+
 # # # # # # # # # # # # # # # # # # # 
 #  Model Exceptions
 # # # # # # # # # # # # # # # # # # # 

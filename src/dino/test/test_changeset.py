@@ -100,7 +100,7 @@ elixir.setup_entities(entity_set)
 #        super(ChangeSetTest, self).tearDown()
 #        
         
-class AddEntityTest(SingleSessionTest):
+class TestAddEntity(SingleSessionTest):
     ENTITY_SET = entity_set
     
     def test_add_person(self):
@@ -152,11 +152,11 @@ class AddEntityTest(SingleSessionTest):
         assert len(result) == 0
         
 
-class RevisionTest(SingleSessionTest):     
+class TestRevision(SingleSessionTest):     
     ENTITY_SET = entity_set
     
     def setUp(self):
-        super(RevisionTest, self).setUp()
+        super(TestRevision, self).setUp()
         
         self.sess.open_changeset()
         p = Person(name='eddie', age=12)

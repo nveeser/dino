@@ -58,6 +58,8 @@ class ElementMeta(elixir.EntityMeta):
     def entity_display_processor(cls):
         return EntityDisplayProcessor()
 
+    def __str__(self):
+        return self.__name__
 
 class Element(object):   
     """ Base Class for 'most' objects in the Dino Model
@@ -355,6 +357,10 @@ class Attribute(object):
     def __init__(self, element, name):
         self.element = element
         self.property_name = name
+        
+        if not self.element.has_sa_property(self.property_name):
+            raise ElementAttributeError("Attribute not found on Element: %s : %s" % (self.element, self.property_name) )
+            
     
     def __str__(self):
         return self.attribute_name()
@@ -375,10 +381,7 @@ class Attribute(object):
         '''  
         session = sa_orm.object_session(self.element)
         assert session is not None, "Element must be attached to session to use set"
-    
-        if not self.element.has_sa_property(self.property_name):
-            raise ElementAttributeError("Attribute not found on Element: %s : %s" % (self.element, self.property_name) )
-            
+ 
         sa_property = self.element.get_sa_property(self.property_name)   
                 
         # Column

@@ -52,15 +52,17 @@ class LogController(object):
             cls._instance = object.__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self):                        
-        self.console_handler = logging.StreamHandler(sys.stdout)
-        self.console_handler.setLevel(logging.DEBUG)   
-
-        self.root = logging.getLogger("")
-        self.root.setLevel(logging.WARNING)
-        self.root.addHandler(self.console_handler)
-        
-        self.load_config()
+    def __init__(self):
+        if 'console_handler' not in vars(self):
+            self.console_handler = logging.StreamHandler(sys.stdout)
+            self.console_handler.setLevel(logging.DEBUG)   
+            self.console_handler.description = "LogController StreamHandler"
+    
+            self.root = logging.getLogger("")
+            self.root.setLevel(logging.WARNING)
+            self.root.addHandler(self.console_handler)
+            
+            self.load_config()
 
     def reset(self):
         self.console_handler.setLevel(logging.WARNING)   

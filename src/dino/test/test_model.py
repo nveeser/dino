@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 from dino.db import * 
-import unittest
-
+from nose.tools import *
 
 import pprint
 pp = pprint.PrettyPrinter(indent=2).pprint
@@ -10,19 +9,19 @@ pp = pprint.PrettyPrinter(indent=2).pprint
 
 
 
-class AddressMathTest(unittest.TestCase):
+class TestAddressMath(object):
     
     ntoa_pairs = { 0x0A0A0A0A : "10.10.10.10", 
                    0xFFFFFFFF : "255.255.255.255", }
                    
                     
     def test_all_ntoa(self):
-        for n,a in AddressMathTest.ntoa_pairs.items():
+        for n,a in TestAddressMath.ntoa_pairs.items():
             result = IpType.ntoa(n)        
-            self.assertEqual( result, a )
+            eq_( result, a )
             
             result = IpType.aton(a)
-            self.assertEqual( result, n )
+            eq_( result, n )
             
 
     mask_pairs = {  32 : "255.255.255.255",
@@ -33,14 +32,14 @@ class AddressMathTest(unittest.TestCase):
                     
 
     def test_mask(self):
-        for l, a in AddressMathTest.mask_pairs.items():
+        for l, a in TestAddressMath.mask_pairs.items():
             n = IpType.aton(a)
             
             result = Subnet.len_to_mask(l)
-            self.assertEqual( result, n )
+            eq_( result, n )
             
             result = Subnet.mask_to_len(n)
-            self.assertEqual( result, l )
+            eq_( result, l )
             
     init_pairs = [  
         ("127.0.0.1/24", "127.0.0.0"),
@@ -50,7 +49,7 @@ class AddressMathTest(unittest.TestCase):
     def test_init(self):
         for net_spec, net_name in self.init_pairs:            
             s = Subnet(addr=net_spec)
-            self.assertEqual( s.addr, net_name )
+            eq_( s.addr, net_name )
         
         
     broadcast_pairs = [
@@ -64,11 +63,11 @@ class AddressMathTest(unittest.TestCase):
             s = Subnet(addr=net_spec)
             nbcast = IpType.aton(bcast)
             #print IpType.ntoa( s.broadcast ), bcast
-            self.assertEquals( s.broadcast, nbcast )
+            eq_( s.broadcast, nbcast )
         
         
         
-class AddressSetTest(unittest.TestCase):
+class TestAddressSet(object):
     
     test_subnet_pairs = [ 
         ("10.0.0.1/24", 254),
@@ -81,7 +80,7 @@ class AddressSetTest(unittest.TestCase):
             s = Subnet(addr=net)        
             ip_set = s.naddr_set()
  
-            self.assertEqual( len(ip_set), count)
+            eq_( len(ip_set), count)
         
     def test_range_set(self):
         for net, count in self.test_subnet_pairs:            
@@ -89,7 +88,7 @@ class AddressSetTest(unittest.TestCase):
             r = Range(subnet=subnet, start=1, end=10, range_type='policy')
             set = r.naddr_set()
 
-            self.assertEquals( len(set), 10 )
+            eq_( len(set), 10 )
             
             
             
