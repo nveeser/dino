@@ -44,22 +44,23 @@ class MigrateCommand(MainCommand):
         while sinfo.version != sinfo.model_version:
             (filepath, new_version) = self.find_migrate_script(sinfo)
             
-            f = open(filepath)
-            text = f.read()
-            f.close()
-            
-            session.open_changeset()
-
-            self.log.info("Running script: %s", filepath)
-            cursor  = session.connection().connection.cursor()
-            cursor.execute(text)
+            try:
+                session.begin()
                 
-            sinfo.database_version = new_version
-            
-            session.submit_changeset()
+                self.do_upgrade(session, filepath, new_version)
+                        
+                sinfo.database_version = new_version
+                
+                session.commit()
+                
+                if session.last_changeset:
+                    self.log.info("Submitted Changeset: %s", session.last_changeset)
 
-            if session.last_changeset:
-                self.log.info("Submitted Changeset: %s", session.last_changeset)
+            except Exception, e:
+                session.rollback()
+                raise
+            
+
             
         session.begin()
         
@@ -72,7 +73,22 @@ class MigrateCommand(MainCommand):
             
         session.commit()
 
-            
+    def do_upgrade(self, session, filepath, new_version):
+        f = open(filepath)
+        sql_script = f.read()
+        f.close()       
+        
+        self.log.info("Running script: %s", filepath)
+        conn = session.connection().connection
+        cursor  = conn.cursor()
+        
+        for stmt in sql_script.split(';'):    
+            if stmt.strip() == "":
+                continue
+                                      
+            self.log.finer("Statement: \n%s" % stmt)
+            cursor.execute(stmt)
+    
 
     def find_migrate_script(self, sinfo):
 

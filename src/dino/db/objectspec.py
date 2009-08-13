@@ -237,11 +237,6 @@ class EntitySpec(ObjectSpec):
     def __init__(self, entity_name):            
         self.entity_name = entity_name
 
-
-#class EntityAll(EntitySpec):
-#    REGEX = re.compile("^elements$" % EntitySpec.ENTITY_NAME, re.IGNORECASE)
-    
-
     
 class EntityName(EntitySpec):
     '''ObjectSpec to specify a single Element'''

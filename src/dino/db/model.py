@@ -221,7 +221,7 @@ class Subnet(object):
     #   
     def contains(self, address):      
         if isinstance(address, schema.IpAddress):
-            return self.naddr == self.nmask & address.naddr
+            return self.naddr == self.nmask & address.nvalue
         elif isinstance(address, (int,long)):
             return self.naddr == self.nmask & address
         elif isinstance(address, basestring):
