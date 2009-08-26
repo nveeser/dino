@@ -506,7 +506,11 @@ class JsonProcessor(object):
         bport_mac = data_v1['mac_port.mac ' + bport]
         hid = bport_mac.replace(":", "")
         hid = hid.upper()
-    
+        # translate legacy 'blessed' key
+        if data_v1.has_key('ip_mac.addr blessed'):
+            data_v1['ip_mac.addr ' + bport] = data_v1['ip_mac.addr blessed']
+            data_v1.pop('ip_mac.addr blessed')
+
         #
         # Device keys
         #
