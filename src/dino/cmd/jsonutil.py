@@ -663,14 +663,19 @@ def get_ip(addr, iface):
     if not addr or not iface:
         raise CommandExecutionError(self.cmd, "Bad params to _get_ip: %s / %s" % (addr, iface))
         
-    reserver = IpCommand(self.db)
-    iplist = reserver.sub_avail(addr)
-    if len(iplist) < 1:
-        raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
-        # Free IP. 
-        # Guaranteed not to be in a range, or already in use.
-        addr = ip_list[0]
+    #reserver = IpCommand(self.db)
+    #iplist = reserver.sub_avail(addr)
 
+    # get subnet for IP.
+    mysub = find_subnet(session, addr)
+    ipset = mysub.avail_ip_set()
+
+    if len(ipset) < 1:
+        raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
+    
+    # Free IP. 
+    # Guaranteed not to be in a range, or already in use.
+    addr = ipset.first()
     ip = IpAddress(value=addr)
 
     return ip
