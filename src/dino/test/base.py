@@ -233,7 +233,7 @@ class CommandTest(DatabaseTest):
         try:
             return cmd.execute()
         except CommandExecutionError, e:
-            print e.print_trace()
+            #print e.print_trace()
             raise
         
         
