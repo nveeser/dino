@@ -518,7 +518,7 @@ class AttributeName(AttributeSpec):
     
     def resolve(self, session, **kwargs):  
         for inst in self.element_spec.resolve(session, **kwargs):
-            yield inst.attribute(self.property_name)
+            yield inst.element_property(self.property_name)
             
 class_logger(AttributeName)  
 
@@ -536,7 +536,7 @@ class AttributeQuery(AttributeSpec):
     
     def resolve(self, session, **kwargs):  
         for inst in self.element_query.resolve(session, **kwargs):
-            yield inst.attribute(self.property_name)
+            yield inst.element_property(self.property_name)
 
 class_logger(AttributeQuery)   
 

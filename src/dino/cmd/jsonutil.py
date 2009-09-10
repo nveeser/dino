@@ -25,14 +25,14 @@ Basic tenets of the json importer:
    and entity_name.  Elements are represented as objects in dino's ORM.
 
 3) Instances of an element can be expressed as a string like so: 
-   "Element/instance_name", where Element is a class of object, and 
+   "Element:instance_name", where Element is a class of object, and 
    instance_name is a unique string describing an instance of that element.   
 
      Examples:   
-         "Device/a5s1.net"
-         "Host/app04.p01.sjc1"
-         "Interface/app04.p01.sjc1_eth0"
-         "IpAddress/172.29.5.24"
+         "Device:a5s1.net"
+         "Host:app04.p01.sjc1"
+         "Interface:app04.p01.sjc1_eth0"
+         "IpAddress:172.29.5.24"
 
 4) Elements in the ORM can have many relationships with other elements, 
    but certain elements cannot exist in dino without an owner element.
@@ -69,7 +69,7 @@ class JsonProcessor(object):
         hname = str(host.instance_name).split('.')
 
         # some initial structs
-        E = ['Device/', 'Host/', 'Port/', 'Interface/', 'IpAddress/'] 
+        E = ['Device:', 'Host:', 'Port:', 'Interface:', 'IpAddress:'] 
         data = {}
         # add v2 header.
         data['Header'] = { "version" : 2, "type": "server" }
@@ -124,7 +124,7 @@ class JsonProcessor(object):
                     data[ip] = {}
                     data[ip]['interface'] = str(address.interface)
                     data[ip]['subnet'] = str(address.subnet)
-                    (a, b) = str(address).split('/')
+                    (a, b) = str(address).split(':')
                     data[ip]['value'] = b
         
         #data = verify(self.session, data)    
@@ -133,7 +133,7 @@ class JsonProcessor(object):
 
     def process(self, filepath):  
 
-        elements = ['Device/', 'Host/', 'Port/', 'Interface/', 'IpAddress/'] 
+        elements = ['Device:', 'Host:', 'Port:', 'Interface:', 'IpAddress:'] 
         self.log.info("Read file: %s", filepath)
         data = json.load(open(filepath)) 
         # asserts new format, then verifies.
@@ -229,7 +229,7 @@ class JsonProcessor(object):
     
         for e, edict in data.items():
     
-            if e.startswith('Device/'):
+            if e.startswith('Device:'):
                 count['device'] += 1
         
                 # Rack must be known.
@@ -247,7 +247,7 @@ class JsonProcessor(object):
                                   % edict['chassis'])
                 data[e]['chassis'] = chassis
     
-            if e.startswith('Host/'):
+            if e.startswith('Host:'):
                 count['host'] += 1
     
                 # Pod must be known.
@@ -260,17 +260,17 @@ class JsonProcessor(object):
     
             # unnamed ethernet ports are lo0, by convention.
             # (ports on consoles and PDUs are unnamed.)
-            if e.startswith('Port/'):
+            if e.startswith('Port:'):
                 count['port'] += 1
                 if not data[e]['name'] == 'lo0':
                     critical = True
                     self.log.warn('Port: %s should be named lo0' 
                                   % edict['name'])
     
-            if e.startswith('Interface/'):
+            if e.startswith('Interface:'):
                 count['interface'] += 1
     
-            if e.startswith('IpAddress/'):
+            if e.startswith('IpAddress:'):
                 subnet = is_known(self.session, edict['subnet'])
                 if not subnet: 
                     critical = True 
@@ -341,7 +341,7 @@ class JsonProcessor(object):
     
         for e, edict in data.items():
     
-            if e.startswith('Device/'):
+            if e.startswith('Device:'):
                 count['device'] += 1
     
                 # Rack must be known.
@@ -360,12 +360,12 @@ class JsonProcessor(object):
                 data[e]['chassis'] = chassis
     
                 # Console must be known, if given.
-                if edict.has_key('console') and edict['console'].startswith('Device/'):
+                if edict.has_key('console') and edict['console'].startswith('Device:'):
                     # must be an instance name
                     console = is_known(self.session, edict['console'])
                     if not console:
                         critical = True 
-                        (a, b) = edict['console'].split('/')
+                        (a, b) = edict['console'].split(':')
                         self.log.warn('Console: %s does not exist.\n' % b)
                     else: 
                         data[e]['console'] = console
@@ -382,7 +382,7 @@ class JsonProcessor(object):
                         
                 
     
-            if e.startswith('Host/'):
+            if e.startswith('Host:'):
                 count['host'] += 1
     
                 # Pod must be known.
@@ -400,7 +400,7 @@ class JsonProcessor(object):
                                   % edict['appliance'])
                 data[e]['appliance'] = appliance 
        
-            if e.startswith('Port/'):
+            if e.startswith('Port:'):
                 count['port'] += 1
                 # check blessed flag
                 if edict.has_key('is_blessed') and edict['is_blessed'] == 1:
@@ -410,10 +410,10 @@ class JsonProcessor(object):
                 if edict['name'] is 'ipmi':
                     edict['is_ipmi'] = 1
           
-            if e.startswith('Interface/'):
+            if e.startswith('Interface:'):
                 count['interface'] += 1
     
-            if e.startswith('IpAddress/'):
+            if e.startswith('IpAddress:'):
                 subnet = is_known(self.session, edict['subnet'])
                 if not subnet: 
                     critical = True 
@@ -452,7 +452,7 @@ class JsonProcessor(object):
     
         # ipmi port should not be blessed port
         for e, edict in data.items():
-            if e.startswith('Port/') and \
+            if e.startswith('Port:') and \
                edict.has_key('is_blessed') and edict['is_blessed'] == 1 and \
                edict.has_key('is_ipmi')    and edict['is_ipmi']    == 1:
                 critical = True
@@ -460,9 +460,9 @@ class JsonProcessor(object):
     
         # must have either a console port, or an ipmi port.
         for e, edict in data.items():
-            if e.startswith('Device/') and edict.has_key('console'): 
+            if e.startswith('Device:') and edict.has_key('console'): 
                 count['console'] += 1
-            if e.startswith('Port/') and edict.has_key('is_ipmi'):
+            if e.startswith('Port:') and edict.has_key('is_ipmi'):
                 count['ipmi'] += 1
     
         if count['ipmi'] == 0 and count['console'] == 0:
@@ -510,7 +510,7 @@ class JsonProcessor(object):
         #
         # Device keys
         #
-        Device = E[0] + '/' + hid
+        Device = E[0] + ':' + hid
         data_v2[Device] = {}
         data_v2[Device]['hid']      =  hid
         data_v2[Device]['rackpos'] = data_v1.get('hnode.loc_rackpos', None)
@@ -528,21 +528,21 @@ class JsonProcessor(object):
     
         # rack
         if  data_v1.has_key('hnode.loc_row') and data_v1.has_key('hnode.loc_rack'):
-            rack_spec = 'Rack/' + '.'.join([data_v1['site.domain'], 
+            rack_spec = 'Rack:' + '.'.join([data_v1['site.domain'], 
                                             data_v1['hnode.loc_rack']])
         else:
-            rack_spec = "Rack/%s.unknown" % data_v1['site.domain']
+            rack_spec = "Rack:%s.unknown" % data_v1['site.domain']
             
         data_v2[Device]['rack'] = rack_spec
     
         # chassis
-        chassis_spec = 'Chassis/' + data_v1['model.name']
+        chassis_spec = 'Chassis:' + data_v1['model.name']
         data_v2[Device]['chassis'] = chassis_spec
     
         # console
         if data_v1.has_key('hnode.console_id'):
             tmp = data_v1['hnode.console_id'].split('.')
-            console_host_spec = E[1] + '/' + '.'.join(tmp[:3])
+            console_host_spec = E[1] + ':' + '.'.join(tmp[:3])
             console_host = is_known(self.session, console_host_spec)
             if console_host is None: 
                 self.log.info("  Cannot find console host: %s" % console_host_spec)
@@ -552,7 +552,7 @@ class JsonProcessor(object):
     
         # switch
         tmp = data_v1['switch_handle'].split('.')
-        switch_host_spec = E[1] + '/' + '.'.join(tmp[:3])
+        switch_host_spec = E[1] + ':' + '.'.join(tmp[:3])
         switch_host = is_known(self.session, switch_host_spec)
         if switch_host is None:
             self.log.info("  Cannot find switch host: %s" % switch_host_spec)
@@ -570,7 +570,7 @@ class JsonProcessor(object):
 
         h = handle.split('.')
         short_name = '.'.join(h[:3])
-        Host = E[1] + '/' + short_name
+        Host = E[1] + ':' + short_name
         data_v2[Host] = {}
         data_v2[Host]['name'] = h[0]
         data_v2[Host]['device'] = Device
@@ -578,11 +578,11 @@ class JsonProcessor(object):
             data_v2[Host]['id'] = int(data_v1['hnode.mw_tag']) 
     
         # pod
-        pod_spec = 'Pod/' + h[1]
+        pod_spec = 'Pod:' + h[1]
         data_v2[Host]['pod'] = pod_spec
     
         # appliance
-        appliance_spec = 'Appliance/' + data_v1['appliance.name'] + \
+        appliance_spec = 'Appliance:' + data_v1['appliance.name'] + \
                          '[' + data_v1['hnode.os_id'] + ']'
         data_v2[Host]['appliance'] = appliance_spec
     
@@ -593,7 +593,7 @@ class JsonProcessor(object):
             if key.startswith('mac_port.mac'):
                 (x, iface) = key.split()
                 mac = val.upper()
-                Port = E[2] + '/' + mac + '_' + iface
+                Port = E[2] + ':' + mac + '_' + iface
                 data_v2[Port] = {}
                 data_v2[Port]['mac'] = mac
                 data_v2[Port]['name'] = iface
@@ -617,7 +617,7 @@ class JsonProcessor(object):
     
                 # add only if there's a corresponding IP.
                 if data_v1.has_key('ip_mac.addr ' + iface):
-                    Interface = E[3] + '/' + '.'.join(h[:3]) + '_' + iface
+                    Interface = E[3] + ':' + '.'.join(h[:3]) + '_' + iface
                     data_v2[Interface] = {}
                     data_v2[Interface]['port_name'] = iface
                     data_v2[Interface]['host'] = Host
@@ -631,12 +631,12 @@ class JsonProcessor(object):
                     if is_dynamic(self.session, ip):
                         new_addr = get_ip(ip, iface)
                         ip = new_addr.instance_name
-                    IpAddress = E[4] + '/' + ip
+                    IpAddress = E[4] + ':' + ip
                     data_v2[IpAddress] = {}
                     # find my subnet
                     subnet = find_subnet(self.session, ip)
                     if subnet: 
-                        data_v2[IpAddress]['subnet'] = 'Subnet/' + subnet.instance_name
+                        data_v2[IpAddress]['subnet'] = 'Subnet:' + subnet.instance_name
                     data_v2[IpAddress]['interface'] = Interface
                     data_v2[IpAddress]['value'] = ip
     
@@ -704,14 +704,12 @@ def is_known(session, instance_name):
     '''Discover if a given element instance
        is known by dino. Does not include history.'''
 
-    obj_name = ObjectSpec.parse(instance_name, expected=ElementName) 
-
 #    if spec.entity_name == 'Device': 
 #        # discover devices in a special way
 #        instance = find_device(session, spec)
 #    else: 
     
-    instance = session.find_element(obj_name)
+    instance = session.find_element(instance_name)
 
     if instance: 
         return instance

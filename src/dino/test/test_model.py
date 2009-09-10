@@ -3,11 +3,29 @@
 from dino.db import * 
 from nose.tools import *
 
+from dino.test.base import DatabaseTest
+
 import pprint
 pp = pprint.PrettyPrinter(indent=2).pprint
 
 
-
+class TestSubnet(DatabaseTest):
+    
+    def test_add_subnet(self):
+        sess = self.db.session() 
+        
+        sess.open_changeset()
+        subnet = Subnet(addr="127.0.0.1/24")        
+        sess.add(subnet)
+        sess.submit_changeset()
+        
+        subnets = sess.query(Subnet).all()
+        
+        eq_( len(subnets), 1 )
+        
+        eq_(subnets[0].addr, "127.0.0.0")
+        eq_(subnets[0].mask, "255.255.255.0")
+        
 
 class TestAddressMath(object):
     
@@ -25,7 +43,7 @@ class TestAddressMath(object):
             
 
     mask_pairs = {  32 : "255.255.255.255",
-                    24  : "255.255.255.0",
+                    24 : "255.255.255.0",
                     16 : "255.255.0.0",
                     8 : "255.0.0.0",
                     0 : "0.0.0.0", }

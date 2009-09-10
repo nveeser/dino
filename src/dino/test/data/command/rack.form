@@ -1,0 +1,50 @@
+#############################################
+element_name: Site:sjc1
+#############################################
+city: 
+name: sjc1
+address1: 
+address2: 
+is_active: None
+state: 
+ownership: None
+sitetype: None
+timezone: None
+postal: 
+description: 
+---
+#############################################
+element_name: Rack:sjc1.1.1
+#############################################
+size: None
+name: 1.1
+location: None
+site: Site:sjc1
+devices: [  ]
+---
+#############################################
+element_name: Chassis:small
+#############################################
+product: yourmom
+vendor: yourmom
+description: None
+racksize: 1
+name: small
+---
+#############################################
+element_name: Chassis:medium
+#############################################
+product: yourmom
+vendor: yourmom
+description: None
+racksize: 2
+name: medium
+---
+#############################################
+element_name: Chassis:large
+#############################################
+product: yourmom
+vendor: yourmom
+description: None
+racksize: 4
+name: large

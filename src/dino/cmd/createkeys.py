@@ -58,7 +58,9 @@ class CreateKeys(MainCommand):
     def execute(self, session):
         instance_name = self.args[0]
         
-        host = session.find_element(instance_name)
+        resolver = session.spec_parser.parse(self.args[0])
+        
+        host = resolver.resolve().next()
         if host is None:
             raise CommandArgumentError(self, "Cannot find Host: %s" % instance_name)
             

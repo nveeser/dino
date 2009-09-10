@@ -1,0 +1,105 @@
+#############################################
+element_name: OperatingSystem:baccus
+#############################################
+name: baccus
+applicances: [ Appliance:mwdeploy[baccus] ]
+---
+#############################################
+element_name: Appliance:mwdeploy[baccus]
+#############################################
+name: mwdeploy
+os: OperatingSystem:baccus
+---
+#############################################
+element_name: Site:sjc1
+#############################################
+city: 
+name: sjc1
+address1: 
+address2: 
+is_active: None
+state: 
+ownership: None
+sitetype: None
+timezone: None
+postal: 
+description: 
+---
+#############################################
+element_name: Pod:p01
+#############################################
+description: None
+name: p01
+---
+#############################################
+element_name: Pod:net
+#############################################
+description: None
+name: net
+---
+#############################################
+element_name: Rack:sjc1.10
+#############################################
+size: None
+name: 10
+location: None
+site: Site:sjc1
+devices: [ Device:1134345 ]
+---
+#############################################
+element_name: Chassis:util
+#############################################
+product: yourmom
+vendor: yourmom
+description: None
+racksize: None
+name: util
+---
+#############################################
+element_name: Device:1134345
+#############################################
+status: None
+hw_type: None
+serialno: 1234
+hw_class: network
+rackpos: None
+console_port: None
+hid: 1134345
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: Host:a10s1.net.sjc1
+chassis: Chassis:util
+rack: Rack:sjc1.10
+---
+#############################################
+element_name: Host:a10s1.net.sjc1
+#############################################
+name: a10s1
+device: Device:1134345
+ssh_key_info: None
+interfaces: [  ]
+appliance: None
+pod: Pod:net
+---
+#############################################
+element_name: Subnet:10.2.10.0_24
+#############################################
+is_assigned: None
+description: None
+mask_len: 24
+is_active: None
+is_console: None
+gateway: None
+addr: 10.2.10.0
+parent: None
+addresses: [  ]
+admin_info: None
+site: Site:sjc1
+ranges: [  ]
+children: [  ]

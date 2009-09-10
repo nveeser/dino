@@ -20,12 +20,12 @@ class ElementCommand(MainCommand):
     
     def _find_element(self, session, assert_class=None):
         try:            
-            oname = ObjectSpec.parse(self.args[0], expected=ElementName)
+            resolver = session.spec_parser.parse(self.args[0], expected=ElementNameResolver)
               
-            if assert_class and oname.entity_name != assert_class:
+            if assert_class and resolver.get_entity() != assert_class:
                 raise CommandArgumentError(self, "EntityName must be: %s" % assert_class)
             
-            return session.resolve_element_spec(oname)
+            return resolver.resolve(session).next()
                           
         except InvalidObjectSpecError, e:
             raise CommandArgumentError(self, "Invalid ObjectSpec: %s" % e)
@@ -35,9 +35,11 @@ class ElementCommand(MainCommand):
         
     def _find_elements(self, session):
         try:
-            onames = [ ObjectSpec.parse(a, expected=ElementName) for a in self.args ]         
-            return [ session.resolve_element_spec(onames) for onames in onames ]
-
+            for a in self.args:                
+                resolver = session.spec_parser.parse(a, expected=ElementNameResolver) 
+                for elmt in resolver.resolve(session):
+                    yield elmt
+            
         except InvalidObjectSpecError, e:
             raise CommandArgumentError(self, "Invalid ObjectSpec: %s" % e)
         except UnknownElementError, e:
@@ -69,7 +71,7 @@ class ElementFormCommand(ElementCommand):
         # Editor: (not -i or -o)
         #
         else:                   
-            elements = self._find_elements(session)
+            elements = list(self._find_elements(session))
             processor.show_headers = len(elements) == 1
             form = processor.to_form(elements)
         
@@ -169,7 +171,7 @@ class EditCommand(ElementFormCommand):
 
 
     def create_processor(self, session):
-        return MultiUpdateFormProcessor(session)
+        return MultiElementFormProcessor(session)
         
 
     def process_form(self, session, processor, form):
@@ -237,16 +239,17 @@ class CreateCommand(ElementFormCommand):
             raise CommandArgumentError(self, "Must specify an EntityName")  
 
         for a in self.args:
-            if ObjectSpec.SEPARATOR in a:
-                raise CommandArgumentError(self, "Argument looks like a ElementName, not EntityName: %s" % a)
+            if not self.session.spec_parser.is_spec(a, expected=EntityNameResolver):                
+                raise CommandArgumentError(self, "Argument must be an EntityName")
                 
     def create_processor(self, session):
-        return MultiCreateFormProcessor(session)
+        return MultiElementFormProcessor(session, allow_create=True)
      
 
     def _find_elements(self, session):
         try:
-            return [ session.resolve_entity(a).create_empty() for a in self.args ]                     
+            for a in self.args:
+                yield session.resolve_entity(a).create_empty()                     
 
         except UnknownEntityError, e:
             raise CommandArgumentError(self, str(e))
@@ -312,8 +315,8 @@ class DumpCommand(EditCommand):
 
     @with_session
     def execute(self, session): 
-        processor = MultiUpdateFormProcessor(session, show_read_only=True)
-        elements = self._find_elements(session)
+        processor = MultiElementFormProcessor(session, show_read_only=True)
+        elements = list(self._find_elements(session))
         
         processor.show_headers = len(elements) == 1
         

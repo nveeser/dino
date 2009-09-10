@@ -9,6 +9,8 @@ import dino.config
 import dino.db.schema  
 from session import ElementSession
 
+from objectresolver import ObjectSpecParser
+
 class DbConfig(object):
     """
     A DbConfig is comprised of two things:
@@ -150,6 +152,9 @@ class DbConfig(object):
     def object_session(instance):
         return sqlalchemy.orm.session.object_session(instance)
         
+    
+    def object_spec_parser(self, **kwargs):
+        return ObjectSpecParser(self.entity_set, **kwargs)
         
     #
     # Testing / Maintenance methods
@@ -228,6 +233,19 @@ class_logger(DbConfig)
 
 
 class SqlLoggingHandler(logging.Handler):
+    '''
+    Distill / report SQL statement events from the SqlAlchemy Engine logging.
+    
+    Will handle and 'parse' the SQL statements and attempt to distill the event
+    down to a few key facts.  Used to observe/diagnose gross sql 
+    behavior from SqlAlchemy.
+    
+    SELECT <table> <where clause>
+    UPPDATE <table>
+    INSERT <table>
+    DELETE <table>
+    
+    '''
     SQL_REGEX_SET = [ 
         re.compile("\s*(SELECT).*FROM\s+(\S*)\s+(WHERE.*)?", re.I),
         re.compile("\s*(UPDATE)\s*(\S*)\s*.*", re.I),

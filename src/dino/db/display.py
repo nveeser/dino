@@ -20,7 +20,11 @@ class DisplayProcessor(object):
         raise NotImplemented()
 
 class EntityDisplayProcessor(DisplayProcessor):
-    def show(self, entity):               
+    
+    def show(self, entity):
+        return "\n".join(self._get_info(entity))
+            
+    def _get_info(self, entity):            
         yield ""
         yield "Description:"
         if hasattr(entity, '__doc__') and entity.__doc__ is not None:
@@ -123,7 +127,7 @@ class RackDisplayProcessor(DisplayProcessor):
         rowlist = list( rack_list.row_list() )        
         rowlist.reverse()
         
-        return [ "%02d  %s" % (i, r) for i,r in rowlist ]
+        return "\n".join([ "%02d  %s" % (i, r) for i,r in rowlist ])
         
 
     class RackElement(object):

@@ -55,10 +55,13 @@ class UnknownElementError(ElementException):
 class ElementInstanceNameError(ElementException):
     pass
 
-class ElementAttributeError(ElementException):
+class ElementPropertyError(ElementException):
     pass
  
- 
+class ElementPropertyTypeError(ElementPropertyError):
+    MSG_STR = "Type mismatch on attribute: %s/%s   Value: %s"
+    
+    
 class DatabaseError(ElementException):
     '''Used to wrap SQL Alchemy DBAPIError's '''
     def __init__(self, msg, dberr):
@@ -107,18 +110,16 @@ class FormTypeError(ElementFormException):
 #  ObjectSpec Exceptions
 # # # # # # # # # # # # # # # # # # #             
 class ObjectSpecError(ElementException):
-    def __init__(self, spec, msg):
-        self.msg = "'%s': %s" % (str(spec), msg)
-        self.args = spec
+    def __init__(self, msg, spec):
+        self.msg = "%s: %s: '%s'" % (self.__class__.__name__, msg, spec)
+        self.spec = spec
         
 class InvalidObjectSpecError(ObjectSpecError):
-    def __init__(self, spec):
-        ObjectSpecError.__init__(self, spec, "Invalid ObjectSpec")
-
-class InvalidAttributeError(ObjectSpecError):
-    def __init__(self, spec):
-        ObjectSpecError.__init__(self, spec, "Invalid Attribute")
-
+    pass
+    
+class InvalidAttributeSpecError(ObjectSpecError):
+    pass
+    
 class QueryClauseError(ObjectSpecError):
     pass
 

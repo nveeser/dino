@@ -1,0 +1,38 @@
+#############################################
+element_name: Site:old
+#############################################
+city: 
+name: old
+address1: 
+address2: 
+is_active: None
+state: 
+ownership: None
+sitetype: None
+timezone: None
+postal: 
+description: 
+---
+#############################################
+element_name: Site:new
+#############################################
+city: 
+name: new
+address1: 
+address2: 
+is_active: None
+state: 
+ownership: None
+sitetype: None
+timezone: None
+postal: 
+description: 
+---
+#############################################
+element_name: Rack:old.1.1A
+#############################################
+size: None
+name: 1.1A
+location: None
+site: Site:old
+devices: [  ]

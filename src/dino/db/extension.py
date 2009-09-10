@@ -17,6 +17,7 @@ from elixir.statements import Statement
 from dino.config import class_logger
 from session import ElementSession
 import element
+from exception import ElementInstanceNameError
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
@@ -46,6 +47,7 @@ class ElementNameBuilder(EntityBuilder):
             revision_pattern = "%s@{revision}" % format
             entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(revision_pattern) 
         
+        self.add_mapper_extension(self.InstanceNameExtension())
         
     def finalize(self):
         # Compile so that all properties are created on the mapper
@@ -68,7 +70,7 @@ class ElementNameBuilder(EntityBuilder):
         def before_insert(self, mapper, connection, instance):
             assert isinstance(instance, element.Element)
             if instance.instance_name is None:
-                raise ElementInstanceNameError("InstanceName cannot be None: %s" % mapper.class_ )
+                raise ElementInstanceNameError("InstanceName cannot be None: %s(%s)" % (mapper.class_, id(instance) ))
             return sa_orm.EXT_CONTINUE
         
         before_update = before_insert     

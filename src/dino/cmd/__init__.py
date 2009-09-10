@@ -2,18 +2,19 @@ from dino.cmd.exception import *
 from dino.cmd.command import with_session
 from dino.cmd.maincmd import MainCommand
 
-import dino.cmd.admin
-import dino.cmd.help
-import dino.cmd.jsonimport
-import dino.cmd.jsonexport
-import dino.cmd.ip
-import dino.cmd.migrate
-import dino.cmd.edit
-import dino.cmd.getset
-import dino.cmd.generate
-import dino.cmd.createkeys
-import dino.cmd.show
-import dino.cmd.info
+import admin
+import help
+import jsonimport
+import jsonexport
+import ip
+import migrate
+import edit
+import set
+import generate
+import createkeys
+import show
+import info
+import delete
 
 #import dino.cmd.jimport
 #import dino.cmd.showrack

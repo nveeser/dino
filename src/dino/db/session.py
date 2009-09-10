@@ -9,6 +9,7 @@ from dino.config import class_logger
 from exception import UnknownElementError, DatabaseError, ElementExistsError
 import changeset
 from objectspec import *
+from objectresolver import *
 import element
 
 
@@ -28,14 +29,17 @@ class ElementSession(changeset.ChangeSetSession):
         
         self.rename_elements = []
         
-        self.element_cache = None
-            
+        self.element_cache = None    
+        self.temp_cache = {}
+        
         kwargs['weak_identity_map'] = False
         changeset.ChangeSetSession.__init__(self, *args, **kwargs)
         self._identity_cls = MyStrongInstanceDict
         self.identity_map = self._identity_cls()
                  
         self.extensions.append(self.ElementSessionExtension())  
+    
+        self.spec_parser = ObjectSpecParser(self.entity_set)
     
     def commit(self):
         while self.rename_elements:
@@ -45,6 +49,7 @@ class ElementSession(changeset.ChangeSetSession):
             changeset.ChangeSetSession.commit(self)
         
         except sa_exc.DatabaseError, e:
+            import pdb;pdb.set_trace()
             raise DatabaseError("Error during commit", e)
             
     
@@ -61,72 +66,47 @@ class ElementSession(changeset.ChangeSetSession):
                 if revisioned or not e.is_revision_entity():
                     yield e
  
-         
-         
-    def _get_element_spec(self, object_spec):
-        if isinstance(object_spec, basestring):
-            element_spec = ObjectSpec.parse(object_spec, expected=(ElementName, ElementId, AttributeName))
-        
-        elif isinstance(object_spec, (ElementName, ElementId, AttributeName)):
-            element_spec = object_spec
-            
-        else:    
-            raise RuntimeError("method _get_element_spec() takes a basestring | ElementName | ElementId | AttributeName: %s" % type(object_spec))
-    
-        if isinstance(object_spec, AttributeName):
-            element_spec = object_spec.element_spec
-        
-        return element_spec 
         
     def resolve_element_spec(self, object_spec):
         ''' 
         Resolve the instance specified by the ObjectSpec object
         If not found, throw an exception 
         '''
-        element_spec = self._get_element_spec(object_spec)
+
+        expected = (ElementNameResolver, ElementIdResolver, ElementFormIdResolver)
+        resolver = self.spec_parser.parse(object_spec, expected=expected)
+        result = list(resolver.resolve(self))
+
+        if len(result) > 1:
+            raise ElementInstanceNameError("Resolver should not returned more than one element for spec: %s" % object_spec)
         
-        self.log.fine("Resolve Instance: %s" % element_spec.object_name)
-        
-        if self.element_cache and element_spec.object_name in self.element_cache:
-            self.log.fine("  Found in ElementCache")
-            return self.element_cache[element_spec.object_name]   
-        
-        return element_spec.resolve(self).next()
+        return result[0]
 
                 
     def find_element(self, object_spec):
         ''' Find the instance specified by the ObjectSpec ( ElementName | ElementId | AttributeName )
         If the element is not found, return None
         '''
-
-        element_spec = self._get_element_spec(object_spec)
-        
-        self.log.fine("Find Instance: %s" % element_spec.object_name)
-        
-        if self.element_cache and element_spec.object_name in self.element_cache:
-            self.log.fine("  Found in ElementCache")
-            return self.element_cache[element_spec.object_name]  
-        
         try:
-            return element_spec.resolve(self).next()
-            
+            return self.resolve_element_spec(object_spec)
+                        
         except UnknownElementError:
             return None
-            
 
-    def query_instances(self, object_spec):
-        ''' Find All Instances specified by the ObjectSpec ( ElementQuery | AttributeQuery )'''
+    def add_temp_element(self, entity, instance_id):
+        ''' Used by forms to create an empty element that can be referenced by
+        many other elements in the same form'''
+                
+        if entity not in self.temp_cache:
+            self.temp_cache[entity] = {}
+             
+        elmt = entity.create_empty()
+        self.temp_cache[entity][instance_id] = elmt 
         
-        if isinstance(object_spec, basestring):
-            obj_query = ObjectSpec.parse(object_spec, expected=ElementQuery)
-        elif isinstance(object_spec, ElementQuery):
-            obj_query = object_spec
-        else:
-            raise RuntimeError("query_instances() takes a basestring | ElementName: %s" % type(object_spec))
+    def get_temp_element(self, entity, instance_id):
+        return self.temp_cache.get(entity, {}).get(instance_id)
         
-        return obj_query.create_query(self).all()
-
-
+                
     def cache_add(self, instance, info=""):
         if self.element_cache is None:
             return 
@@ -157,6 +137,25 @@ class ElementSession(changeset.ChangeSetSession):
         self.log.info("CACHE END DELETE: %s", instance.object_id)
 
 
+    def dump(self, f=None):
+        if f is None:
+            import sys
+            f = sys.stdout
+            
+        f.write("----------SESSION\n")
+        f.write("-new\n")
+        for e in self.new:
+            f.write("%s %s %s\n" % (id(e), type(e), e)) 
+        
+        f.write("-dirty\n")
+        for e in self.dirty:
+            f.write("%s %s %s\n" % (id(e), type(e), e)) 
+    
+        f.write("-deleted\n")
+        for e in self.deleted:
+            f.write("%s %s %s\n" % (id(e), type(e), e)) 
+        f.write("----------SESSION\n")
+
     class ElementSessionExtension(sqlalchemy.orm.session.SessionExtension):             
         def before_flush(self, session, flush_context, instances):
             from dino.db.element import Element
@@ -164,6 +163,8 @@ class ElementSession(changeset.ChangeSetSession):
                 if isinstance(element, Element):
                     if session.query(element.__class__).filter_by(instance_name=element.instance_name).count() > 0:
                         raise ElementExistsError("Element already exists: %s" % element.element_name)
+
+
 
 
 class_logger(ElementSession)

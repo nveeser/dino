@@ -1,6 +1,7 @@
 
 from schema import *
 from objectspec import *
-from element import Element, ResourceElement
-from element_form import MultiElementFormProcessor, MultiUpdateFormProcessor, MultiCreateFormProcessor
+from objectresolver import *
+from element import Element, ResourceElement, ElementProperty
+from element_form import MultiElementFormProcessor
 from dbconfig import DbConfig

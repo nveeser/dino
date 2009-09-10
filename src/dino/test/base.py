@@ -15,6 +15,14 @@ import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 class DinoTest(object):
 
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
     def setUp(self):           
         formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
         #import pdb;pdb.set_trace()
@@ -24,22 +32,29 @@ class DinoTest(object):
     def tearDown(self):
         pass
         
+        
 class DataTest(DinoTest):
     DATA_DIR = None
     
-    def setUp(self):
-        super(DataTest, self).setUp() 
+    @classmethod
+    def setUpClass(cls):
+        super(DataTest, cls).setUpClass() 
         
-        if self.DATA_DIR != None:
-            self.basedir = abspath(join(dirname(__file__), "data", self.DATA_DIR))
+        if cls.DATA_DIR != None:
+            cls.basedir = abspath(join(dirname(__file__), "data", cls.DATA_DIR))
         else:
-            self.basedir = abspath(join(dirname(__file__), "data"))
+            cls.basedir = abspath(join(dirname(__file__), "data"))
     
-    def get_datafile(self, shortname):
-        path = os.path.join(self.basedir, shortname)
+    @classmethod
+    def get_datafile(cls, shortname):
+        path = os.path.join(cls.basedir, shortname)
         assert os.path.exists(path), "Could not find file: %s" % path
         return path        
 
+    @classmethod
+    def read_form(cls, formname):
+        path = cls.get_datafile("%s.form" % formname)        
+        return open(path).read()
 
     def compare_data(self, expected, actual):        
         expected_lines = expected.split('\n')
@@ -89,23 +104,30 @@ class DatabaseTest(DinoTest):
     ENTITY_SET = None    
     CONFIG_SECTION = 'unittest.db'
  
-       
     def setUp(self):
         super(DatabaseTest, self).setUp() 
-        
-        self.log.info("Setup database")
-        self.db = self.get_database_config(self.ENTITY_SET)
-        self.db.clear_schema()
         self.db.create_all()
+    
                     
     def tearDown(self):
         super(DatabaseTest, self).tearDown()
-        
-        self.log.info("Teardown database")
-        self.db = self.get_database_config(self.ENTITY_SET)
-        self.db.clear_schema()
+        #self.db.clear_schema()
+ 
+ 
+    @classmethod
+    def setUpClass(cls):  
+        super(DatabaseTest, cls).setUpClass()
+        cls.db = cls.get_database_config(cls.ENTITY_SET)     
+        cls.db.create_all()
+
+ 
+    @classmethod
+    def tearDownClass(cls):
+        super(DatabaseTest, cls).tearDownClass()
+        cls.db.drop_all()     
    
-    def get_database_config(self, entity_set): 
+    @classmethod
+    def get_database_config(cls, entity_set): 
         opts = { 
         'user' : None,
         'password' : None,
@@ -117,11 +139,24 @@ class DatabaseTest(DinoTest):
 
         file_config = dino.config.load_config()
         for k in opts.keys():
-            if file_config.has_option(self.CONFIG_SECTION, k):
-                opts[k] = file_config.get(self.CONFIG_SECTION, k)
+            if file_config.has_option(cls.CONFIG_SECTION, k):
+                opts[k] = file_config.get(cls.CONFIG_SECTION, k)
         
         return DbConfig(**opts)
-       
+   
+
+class DatabaseResetTest(DatabaseTest):
+    ''' 
+    Adds fixtures to reset the database after each test.
+    '''
+    def setUp(self):
+        self.setUpClass()        
+        super(DatabaseResetTest, self).setUp()
+        
+        
+    def tearDown(self):
+        self.tearDownClass()        
+        super(DatabaseResetTest, self).tearDown()
 
 class SingleSessionTest(DatabaseTest):
         
@@ -134,18 +169,25 @@ class SingleSessionTest(DatabaseTest):
         super(SingleSessionTest, self).tearDown()
         self.sess.close()
     
+    
+    def load_form(self, formdata):
+        proc = MultiCreateFormProcessor(self.sess)                
+        self.sess.begin() 
+        proc.process(formdata)
+        self.sess.commit()
+        
  
-class DoubleSessionTest(DatabaseTest):
-    '''currently unused'''    
-    def setUp(self):
-        super(DoubleSessionTest, self).setUp()
-        self.sess1 = self.db.session()
-        self.sess2 = self.db.session()
-                
-    def tearDown(self):
-        super(SingleSessionTest, self).tearDown()
-        self.sess1.close()
-        self.sess2.close()
+#class DoubleSessionTest(DatabaseTest):
+#    '''currently unused'''    
+#    def setUp(self):
+#        super(DoubleSessionTest, self).setUp()
+#        self.sess1 = self.db.session()
+#        self.sess2 = self.db.session()
+#                
+#    def tearDown(self):
+#        super(SingleSessionTest, self).tearDown()
+#        self.sess1.close()
+#        self.sess2.close()
     
     
 class ObjectTest(DatabaseTest):
@@ -218,25 +260,6 @@ class ObjectTest(DatabaseTest):
         
         return [ d.host for d in self.objects['devices'] ]
 
-        
-class CommandTest(DatabaseTest):
-    
-    def setUp(self):
-        super(CommandTest, self).setUp()
-
-        
-    def runCommand(self, *args):
-        (cmdname, args) = (args[0], list(args[1:]))
-
-        cmd_cls = MainCommand.find_command(cmdname)
-        cmd = cmd_cls(self.db, None)
-        cmd.parse(args)
-        #try:
-        return cmd.execute()
-        #except CommandExecutionError, e:
-        #    #print e.print_trace()
-        #    raise
-        
         
         
         

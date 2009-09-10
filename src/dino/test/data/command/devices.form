@@ -1,0 +1,263 @@
+#############################################
+element_name: Device:XXX:1
+#############################################
+status: None
+hw_type: None
+serialno: 1234-1
+hw_class: None
+rackpos: 1
+console_port: None
+hid: XXX:1
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:small
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:3
+#############################################
+status: None
+hw_type: None
+serialno: 1234-3
+hw_class: None
+rackpos: 3
+console_port: None
+hid: XXX:3
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:small
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:5
+#############################################
+status: None
+hw_type: None
+serialno: 1234-5
+hw_class: None
+rackpos: 5
+console_port: None
+hid: XXX:5
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:small
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:9
+#############################################
+status: None
+hw_type: None
+serialno: 1234-9
+hw_class: None
+rackpos: 9
+console_port: None
+hid: XXX:9
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:medium
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:12
+#############################################
+status: None
+hw_type: None
+serialno: 1234-12
+hw_class: None
+rackpos: 12
+console_port: None
+hid: XXX:12
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:medium
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:15
+#############################################
+status: None
+hw_type: None
+serialno: 1234-15
+hw_class: None
+rackpos: 15
+console_port: None
+hid: XXX:15
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:medium
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:20
+#############################################
+status: None
+hw_type: None
+serialno: 1234-20
+hw_class: None
+rackpos: 20
+console_port: None
+hid: XXX:20
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:25
+#############################################
+status: None
+hw_type: None
+serialno: 1234-25
+hw_class: None
+rackpos: 25
+console_port: None
+hid: XXX:25
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:30
+#############################################
+status: None
+hw_type: None
+serialno: 1234-30
+hw_class: None
+rackpos: 30
+console_port: None
+hid: XXX:30
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:35
+#############################################
+status: None
+hw_type: None
+serialno: 1234-35
+hw_class: None
+rackpos: 35
+console_port: None
+hid: XXX:35
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:40
+#############################################
+status: None
+hw_type: None
+serialno: 1234-40
+hw_class: None
+rackpos: 40
+console_port: None
+hid: XXX:40
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1
+---
+#############################################
+element_name: Device:XXX:45
+#############################################
+status: None
+hw_type: None
+serialno: 1234-45
+hw_class: None
+rackpos: 45
+console_port: None
+hid: XXX:45
+pdu_port: None
+pdu_module: None
+notes: None
+switch_port: None
+console: None
+pdu: None
+switch: None
+ports: [  ]
+host: None
+chassis: Chassis:large
+rack: Rack:sjc1.1.1

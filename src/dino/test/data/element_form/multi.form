@@ -1,39 +1,13 @@
-#############################################
-# System Attributes (Read-Only) 
-# 
-element_name: Person/<1>
+
+element_name: Person:<1>
 id: None
-
-#############################################
-# Attributes
-# 
-
 name: eddie
 age: 12
-
-#############################################
-# Relationships
-# 
-addresses: [ Address/<1> ]
+addresses: [ Address:<1> ]
+company: None
 ---
-#############################################
-# System Attributes (Read-Only) 
-# 
-element_name: Address/<1>
+element_name: Address:<1>
 id: None
-
-#############################################
-# Attributes
-# 
-# HostPort.value: String(length=20, convert_unicode=False, assert_unicode=None)
-# HostPort.prop: Integer()
-
 value1: Work
 value2: 50
-
-#############################################
-# Relationships
-# 
-# HostPort.host: Host
-
-person: Person/<1>
+person: Person:<1>

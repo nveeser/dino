@@ -87,9 +87,7 @@ class HelpCommand(MainCommand):
         cmd.print_help()
 
     def print_entity(self, entity):
-        proc = entity.entity_display_processor()
-        for line in proc.show(entity):
-            print line
+        print entity.entity_display_processor().show(entity)
   
     def _print_doc(self, docstr, indent=""):
         ''' Print out the docstring, removing any whitespace begining or ending the line

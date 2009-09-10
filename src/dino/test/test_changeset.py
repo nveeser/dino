@@ -20,65 +20,7 @@ from dino.test.base import *
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
-
-__session__ = None
-__entity_collection__ = entity_set = dino.db.collection.EntityCollection()
-__metadata__ = metadata = sqlalchemy.schema.MetaData()
-
-
-###############################################
-#
-# Example Classes 
-#
-class Person(elixir.Entity):
-    elixir.using_options(tablename='person')
-    elixir.using_table_options(mysql_engine='InnoDB')
-    using_changeset()
-    
-    name = Field(types.String(20))
-    age = Field(types.Integer)
-    addresses = OneToMany("Address")
-
-    def __str__(self):
-        return "<%s %s(%s)>" % (self.__class__.__name__, self.name, self.age)
-    
-    
-class Address(elixir.Entity):
-    elixir.using_options(tablename='address')
-    elixir.using_table_options(mysql_engine='InnoDB')
-    using_changeset()
-    
-    value1 = Field(types.String(20))
-    value2 = Field(types.Integer)
-
-    person = ManyToOne("Person")    
-        
-    def __str__(self):
-        return "<Addr %s(%s)>" % (self.value, self.prop)
-
-
-########
-# Experiment with inheritance
-########
-
-class Car(elixir.Entity):
-    elixir.using_options(tablename='car')
-    elixir.using_table_options(mysql_engine='InnoDB')
-    using_changeset()
-    
-    color = Field(types.String(255), index=True)
-    mileage = Field(types.Integer)  
-
-class Sedan(Car):
-    pass 
-
-class Suv(Car):
-    fourwheeldrive = Field(types.Boolean, default=False)
-
-
-#print [ "%s.%s" % (e.__module__, e.__name__) for e in entity_set ]
-elixir.setup_entities(entity_set)            
-
+from simplemodel import *
 
 ###############################################
 #
@@ -98,19 +40,34 @@ elixir.setup_entities(entity_set)
 #        conn.close()
 #        
 #        super(ChangeSetTest, self).tearDown()
-#        
-        
-class TestAddEntity(SingleSessionTest):
-    ENTITY_SET = entity_set
+
+
+class ChangeSetTest(SingleSessionTest):
+    ENTITY_SET = simple_entity_set
     
-    def test_add_person(self):
-       
-        self.sess.open_changeset()
-        p = Person(name='eddie', age=12)
-        self.sess.add(p)
-        self.sess.submit_changeset()
+    def setUp(self):
+        super(ChangeSetTest, self).setUp() 
+        self.db.create_all()
+                
+        session = self.db.session()
         
-        assert self.sess.last_changeset is not None
+        session.open_changeset()
+        p = Person(name='eddie', age=12)
+        session.add(p)
+        session.submit_changeset()
+        
+        assert session.last_changeset is not None
+
+   
+    def tearDown(self):
+        super(ChangeSetTest, self).tearDown()
+        self.db.clear_schema()
+
+
+
+class TestChangeSet(ChangeSetTest):
+
+    def test_add_person(self):
         
         for stmt in ["SELECT * FROM person", "SELECT * FROM person_revision"]:
             result = self.sess.execute(stmt)
@@ -119,27 +76,22 @@ class TestAddEntity(SingleSessionTest):
             assert len(rows) == 1
             myrow = rows[0]
         
-            assert myrow['name'] == 'eddie'
-            assert myrow['age'] == 12
+            eq_(myrow['name'],'eddie')
+            eq_(myrow['age'],12)
         
         
     def test_add_address(self):
         self.sess.open_changeset()
 
-        a = Address(value1='Home', value2=12)
+        p = self.sess.query(Person).filter_by(name='eddie').first()     
+        a = Address(value1='Home', value2=12, person=p)
         self.sess.add(a)
     
         self.sess.submit_changeset()
 
 
     def test_delete_person(self):
-        self.sess.open_changeset()
-        p = Person(name='eddie', age=12)
-        self.sess.add(p)
-        self.sess.submit_changeset()
-        
-        assert self.sess.last_changeset is not None
-        
+        p = self.sess.query(Person).filter_by(name='eddie').first() 
         self.sess.open_changeset()
         self.sess.delete(p)
         cs = self.sess.submit_changeset()
@@ -152,17 +104,12 @@ class TestAddEntity(SingleSessionTest):
         assert len(result) == 0
         
 
-class TestRevision(SingleSessionTest):     
-    ENTITY_SET = entity_set
+class TestRevision(ChangeSetTest):     
     
     def setUp(self):
-        super(TestRevision, self).setUp()
+        super(TestRevision, self).setUp()        
         
-        self.sess.open_changeset()
-        p = Person(name='eddie', age=12)
-        self.sess.add(p)
-        self.sess.submit_changeset()
-        
+        p = self.sess.query(Person).filter_by(name='eddie').first()        
         for i in xrange(4):
             self.sess.open_changeset()
             p.age += 1
@@ -170,11 +117,10 @@ class TestRevision(SingleSessionTest):
     
         self.sess.expunge_all()
 
-        
+
     def test_revision(self):
         
-        q = self.sess.query(Person).filter_by(name='eddie').limit(1)
-        p = q.first()
+        p = self.sess.query(Person).filter_by(name='eddie').first()
         
         assert p.name == 'eddie'
         assert p.revision == 5
@@ -300,8 +246,6 @@ def do_revisions(db):
     
     
 if __name__ == "__main__":
-    teardown_module()
-    setup_module()
     db = get_database_config(entity_set)
     
     #print db.dump_schema()

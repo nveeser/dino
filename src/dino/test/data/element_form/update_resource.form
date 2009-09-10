@@ -1,16 +1,5 @@
-#############################################
-# System Attributes (Read-Only)                     
-#                 
-element_name: Person/eddie
-
-#############################################
-# Attributes               
-#
+element_name: Person:eddie
 age: 12
 name: eddie
-
-#############################################
-# Relationships  
-#
 phone_number: 415-202-5555
-addresses: [ Address/ADDR-eddie-Work ]
+addresses: [ Address:ADDR-eddie-Work ]

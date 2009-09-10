@@ -95,7 +95,7 @@ class Device(object):
     @validates('status', 'rackpos')
     def validate(self, name, value):
         if name == "status":
-            if value.upper() not in [ 'INVENTORY','ACTIVE', 'BROKEN', 'DEAD', 'RMA' ]:
+            if value and value.upper() not in [ 'INVENTORY','ACTIVE', 'BROKEN', 'DEAD', 'RMA' ]:
                 raise ValueError("Value must be one of %s" % self.choices)
                 
 #        if name == 'rackpos':

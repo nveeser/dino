@@ -1,5 +1,6 @@
 import logging
 import re
+import datetime
 
 import sqlalchemy.orm as sa_orm
 import sqlalchemy.types as sa_types
@@ -10,12 +11,14 @@ import elixir
 from dino.config import class_logger
 from exception import *
 from objectspec import *
+from objectresolver import *
+from objectresolver import BaseElementResolver
 from display import FormDisplayProcessor, EntityDisplayProcessor
 import extension
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
-__all__ = [ 'Element', 'ResourceElement', 'InstanceName' ]
+__all__ = [ 'Element', 'ResourceElement', 'InstanceName', 'ElementProperty' ]
 
 ###################################################################
 #
@@ -35,16 +38,12 @@ class ElementMeta(elixir.EntityMeta):
                 
         cls.log = logging.getLogger("dino.db.schema." + name)    
 
-        element_bases = [ b for b in bases if isinstance(b, ElementMeta) ]
         # If none of the base classes are 'derived' from ElementMeta, 
-        # this class is Element
+        # this class is the 'Root' (ie Element)
+        element_bases = [ b for b in bases if isinstance(b, ElementMeta) ]
         if len(element_bases) == 0:  
-            # is 'base' class of the Metaclass tree (ie Element)
-            cls.ALL_ENTITY_LIST = []
             return 
-        
-        cls.ALL_ENTITY_LIST.append(cls)        
-        cls.INSTANCE_NAME_REGEX = ObjectSpec.create_element_regex(name)        
+              
         cls.NEXT_FORM_ID = 0
 
         if hasattr(cls, '_descriptor'):
@@ -53,13 +52,14 @@ class ElementMeta(elixir.EntityMeta):
 
     def allocate_form_id(cls):
         cls.NEXT_FORM_ID += 1
-        return ElementFormId.to_form_id(cls.NEXT_FORM_ID)
+        return ElementFormIdResolver.to_form_id(cls.NEXT_FORM_ID)
         
     def entity_display_processor(cls):
         return EntityDisplayProcessor()
 
     def __str__(self):
         return self.__name__
+
 
 class Element(object):   
     """ Base Class for 'most' objects in the Dino Model
@@ -110,8 +110,8 @@ class Element(object):
 
 
     def __init__(self, **kwargs):
-        object.__setattr__(self, '_form_id', None) # odd syntax to get around __setattr__ method
-        
+        # initialize self._form_id (without calling self.__setattr__())
+        object.__setattr__(self, '_form_id', None) 
         self.set(**kwargs)        
     
     def __str__(self):
@@ -134,7 +134,7 @@ class Element(object):
         pass
 
     def __setattr__(self, name, value):
-        if not hasattr(self, name) and name not in ('_sa_instance_state', '_default_state'):
+        if not hasattr(self, name) and name not in ('_sa_instance_state', '_default_state', '_changeset_view'):
             self.log.warning("Assigning to unknown attribute: %s.%s" % (self.__class__.__name__, name))
         object.__setattr__(self, name, value)
     
@@ -224,16 +224,9 @@ class Element(object):
     #
     # ElementName Related Methods
     #
+
     @classmethod
-    def is_element_name(cls, string):
-        for element in cls.ALL_ENTITY_LIST:
-            if element.INSTANCE_NAME_REGEX.match(string) is not None:
-                return True    
-        return False 
-            
-    
-    @classmethod
-    def element_name_re(cls):
+    def element_name_regex(cls):
         '''Return a compiled RegEx object that will 
         match an ElementName of this objects type.
         
@@ -243,43 +236,59 @@ class Element(object):
         2: The EntityName : 'Device'
         3: The InstanceName : 'foo' 
         '''
-        return cls.INSTANCE_NAME_REGEX
-        
+        if 'ELEMENT_NAME_REGEX' not in vars(cls):
+            cls.ELEMENT_NAME_REGEX = BaseElementResolver.create_element_name_regex(cls.__name__)  
+        return cls.ELEMENT_NAME_REGEX
 
-    def attribute(self, property_name):
-        return Attribute(self, property_name)
 
 
     @property
     def instance_id(self):
         if self.id:
-            return ElementId.to_instance_id(self.id)
+            return ElementIdResolver.to_instance_id(self.id)
         else:
             return None
-    
+         
+    def element_property(self, property_name):
+        if not self.has_sa_property(property_name):
+            raise ElementPropertyError("Attribute not found on Element: %s : %s" % (self, property_name) )
+            
+        sa_property = self.get_sa_property(property_name)
+        
+        if isinstance(sa_property, sa_props.ColumnProperty):
+            return ElementPropertyColumn(self, property_name)
+        
+        elif isinstance(sa_property, sa_props.RelationProperty):
+            if sa_property.uselist:
+                return ElementPropertyRelationToMany(self, property_name)
+            else:
+                return ElementPropertyRelationToOne(self, property_name)
+
+        else:
+            raise ElementPropertyError()
+               
     @property
     def element_name(self):
-        return ElementName(self.entity_name, self.find_name()).object_name
+        return ElementNameResolver.make_name(self.entity_name, self.instance_name)
 
     @property
     def element_id(self):
         if self.id:
-            return ElementId(self.entity_name, self.id).object_name
+            return ElementIdResolver.make_name(self)
         else:
             return None
 
 
     def find_name(self):
         ''' Find some unique name by which to refer to this instance
-        
-        1. Look in the _instance_name attribute
-        2. Create an InstanceId from the id column of the object 
-        3. Read the underlying _instance_name Column
+        1. Look at the instance_name column (None if a required field is not available)
+        2. Look at the InstanceId from the id column of the object (None if the object has never been persisted) 
+        3. Look at existing form_id value 
         4. Create a temporary FormId unique to all instances of this Element, in this process         
         '''        
             
         self.log.finest("  Trying instance_name")
-        instance_name = self.instance_name  # self.derive_name()                
+        instance_name = self.instance_name               
 
         if instance_name is None:
             self.log.finest("  Trying instance_id")
@@ -294,6 +303,7 @@ class Element(object):
             instance_name = self._form_id = self.__class__.allocate_form_id()
         
         self.log.finest("  InstanceName: %s" % instance_name)
+        
         return instance_name
     
                
@@ -301,7 +311,7 @@ class Element(object):
         return self.NAME_PROCESSOR.derive_name(self)
  
     def derive_element_name(self):
-        return str( ElementName(self.entity_name, self.derive_name()) )
+        return str( ElementNameResolver.make_name(self.entity_name, self.derive_name()) )
 
     def update_name(self, override_dict={}):
         derived_name = self.NAME_PROCESSOR.derive_name(self, override_dict)   
@@ -323,8 +333,8 @@ class Element(object):
         for entity in entity_list:
             cls.log.info("Processing: %s" % entity.__name__)
             
-            for instance in session.query(entity).all():
-                instance.update_name()
+            for elmt in session.query(entity).all():
+                elmt.update_name()
                                 
 class ResourceElement(object):
     '''  What is a 'ResourceElement'?
@@ -350,63 +360,197 @@ class ResourceElement(object):
         raise NotImplemented()
 
 
-class Attribute(object):
+
+
+class ElementProperty(object):
     ''' 
     An Attribute is a specific attribute on a specific element instance
     '''
+    
+    PARSER_MAP = {
+        sa_types.Boolean : bool,
+        sa_types.Integer : int,
+        sa_types.String : str,
+        sa_types.Text : str,
+        sa_types.Unicode : unicode,
+        sa_types.Float : float, 
+        sa_types.Date : datetime.date,        
+        sa_types.DateTime : datetime.datetime,
+        sa_types.Time : datetime.time, 
+        sa_types.Interval : datetime.timedelta,
+    } 
+    
     def __init__(self, element, name):
+        assert self.__class__ is not ElementProperty, "Hey! use a subclass of ElementProperty"
+
         self.element = element
         self.property_name = name
-        
-        if not self.element.has_sa_property(self.property_name):
-            raise ElementAttributeError("Attribute not found on Element: %s : %s" % (self.element, self.property_name) )
-            
-    
+        self.sa_property = self.element.get_sa_property(self.property_name)
+         
+         
     def __str__(self):
-        return self.attribute_name()
+        return self.element_property_name()
     
-    def attribute_name(self):
-        element_spec = ElementName(self.element.entity_name, self.element.instance_name)
-        return str( AttributeName(element_spec, self.property_name) )
+    def element_property_name(self):
+        return AttributeSpecResolver.make_name(self.element.entity_name, self.element.instance_name, self.property_name)
+    
+    def is_relation(self):
+        return isinstance(self.sa_property, sa_props.RelationProperty)
         
+    def is_attribute(self):
+        return isinstance(self.sa_property, sa_props.ColumnProperty)
+    
+    def is_relation_to_one(self):
+        return self.is_relation() and not self.sa_property.uselist
+            
+    def is_relation_to_many(self):
+        return self.is_relation() and self.sa_property.uselist
+    
     def value(self):
         '''return the value specified by this Attribute object'''
         return getattr(self.element, self.property_name)
 
-    def set(self, value):
+    def valuestr(self):
+        return str(self.value())
+
+    def _resolve_value_element(self, value):
+        '''Given a string (resource or object specification), return an element
+            
         '''
-        Set the attribute to value
-        Checks Property information on the Attribute, and resolves
-        ElementNames to a live Object Reference
-        '''  
-        session = sa_orm.object_session(self.element)
-        assert session is not None, "Element must be attached to session to use set"
- 
-        sa_property = self.element.get_sa_property(self.property_name)   
+           
+        if isinstance(value, Element) or value is None:
+            return value
+                    
+        target_cls = self.element.get_sa_property_type(self.property_name)                
+        
+        try: 
+            session = sa_orm.object_session(self.element)
+            assert session is not None, "Element must be attached to session to use set"
+
+            value_element = session.resolve_element_spec(value)
+            
+            if not isinstance(value_element, target_cls):
+                raise ElementPropertyError("Object Specification resolves to incorrect type %s.  Must resolve to type %s" % (type(value_element), target_cls))
+                        
+        except InvalidObjectSpecError, e:
+            
+            if issubclass(target_cls, ResourceElement):
+                self.log.finer("Create Resource from value: %s" % value)  
+                value_element = target_cls.create_resource(session, value, self.element)
                 
-        # Column
-        #
-        if isinstance(sa_property, sa_props.ColumnProperty):                                                                
-            setattr(self.element, self.property_name, value)      
-         
-        # Relation
-        #     
-        elif isinstance(sa_property, sa_props.RelationProperty):
-            if sa_property.uselist:
-                ElementAttributeError("Cannot call set on 1toN or NtoN Relationship: %s" % self.property_name)
-
-            if not ElementSpec.is_spec(value):
-                target_cls = self.element.get_sa_property_type(self.property_name)
-
-                if issubclass(target_cls, ResourceElement):
-                    self.log.finer("Create Resource from value: %s" % value)  
-                    value_instance = target_cls.create_resource(session, value, self.element)
-                else:
-                    self.log.error("Must specify ElementName for attribute. Argument is not ObjectSpec: %s", value)
-                     
             else:
-                value_instance = session.resolve_element_spec(value)
-                            
-            setattr(self.element, self.property_name, value_instance)
+                raise ElementPropertyError("Must specify ElementName/ElementId for . Argument cannot be resolved: %s", value)
 
-class_logger(Attribute)
+        return value_element
+        
+            
+    def add(self, value):        
+        raise ElementPropertyError("Cannot only call ElementProperty.add() on ElementProperty is OneToMany / ManyToMany" )
+
+    def remove(self, value):        
+        raise ElementPropertyError("Cannot only call ElementProperty.remove() on ElementProperty is OneToMany / ManyToMany" )
+
+    def set(self, value):
+        raise NotImplemented() 
+
+
+class ElementPropertyColumn(ElementProperty):
+
+    def set(self, value):
+        # Method returns a processor for converting between SQL and Python types
+        coltype_processor = self.sa_property.columns[0].type
+        # We want to know what class the type processor came from, and translate 
+        # to a python type.        
+        coltype = type(coltype_processor)  
+        
+        if value is None:
+            value = ""
+                                                                     
+        elif value == 'None':
+            value = None
+            
+        elif coltype in self.PARSER_MAP:
+            try:
+                value_type = self.PARSER_MAP[coltype]
+                value = value_type(value)
+            
+            except ValueError, e:
+                raise ElementPropertyError("Bad Value for Column: %s Type: %s Value: %s" % (self.element_property_name(), str(value_type), value ))
+                
+            except TypeError, e:
+                raise ElementPropertyTypeError(self.element, self.property_name, value)
+                                                        
+        setattr(self.element, self.property_name, value)     
+
+
+class ElementPropertyRelationToOne(ElementProperty):
+
+    def set(self, value):
+        if value == "None":                        
+            value = None
+                     
+        value = self._resolve_value_element(value)
+        setattr(self.element, self.property_name, value)
+     
+     
+class ElementPropertyRelationToMany(ElementProperty):   
+    
+    def valuestr(self):
+        return "[" + " ".join([ str(x) for x in self.value()]) + "]"
+
+    def set(self, value):
+        assert isinstance(value, (basestring, list, Element)), "Must Element pass element, list or string to ElementProperty.set() for this property: %s" % str(self) 
+
+        property_collection = getattr(self.element, self.property_name)            
+        if not isinstance(property_collection, list):
+            raise ElementPropertyError("""Cannot currently call 'set' on an ElementProperty OneToMany/ManyToMany that is not a list""")
+            
+        if isinstance(value, (basestring, Element)):
+            value = self._resolve_value_element(value)    
+            property_collection.append(value)
+            
+        elif isinstance(value, list):
+            value_collection = [ self._resolve_value_element(v) for v in value ]                
+            
+            # make the property collection look like the value collection
+            for elmt in property_collection:
+                if elmt not in value_collection:
+                    property_collection.remove(elmt)
+
+            for elmt in value_collection:
+                if elmt not in property_collection:
+                    property_collection.append(elmt)
+    
+                   
+    def add(self, value):
+        if not self.is_relation_to_many():
+            raise ElementPropertyError("Cannot only call ElementProperty.add() on ElementProperty is OneToMany / ManyToMany" )
+
+        value = self._resolve_value_element(value)
+
+        property_collection = getattr(self.element, self.property_name)            
+        if not isinstance(property_collection, list):
+            raise ElementPropertyError("""Cannot currently call 'add' on an ElementProperty OneToMany/ManyToMany that is not a list""")
+        
+            
+        if value not in property_collection:
+            property_collection.append(value)
+        else:
+            raise ElementPropertyError("Element not added: Element already on list: %s", value)
+    
+    
+    
+    def remove(self, value):
+        value = self._resolve_value_element(value)
+ 
+        property_collection = getattr(self.element, self.property_name)            
+        if not isinstance(property_collection, list):
+            raise ElementPropertyError("""Cannot currently call 'remove' on an ElementProperty OneToMany/ManyToMany that is not a list""")
+ 
+        if value in property_collection:
+            property_collection.remove(value)
+        else:
+            raise ElementPropertyError("Cannot remove: Element not in list: %s", value)                
+
+
+class_logger(ElementProperty)
