@@ -14,8 +14,7 @@ import yaml
 from optparse import Option
 
 from dino.generators.base import Generator, GeneratorExecutionError
-from dino.db import (Device, Rack, Site, Host, IpType)
-
+from dino.db import (Device, Rack, Site, Host, IpType, Appliance, OperatingSystem)
 
 HID_JSON_PATTERN = 'hostid-%i.json'
 HID_YAML_PATTERN = 'hostid-%i'

@@ -61,7 +61,7 @@ src_install() {
 	mkdir -p ${D}/usr/bin
 	mkdir -p ${D}/var/cache/dino
 	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dinoadm
-	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/betty
+	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dino
 	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dino-probe
 	cp ${WORKDIR}/dino2-${PV}/dino-discover ${D}/usr/bin/dino-discover
 	

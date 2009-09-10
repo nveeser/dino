@@ -13,7 +13,7 @@ import os
 
 cmdname = os.path.basename(sys.argv[0])
 
-if cmdname in ('dinoadm', 'belle', 'pug', 'cli'):
+if cmdname in ('dino', 'dinoadm', 'belle', 'pug', 'cli'):
     import dino.cmd.cli
     dino.cmd.cli.AdminCli().main(sys.argv)
 
