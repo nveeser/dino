@@ -41,6 +41,18 @@ class IpType(types.TypeDecorator):
     def ntoa(n):
         return '%d.%d.%d.%d' % ((n>>24) & 0xff, (n>>16) & 0xff, (n>>8) & 0xff, n & 0xff)    
 
+    @classmethod
+    def network_int(cls, address):
+        if isinstance(address, schema.IpAddress):
+            return address.nvalue
+        elif isinstance(address, (int,long)):
+            return address
+        elif isinstance(address, basestring):
+            return cls.aton(address)
+        else:
+            raise ValueError("Address must { IpAddress | int | str }, not %s" % type(address))
+        
+        
 
 class StringSetType(types.TypeDecorator):
     def __init__(self, length, choices):
@@ -120,18 +132,12 @@ class IpAddress(object):
     
     @property
     def nsubnet(self):
-        if self._subnet is None:
-            
+        if self._subnet is None:        
             session = object_session(self)
             assert session is not None, "Object must have session to perform query"
+                        
+            self._subnet = Subnet.find_subnet(session, self.nvalue) 
             
-            sql_netmask = func.power(2,32) - func.power(2, (32-schema.Subnet.mask_len))
-            
-            self._subnet = session.query(Subnet)\
-                    .filter( schema.Subnet.addr == sql_netmask.op('&')(self.nvalue) )\
-                    .order_by( schema.Subnet.mask_len.desc() )\
-                    .first()
-    
         return self._subnet
     #
     # Methods
@@ -147,15 +153,8 @@ class IpAddress(object):
         
     def query_subnet(self):
         session = object_session(self)
-        assert session is not None, "Object must have session to perform query"
-        
-        sql_netmask = func.power(2,32) - func.power(2, (32-schema.Subnet.mask_len))
-        
-        q = session.query(schema.Subnet)\
-                .filter( schema.Subnet.addr == sql_netmask.op('&')(self.nvalue) )\
-                .order_by( schema.Subnet.mask_len.desc() )
-                
-        return q.first()
+        assert session is not None, "Object must have session to perform query"        
+        return Subnet.find_subnet(session, self.nvalue)
   
     @staticmethod
     def int2bin(n, count=32):
@@ -186,6 +185,18 @@ class Subnet(object):
             if n >> i & 1: len +=1
             else: break 
         return len
+
+    @classmethod 
+    def find_subnet(self, session, address):
+        int_address = IpType.network_int(address)
+        
+        sql_netmask = func.power(2,32) - func.power(2, (32-schema.Subnet.mask_len))
+        
+        q = session.query(schema.Subnet)\
+                .filter( schema.Subnet.addr == sql_netmask.op('&')(int_address) )\
+                .order_by( schema.Subnet.mask_len.desc() )
+                
+        return q.first()
 
     #
     # Properties
@@ -219,16 +230,9 @@ class Subnet(object):
     #
     # Methods
     #   
-    def contains(self, address):      
-        if isinstance(address, schema.IpAddress):
-            return self.naddr == self.nmask & address.naddr
-        elif isinstance(address, (int,long)):
-            return self.naddr == self.nmask & address
-        elif isinstance(address, basestring):
-            return self.naddr == self.nmask & IpType.aton(address)
-        else:
-            raise ValueError("method contains takes { IpAddress | int | str }, not %s" % type(address))
-
+    def contains(self, address):  
+        ip_int = IpType.network_int(address)
+        return self.naddr == self.nmask & ip_int 
     
     def naddr_set(self):
         """ return a set of integers representing IP addresses """
@@ -249,12 +253,13 @@ class Subnet(object):
         
         ip_set = self.naddr_set()
                 
-        for r in self.ranges:
+        for r in self.ranges: 
             ip_set -= r.naddr_set()
-                    
+            
         for ip in self.addresses:
-            ip_set -= ip.naddr
-
+            if ip.nvalue in ip_set:
+                ip_set.remove(ip.nvalue)
+            
         return ip_set
         
 class Range(object):
@@ -350,6 +355,7 @@ class Range(object):
         
         
 class Chassis(object):
+
     #
     # Methods
     #   

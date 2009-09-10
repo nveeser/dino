@@ -505,7 +505,11 @@ class JsonProcessor(object):
         bport_mac = data_v1['mac_port.mac ' + bport]
         hid = bport_mac.replace(":", "")
         hid = hid.upper()
-    
+        # translate legacy 'blessed' key
+        if data_v1.has_key('ip_mac.addr blessed'):
+            data_v1['ip_mac.addr ' + bport] = data_v1['ip_mac.addr blessed']
+            data_v1.pop('ip_mac.addr blessed')
+
         #
         # Device keys
         #
@@ -623,22 +627,24 @@ class JsonProcessor(object):
     
                 #
                 # IpAddresses
-                #
+                #              
                 if data_v1.has_key('ip_mac.addr ' + iface):
                     ip = data_v1['ip_mac.addr ' + iface]
-                    # if ip is from a range, reserve a new one. 
-                    if is_dynamic(self.session, ip):
-                        new_addr = get_ip(ip, iface)
+                    # if ip is from a range, reserve a new one.
+                    if self.is_dynamic(ip):
+                        new_addr = self.get_ip(ip, iface)
                         ip = new_addr.instance_name
                     IpAddress = E[4] + ':' + ip
                     data_v2[IpAddress] = {}
                     # find my subnet
-                    subnet = find_subnet(self.session, ip)
+                    subnet = Subnet.find_subnet(self.session, ip)
                     if subnet: 
                         data_v2[IpAddress]['subnet'] = 'Subnet:' + subnet.instance_name
                     data_v2[IpAddress]['interface'] = Interface
                     data_v2[IpAddress]['value'] = ip
-    
+                    
+            
+                    
         # NOTE: no dns names are added.
     
         # add v2 header.
@@ -647,55 +653,52 @@ class JsonProcessor(object):
         return data_v2
     
       
-def get_ip(addr, iface):    
-    '''
-    Get an IP.  Tries to return the IP passed-in, 
-    but will retrun a valid IP in any case, one 
-    that is guaranteed not to be part of any reserved
-    range, and not already owned.
-    '''
-
-    if not addr or not iface:
-        raise CommandExecutionError(self.cmd, "Bad params to _get_ip: %s / %s" % (addr, iface))
+    def get_ip(self, addr, iface):    
+        '''
+        Get an IP.  Tries to return the IP passed-in, 
+        but will retrun a valid IP in any case, one 
+        that is guaranteed not to be part of any reserved
+        range, and not already owned.
+        '''
+    
+        if not addr or not iface:
+            raise CommandExecutionError(self.cmd, "Bad params to _get_ip: %s / %s" % (addr, iface))
         
-    reserver = IpCommand(self.db)
-    iplist = reserver.sub_avail(addr)
-    if len(iplist) < 1:
-        raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
-        # Free IP. 
-        # Guaranteed not to be in a range, or already in use.
-        addr = ip_list[0]
-
-    ip = IpAddress(value=addr)
-
-    return ip
-   
-
-def is_dynamic(session, addr):
-
-    '''Discover if a passed-in IP falls within 
-       any known dynamic dhcp range.'''
-
-    sql = '''
-          select 
-              inet_ntoa(subnet.addr) as net, 
-              subnet.mask_len as mask 
-          from range, subnet 
-          where 
-              subnet_id = subnet.id and
-              range.range_type = 'dhcp' and
-              inet_aton('%s') 
-                  between (subnet.addr + range.start) 
-                  and (subnet.addr + range.end) 
-          order by mask desc limit 1;
-          ''' % addr 
-
-    res = session.execute(sql)
-    res = res.fetchone()
-    if res:
-        return True
-    else:
-        return False
+        subnet = Subnet.find_subnet(self.session, addr)
+        iplist = list(subnet.avail_ip_set())
+        iplist.sort()
+        if len(iplist) < 1:
+            raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
+        
+        address = IpType.ntoa(iplist[0])
+        return IpAddress(value=address)
+       
+    
+    def is_dynamic(self, addr):
+    
+        '''Discover if a passed-in IP falls within 
+           any known dynamic dhcp range.'''
+    
+        sql = '''
+              select 
+                  inet_ntoa(subnet.addr) as net, 
+                  subnet.mask_len as mask 
+              from range, subnet 
+              where 
+                  subnet_id = subnet.id and
+                  range.range_type = 'dhcp' and
+                  inet_aton('%s') 
+                      between (subnet.addr + range.start) 
+                      and (subnet.addr + range.end) 
+              order by mask desc limit 1;
+              ''' % addr 
+    
+        res = self.session.execute(sql)
+        res = res.fetchone()
+        if res:
+            return True
+        else:
+            return False
 
 
 def is_known(session, instance_name):
@@ -738,24 +741,6 @@ def find_device(session, spec):
     
     # found no name
     return None
-
-   
-def find_subnet(session, ip):
-
-    '''
-    Returns the subnet object for any passed-in IP 
-    (in dotted quad form). Returns None if no subnet 
-    matches.
-    '''
-
-    naddr = IpType.aton(ip)
-    sql_netmask = func.power(2,32) - func.power(2, (32-Subnet.mask_len))
-
-    q = session.query(Subnet).filter(
-        Subnet.addr == sql_netmask.op('&')(naddr)
-        ).order_by( Subnet.mask_len.desc() )
-
-    return q.first()
 
 
 

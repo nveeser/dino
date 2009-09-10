@@ -59,6 +59,7 @@ HOST_FEDORA_TEMPLATE = \
 '''host %(hostname)s {
     hardware ethernet %(mac)s;
     fixed-address %(ip)s;
+    next-server %(next-ip)s;
     option pxelinux.pathprefix "%(path_prefix)s/";
     option pxelinux.configfile "%(config_file)s";
 }
@@ -179,11 +180,24 @@ class DhcpGenerator(Generator):
             data['boot_filename'] = self.settings.dhcp_boot_filename
             data['rapids_ver'] = str(self.settings.dhcp_rapids_ver)
             data['options'] = ""
-            self.log.fine("   Host: %s", data['hostname'])
+            self.log.fine("   Gentoo Host: %s", data['hostname'])
             
             yield self.check_data(data)
             
     
+    def load_next_server_map(self):
+        prefix = 'dhcp_next_server_'
+        network_map = {}
+        for (name, value) in self.settings.items():
+            
+            if name.startswith(prefix):
+                network = name[len(prefix):]
+                (network, nlen) = network.split('_')
+                subnet = Subnet(addr=network, mask_len=nlen)
+                network_map[subnet] = value               
+                                
+        return network_map
+        
     def query_fedora_hosts(self, session):
         base_data = {
             'hostname' : None,
@@ -192,7 +206,11 @@ class DhcpGenerator(Generator):
             'path_prefix' : None,
             'config_file' : None,
         }
-           
+        
+        next_server_map = self.load_next_server_map()
+        
+        this_host_ip = socket.gethostbyname(socket.gethostname())
+        
         data = dict(base_data)
         
         query = session.query(Port).filter_by(is_blessed=True)\
@@ -211,7 +229,17 @@ class DhcpGenerator(Generator):
             data['ip'] = port.interface.address.value
             data['mac'] = port.mac
             data['path_prefix'] = port.device.host.appliance.os.name 
-
+            
+            # Find the next-ip
+            # 
+            data['next-ip'] = this_host_ip
+            for subnet in next_server_map.keys():
+                if subnet.contains(port.interface.address):
+                    self.log.fine("%s: network (%s) next-server %s", data['hostname'], subnet, next_server_map[subnet])                    
+                    data['next-ip'] = next_server_map[subnet]  
+                
+            # Find the correct PXElinux config file
+            #
             ipmi_ports = [ p for p in port.device.ports if p.is_ipmi ]            
             if port.device.host.device.hw_type == "vm":
                 data['config_file'] = "main.cfg"
@@ -222,7 +250,7 @@ class DhcpGenerator(Generator):
                 else:
                     data['config_file'] = "serial0.cfg"
 
-            self.log.fine("   Host: %s", data['hostname'])
+            self.log.fine("   Fedora Host: %s", data['hostname'])
             
             
             
@@ -282,14 +310,14 @@ class DhcpGenerator(Generator):
         sections = [ SUBNET_TEMPLATE % d for d in self.query_subnets(session) ] 
         generated_config.extend(sections)
         
-        self.log.info("generate: reading gentoo hosts")
-        sections = [ HOST_GENTOO_TEMPLATE % d for d in self.query_gentoo_hosts(session) ] 
-        generated_config.extend(sections)
-
         self.log.info("generate: reading fedora hosts")
         sections = [ HOST_FEDORA_TEMPLATE % d for d in self.query_fedora_hosts(session) ] 
         generated_config.extend(sections)
         
+        self.log.info("generate: reading gentoo hosts")
+        sections = [ HOST_GENTOO_TEMPLATE % d for d in self.query_gentoo_hosts(session) ] 
+        generated_config.extend(sections)
+
         self.log.info("generate: reading ipmi hosts")
         sections = [ IPMI_TEMPLATE % d for d in self.query_ipmi_hosts(session) ] 
         generated_config.extend(sections)

@@ -78,7 +78,10 @@ class PxeGenerator(Generator):
                 if p.is_blessed:
                     data['mac'] = p.mac                
             
-            
+            if data['mac'] is None:
+                self.log.error("Host does not have a blessed port!!!")
+                continue
+                
             if host.device.hw_type == "vm":
                 data['extra_console'] = VGA_CONSOLE    
             else:
