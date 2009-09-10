@@ -8,9 +8,8 @@ import sqlalchemy
 from sqlalchemy import and_
 
 from dino.cmd.exception import *
-from dino.cmd.ip import IpCommand
 from dino.db.schema import * 
-from dino.db.objectspec import *
+from dino.db.objectresolver import *
 
 import pprint; pp = pprint.PrettyPrinter(indent=4)
 
@@ -154,8 +153,8 @@ class JsonProcessor(object):
             
             if instance is None:
                 self.log.info("  Adding new %s" % spec) 
-                oname = ObjectSpec.parse(spec, expected=ElementName)
-                instance = self.session.resolve_entity(oname.entity_name).create_empty()
+                resolver = self.session.spec_parser.parse(spec, expected=ElementNameResolver)
+                instance = resolver.get_entity().next().create_empty()
                 self.session.add(instance)
             else:
                 self.log.info("  Updating %s" % spec)

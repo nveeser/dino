@@ -8,7 +8,6 @@ import sqlalchemy.orm as sa_orm
 import sqlalchemy.types as sa_types
 
 from dino.config import class_logger
-from objectspec import *
 from objectresolver import *
 from exception import * 
 from element import Element, ResourceElement

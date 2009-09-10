@@ -3,8 +3,7 @@ from dino.cmd.command import with_session
 from dino.cmd.maincmd import MainCommand
 from dino.cmd.exception import *
 from dino.cmd.jsonutil import *
-from dino.db.objectspec import *
-
+from dino.db import ElementNameResolver
 class JsonExportCommand(MainCommand):
 
     '''Query repository for a complete server description.'''
@@ -28,14 +27,10 @@ class JsonExportCommand(MainCommand):
             
         processor = JsonProcessor(self, session)
     
-        oname = ObjectSpec.parse(self.args[0], expected=ElementName)
+        resolver = session.spec_parser.parse(self.args[0], expected=ElementNameResolver)
         
-        if oname.entity_name != "Host":
-            raise CommandArgumentError(self, "ElementName is not a Host: %s" % str(oname))
-    
-        host = session.find_element(oname)        
-        
-     	json = processor.host_to_json(host)
+        for elmt in resolver.resolve(session):                    
+            json = processor.host_to_json(elmt)
                 
         if self.cli is None:
             return json

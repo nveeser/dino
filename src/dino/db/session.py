@@ -8,7 +8,6 @@ from dino.config import class_logger
 
 from exception import UnknownElementError, DatabaseError, ElementExistsError
 import changeset
-from objectspec import *
 from objectresolver import *
 import element
 

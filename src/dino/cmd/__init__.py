@@ -6,7 +6,6 @@ import admin
 import help
 import jsonimport
 import jsonexport
-import ip
 import migrate
 import edit
 import set

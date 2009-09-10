@@ -1,3 +1,4 @@
+import types
 import logging
 import re
 import datetime
@@ -10,7 +11,6 @@ import elixir
 
 from dino.config import class_logger
 from exception import *
-from objectspec import *
 from objectresolver import *
 from objectresolver import BaseElementResolver
 from display import FormDisplayProcessor, EntityDisplayProcessor
@@ -502,14 +502,12 @@ class ElementPropertyRelationToMany(ElementProperty):
         assert isinstance(value, (basestring, list, Element)), "Must Element pass element, list or string to ElementProperty.set() for this property: %s" % str(self) 
 
         property_collection = getattr(self.element, self.property_name)            
-        if not isinstance(property_collection, list):
-            raise ElementPropertyError("""Cannot currently call 'set' on an ElementProperty OneToMany/ManyToMany that is not a list""")
             
         if isinstance(value, (basestring, Element)):
             value = self._resolve_value_element(value)    
             property_collection.append(value)
             
-        elif isinstance(value, list):
+        elif isinstance(value, (list, set, types.GeneratorType)):
             value_collection = [ self._resolve_value_element(v) for v in value ]                
             
             # make the property collection look like the value collection
