@@ -161,6 +161,7 @@ class DhcpGenerator(Generator):
         
         data = dict(base_data)
         
+        self.log.info("  query for blessed Port(s), host'ed Device, Site: %s, OperatinSystem: %s ", self.settings.site, "IN [ baccus, chronos ]")  
         query = session.query(Port).filter_by(is_blessed=True)\
             .join(Device).join(Rack).join(Site)\
             .filter_by(name=self.settings.site)\
@@ -213,6 +214,7 @@ class DhcpGenerator(Generator):
         
         data = dict(base_data)
         
+        self.log.info("  query for blessed Port(s), host'ed Device, Site: %s, OperatinSystem: %s ", self.settings.site, "fedora*")
         query = session.query(Port).filter_by(is_blessed=True)\
             .join(Device).join(Rack).join(Site)\
             .filter_by(name=self.settings.site)\
@@ -267,6 +269,7 @@ class DhcpGenerator(Generator):
     
         data = dict(base_data)    
             
+        self.log.info("  query for ipmi Port(s), host'ed Device, Site: %s,", self.settings.site)
         ports = session.query(Port).filter_by(is_ipmi=True)\
             .join(Device).join(Rack).join(Site)\
             .filter(Site.name==self.settings.site)\

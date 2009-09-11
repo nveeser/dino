@@ -4,6 +4,13 @@ import subprocess
 import logging, traceback
 from optparse import OptionParser
 from os.path import join as pjoin
+import yaml
+
+import shutil
+try:
+    import hashlib 
+except ImportError:
+    import md5 as hashlib
 
 import sqlalchemy.exc as sa_exc
 
@@ -207,7 +214,7 @@ class Generator(object):
     def pull_rapids_datacenter(settings, datacenter):
         fp = os.path.join(settings.rapids_root, 'release', 'datacenter', datacenter)
         fd = open(fp, 'r')
-        import yaml
+
         return yaml.load(fd)['tmpl_data']
     
     @staticmethod
@@ -223,7 +230,82 @@ class Generator(object):
             args.append('--delete')
         args.extend(extra_args)
         check_call(args)
+    
+    def sync_directory(self, source, target, delete=True, verbose=True, exclude=() ):
+        source_root = source.rstrip('/') + '/'
+        target_root = target.rstrip('/') + '/'
+        source_len = len(source_root)
+        target_len = len(target_root)
         
+        # clean out stuff that is not supposed to be there if necessary
+        if delete:
+            for (dir, dirnames, filenames) in os.walk(target_root):
+                relative_path = dir[target_len:]
+                                
+                for f in filenames:
+                    if os.path.join(relative_path, f) in exclude:
+                        continue
+                    
+                    source_fp = os.path.join(source_root, relative_path, f)
+                    target_fp = os.path.join(target_root, relative_path, f)   
+
+                    if os.path.islink(source_fp) and not os.path.islink(target_fp):
+                        self.log.info("   Removing: %s", target_fp)
+                        os.unlink(target_fp)
+                        
+                    if os.path.islink(target_fp) and not os.path.islink(source_fp):
+                        self.log.info("   Removing: %s", target_fp)
+                        os.unlink(target_fp)
+                                                
+                    if not os.path.exists(source_fp):                             
+                        self.log.info("   Removing: %s", target_fp)
+                        os.unlink(target_fp)
+        
+        for (dir, dirnames, filenames) in os.walk(source_root):
+            relative_path = dir[source_len:]  
+
+            # make sure target dir exists
+            target_dir = os.path.join(target_root, relative_path)            
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            
+            # check all files
+            for f in filenames:
+                if os.path.join(relative_path, f) in exclude:
+                        continue
+                
+                source_fp = os.path.join(source_root, relative_path, f)
+                target_fp = os.path.join(target_root, relative_path, f)       
+    
+                if os.path.islink(source_fp):
+                    link_path = os.readlink(source_fp)
+                    if os.path.exists(target_fp):
+                        if os.path.islink(target_fp) and link_path == os.readlink(target_fp):
+                            continue
+                            
+                    self.log.info("   Updating: (link) %s", target_fp)
+                    os.symlink(link_path, target_fp)
+                    
+                elif os.path.isfile(source_fp):
+                    if os.path.exists(target_fp):                        
+                        if self.file_hash(source_fp) == self.file_hash(target_fp):
+                            continue
+                                                
+                    self.log.info("   Updating: %s", target_fp)
+                    shutil.copy2(source_fp, target_fp)
+                    
+                else:
+                    self.log.info("   Unknown object: %s", source_fp)
+
+              
+      
+    def file_hash(self, filepath):
+        f = open(filepath)
+        data = f.read()
+        f.close()        
+        return hashlib.md5(data).digest()        
+                        
+    
     @classmethod
     def main(cls):
         return GeneratorCli(cls).main(sys.argv[1:])

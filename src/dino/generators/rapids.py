@@ -81,10 +81,7 @@ data_base = {
 
 class RapidsGenerator(Generator):
     NAME = "rapids"
-    OPTIONS = (
-        Option('-i', '--id', type="int", dest="hostid", default=None),
-    )
-    
+
     def query(self):
         session = self.db_config.session()
         
@@ -173,29 +170,18 @@ class RapidsGenerator(Generator):
         
         
     def activate(self):        
-        
+                
         state_dir = self.settings.rapids_state_dir
         if state_dir is None:
             state_dir = pjoin(self.settings.rapids_root, 'state')
+        
+        if not os.path.exists(state_dir):
+            raise GeneratorExecutionError("Path does not exist: %s" % state_dir)
             
-        if self.option.hostid is not None:
-            filenames = [ HID_YAML_PATTERN % self.option.hostid ]
-        else:
-            filenames = os.listdir(self.workdir)
-
-            
-        for filename in filenames:
-            self.log.fine('activating: %s', filename)
-                     
-            f = open(pjoin(self.workdir, filename), 'r')
-            data = f.read()
-            f.close()
-                       
-            f = open(pjoin(state_dir, filename), 'w')
-            f.write(data)
-            f.close()
-
-            #self.log.info('activate: updating: %s', filename)
+        self.log.info('activate: rapids start (%r from %r)', self.workdir, state_dir)
+        self.sync_directory(self.workdir, state_dir)
+        self.log.info('activate: rapids complete')
+                 
 
 
 
