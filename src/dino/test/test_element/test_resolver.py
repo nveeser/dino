@@ -10,7 +10,7 @@ from dino.test.base import *
 from dino.test.simplemodel import entity_set, Company, Person, Address, PhoneNumber
 
 from dino.db.objectresolver import ObjectSpecParser, EntityNameResolver, ElementNameResolver, \
-    ElementIdResolver, ElementFormIdResolver, AttributeSpecResolver, \
+    ElementIdResolver, ElementFormIdResolver, PropertySpecResolver, \
     ElementQueryResolver, SpecMatchError
 
 class TestObjectResolver(DinoTest):
@@ -62,10 +62,10 @@ class TestObjectResolver(DinoTest):
             (ElementIdResolver, 'Person:{1}'),
             (ElementIdResolver, 'Person:{1}/'),
             
-            (AttributeSpecResolver, 'Person:name/phone_number'),
-            (AttributeSpecResolver, 'Person:name/phone_number/number'),
-            (AttributeSpecResolver, 'Person[foo=bar]/phone_number'),
-            (AttributeSpecResolver, 'Person[foo=bar]/phone_number/number'),
+            (PropertySpecResolver, 'Person:name/phone_number'),
+            (PropertySpecResolver, 'Person:name/phone_number/number'),
+            (PropertySpecResolver, 'Person[foo=bar]/phone_number'),
+            (PropertySpecResolver, 'Person[foo=bar]/phone_number/number'),
         )
         
         for args in arg_list: 
@@ -112,11 +112,11 @@ class TestObjectResolver(DinoTest):
             (ElementFormIdResolver, 'Person[foo=bar]/phone_number'),
             (ElementFormIdResolver, 'Person[foo=bar]/phone_number/hello2'),
         
-            (AttributeSpecResolver, 'Person'),            
-            (AttributeSpecResolver, 'Person:instance_name'),
-            (AttributeSpecResolver, 'Person:<1>'),
-            (AttributeSpecResolver, 'Person:{1}'),
-            (AttributeSpecResolver, 'Person[foo=bar]'),
+            (PropertySpecResolver, 'Person'),            
+            (PropertySpecResolver, 'Person:instance_name'),
+            (PropertySpecResolver, 'Person:<1>'),
+            (PropertySpecResolver, 'Person:{1}'),
+            (PropertySpecResolver, 'Person[foo=bar]'),
         )        
         for args in args_list:  
             yield (name_mismatch_test, ) + args    
@@ -159,47 +159,47 @@ class TestObjectResolver(DinoTest):
         ok_(r.resolve_instance)
 
 
-    def test_attribute_spec_1(self):
+    def test_property_spec_1(self):
         r = self.parser.parse('Person:instance/age')
-        ok_(isinstance(r, AttributeSpecResolver)) 
+        ok_(isinstance(r, PropertySpecResolver)) 
         eq_(r.get_entity().next(), None)
 
     @raises(InvalidObjectSpecError)
-    def test_attribute_spec_2(self):
+    def test_property_spec_2(self):
         r = self.parser.parse('Person:instance/age/')
 
-    def test_attribute_spec_3(self):
+    def test_property_spec_3(self):
         r = self.parser.parse('Person:instance/addresses')
-        ok_(isinstance(r, AttributeSpecResolver)) 
+        ok_(isinstance(r, PropertySpecResolver)) 
         eq_(r.get_entity().next(), Address)
     
-    def test_attribute_spec_3(self):
+    def test_property_spec_3(self):
         r = self.parser.parse('Person:instance/addresses[0]')
-        ok_(isinstance(r, AttributeSpecResolver)) 
+        ok_(isinstance(r, PropertySpecResolver)) 
         eq_(r.get_entity().next(), Address)
         
-    def test_attribute_spec_5(self):
+    def test_property_spec_5(self):
         r = self.parser.parse('Person:instance/addresses/value1')
-        ok_(isinstance(r, AttributeSpecResolver)) 
+        ok_(isinstance(r, PropertySpecResolver)) 
         eq_(r.get_entity().next(), None)       
 
 
     @raises(InvalidAttributeSpecError)
-    def test_attribute_spec_fail_1(self):
+    def test_property_spec_fail_1(self):
         r = self.parser.parse('Person:instance/fake_relation')
-        ok_(isinstance(r, AttributeSpecResolver)) 
+        ok_(isinstance(r, PropertySpecResolver)) 
         eq_(r.get_entity().next(), Address)
 
     @raises(InvalidObjectSpecError)
-    def test_attribute_spec_fail_2(self):
+    def test_property_spec_fail_2(self):
         r = self.parser.parse('Person/instance_name')
         
     @raises(InvalidObjectSpecError)
-    def test_attribute_spec_fail_3(self):
+    def test_property_spec_fail_3(self):
         r = self.parser.parse('Person/instance_name/age[0]')
 
     @raises(InvalidObjectSpecError)
-    def test_attribute_spec_fail_4(self):
+    def test_property_spec_fail_4(self):
         r = self.parser.parse('Person/instance_name/phone_number[0]')
 
     def test_entity_spec_special(self):

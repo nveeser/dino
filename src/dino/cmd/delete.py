@@ -9,7 +9,7 @@ from dino.db import (
     Element, ElementProperty, MultiElementFormProcessor, 
    
     EntityNameResolver, ElementNameResolver, ElementQueryResolver, 
-    ElementIdResolver, ElementFormIdResolver, AttributeSpecResolver,
+    ElementIdResolver, ElementFormIdResolver, PropertySpecResolver,
         
     ObjectSpecError, UnknownEntityError, UnknownElementError )
     

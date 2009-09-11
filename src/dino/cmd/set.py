@@ -25,7 +25,7 @@ class SetCommand(MainCommand):
         
         (spec_string, value) = self.args
         
-        resolver = session.spec_parser.parse(spec_string, expected=AttributeSpecResolver)
+        resolver = session.spec_parser.parse(spec_string, expected=PropertySpecResolver)
         
         session.begin()
         
