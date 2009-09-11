@@ -7,13 +7,14 @@ import subprocess
 import sys
 import socket 
 from os.path import join as pjoin
+import shutil
 
 from sqlalchemy import not_
 
 if __name__ == "__main__":
     sys.path[0] = os.path.join(os.path.dirname(__file__), "..", "..")
 
-from dino.generators.base import Generator, GeneratorQueryError
+from dino.generators.base import Generator, GeneratorQueryError, GeneratorExecutionError
 from dino.db import (Rack, Device, Port, Site, Subnet, Host, Appliance, OperatingSystem, IpType)
  
 GLOBAL_TEMPLATE = \
@@ -338,25 +339,21 @@ class DhcpGenerator(Generator):
     
     
     def activate(self):
-        write_loc = self.settings.dhcp_conf_loc
+        target_fp = self.settings.dhcp_conf_loc
         init_loc = self.settings.dhcp_init_loc
+        source_fp = pjoin(self.workdir, 'dhcpd.conf')
     
-        self.log.info("activate: starting transfer")
-    
-        f = open(pjoin(self.workdir, 'dhcpd.conf'), 'r')
-        data = f.read()
-        f.close()
-        
-        f = open(write_loc, 'w')
-        f.write(data)
-        f.close()
-
-        self.log.debug("activate: config updated")
+        self.log.info("activate: dhcp start")
+        shutil.copy2(source_fp, target_fp)            
+        self.log.debug("activate: dhcp config updated")
  
+        if not os.path.exists(init_loc):
+            raise GeneratorExecutionError("Restart Script does not exist: %s" % init_loc)
+            
         self.check_call([init_loc, 'restart'])
 
-        self.log.debug('activate: service %r restarted', init_loc)
-        self.log.info('activate: completed')
+        self.log.debug('activate: dhcp service %r restarted', init_loc)
+        self.log.info('activate: dhcp complete')
 
 
 

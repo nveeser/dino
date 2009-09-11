@@ -4,7 +4,7 @@ import sqlalchemy.orm.properties as sa_props
 
 from dino.cmd import MainCommand
 from dino.cmd.exception import CommandArgumentError
-from dino.db import schema, ObjectSpec, Element, ResourceElement
+from dino.db import schema, Element, ObjectSpecParser, ResourceElement
 
 
 
@@ -26,7 +26,7 @@ class HelpCommand(MainCommand):
                 self.list_commands()
             
             elif argument == "objectspec":
-                print ObjectSpec.__doc__
+                print ObjectSpecParser.__doc__
                 
             elif schema.entity_set.has_entity(argument):
                 entity = schema.entity_set.resolve(argument)    

@@ -19,7 +19,7 @@ __all__ = [ 'ObjectSpecParser',
             'ElementQueryResolver',
             'ElementIdResolver',
             'ElementFormIdResolver',
-            'AttributeSpecResolver',
+            'PropertySpecResolver',
             ]
 
   
@@ -301,7 +301,7 @@ class ElementQueryResolver(BaseElementResolver):
                         yield element.element_name
                     
     
-class AttributeSpecResolver(Resolver):
+class PropertySpecResolver(Resolver):
     REGEX = re.compile("^(.*/)([^/\[]+)(?:\[(\d+)\])?")
     
     @staticmethod
@@ -318,7 +318,7 @@ class AttributeSpecResolver(Resolver):
     
         (parent_spec, prop_name, index) = m.groups()
 
-        expected =  (ElementNameResolver, ElementQueryResolver, ElementIdResolver, ElementFormIdResolver, AttributeSpecResolver)
+        expected =  (ElementNameResolver, ElementQueryResolver, ElementIdResolver, ElementFormIdResolver, PropertySpecResolver)
         self.parent_resolver = parser.parse(parent_spec, expected=expected)        
         self.property_name = prop_name
         if index is not None:
@@ -408,6 +408,102 @@ class AttributeSpecResolver(Resolver):
             
  
 class ObjectSpecParser(object):
+    ''' ObjectSpec is a string that specifies one or more Objects in the database:
+    
+        - An Entity (EntityName)    
+        - An Element   (ElementName, ElementId, ElementFormId)
+        - An Attribute on an Element  (AttributeName) 
+        
+        - A set of Element(s) (ElementQuery)
+        - An Attribute on one or more Element(s)  (AttributeQuery) 
+        
+        - (experimental) Output of a method on an Entity (EntityMethod)
+        - (experimental) Output of a method on an Element (ElementMethod)
+        
+        The name takes the form of:
+        
+        ObjectSpec := <EntityName> | <ElementSpec> | <AttributeName> | <ElementQuery> 
+        
+        ElementSpec:= <ElementName> | <ElementId> | <ElementFormId>
+        
+        ---Entity Specification---
+        
+        EntityName := <String> 
+            Name of Entity Class (Device, Subnet, Site, etc)
+        
+        ---Element Specification---
+        
+        ElementName := <EntityName> / <InstanceName> 
+            User-Readable name of Element
+                
+            InstanceName := Unique, Human readable name based on the data in the instance 
+
+
+        ElementId := <EntityName> / <InstanceId> 
+            Databse Id based name of Element 
+             
+            InstanceId := '{' num '}'  Unique Integer id based on the unique id column in the database
+
+        
+        ElementFormId := <EntityName> / <FormId>
+            Temporary Form based name of Element
+        
+            FormId :=  '<' num '>' Unique Integer within a given form context.  
+
+
+        ElementQuery := <EntityName> '[' <QuerySpec> ']'
+         
+        --- Query Info ---
+
+        QuerySpec := <QueryClause>[';'<QueryClause>[ ... ] ]
+        
+        QueryClause := <JoinClause> | <JoinFilterClause> | <ObjectFilterClause>
+
+            JoinClause := <ElementName>  
+    
+            JoinFilterClause := <ElementName>.<PropertyName>=<value> 
+    
+            ObjectFilterClause := <PropertyName>=<value> 
+        
+
+        ---PropertySpec---
+
+        PropertySpec := { <ElementName> | <ElementId> } / { <RelationPath> | <ColumnName> } 
+        
+        RelationPath := <RelationName> [ { / <RelationPath> ... | <ColumnName> } ]  
+
+            
+        
+        -- Examples --
+
+        EntityName
+            Device
+            Subnet
+
+        ElementName:
+            Device:001EC9437ABF
+            Site:sjc1
+        
+        ElementId:
+            Device:{12}
+            Site:{304}
+            
+        ElementFormId:
+            Device:<2>
+            Port:<1>
+            
+        ElementQuery
+            Device[hw_class=server]   # ObjectFilterClause
+            Host[device.hw_class=server]  # JoinFilterClause
+            Host[device;chassis.name=unknown]  # JoinClause + JoinFilterClause
+
+        PropertySpec
+            Device:001EC9437ABF/notes
+            Host:hostname.ops.site/device/rack
+
+
+     '''
+
 
     def __init__(self, entity_set, **kwargs):
         self.entity_set = entity_set
@@ -420,9 +516,8 @@ class ObjectSpecParser(object):
         ElementQueryResolver,
         ElementIdResolver,
         ElementFormIdResolver,
-        AttributeSpecResolver
+        PropertySpecResolver
     )
-    
 
     def _parse(self, spec, expected):
         if not isinstance(expected, (list, tuple, types.GeneratorType)):

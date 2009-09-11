@@ -392,7 +392,7 @@ class ElementProperty(object):
         return self.element_property_name()
     
     def element_property_name(self):
-        return AttributeSpecResolver.make_name(self.element.entity_name, self.element.instance_name, self.property_name)
+        return PropertySpecResolver.make_name(self.element.entity_name, self.element.instance_name, self.property_name)
     
     def is_relation(self):
         return isinstance(self.sa_property, sa_props.RelationProperty)
