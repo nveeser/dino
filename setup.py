@@ -18,7 +18,7 @@ def find_packages(src_dir):
 
             
 setup(name='dino',
-    version='1.0',
+    version='2.5',
     author='nicholas veeser',
     author_email='nicholas@metaweb.com',
     description='python tools for managing host inventory and configuration',
