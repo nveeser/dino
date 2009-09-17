@@ -62,6 +62,7 @@ class JsonProcessor(object):
         self.cmd = cmd
         self.session = session
 
+        self._avail_ip_map = {}
 
     def host_to_json(self, host):  
 
@@ -621,6 +622,7 @@ class JsonProcessor(object):
                 # add only if there's a corresponding IP.
                 if data_v1.has_key('ip_mac.addr ' + iface):
                     Interface = E[3] + ':' + '.'.join(h[:3]) + '_' + iface
+                    print Interface
                     data_v2[Interface] = {}
                     data_v2[Interface]['port_name'] = iface
                     data_v2[Interface]['host'] = Host
@@ -635,6 +637,7 @@ class JsonProcessor(object):
                         new_addr = self.get_ip(ip, iface)
                         ip = new_addr.instance_name
                     IpAddress = E[4] + ':' + ip
+                    print IpAddress
                     data_v2[IpAddress] = {}
                     # find my subnet
                     subnet = Subnet.find_subnet(self.session, ip)
@@ -665,12 +668,14 @@ class JsonProcessor(object):
             raise CommandExecutionError(self.cmd, "Bad params to _get_ip: %s / %s" % (addr, iface))
         
         subnet = Subnet.find_subnet(self.session, addr)
-        iplist = list(subnet.avail_ip_set())
-        iplist.sort()
-        if len(iplist) < 1:
-            raise CommandExecutionError(self.cmd, "No IP delivered by IP reserver!")
+
+        if not self._avail_ip_map.has_key(subnet):
+            self._avail_ip_map[subnet] = list(subnet.avail_ip_set())
+            self._avail_ip_map[subnet].sort()
         
-        address = IpType.ntoa(iplist[0])
+        ip_value = self._avail_ip_map[subnet].pop()
+        
+        address = IpType.ntoa(ip_value)
         return IpAddress(value=address)
        
     
