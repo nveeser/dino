@@ -41,6 +41,7 @@ RDEPEND="
 	dev-python/lxml
 	dev-python/pyyaml
 	dev-python/simplejson
+	net-libs/libpcap
 	
 	"
 
