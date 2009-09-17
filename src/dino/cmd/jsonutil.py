@@ -672,6 +672,7 @@ class JsonProcessor(object):
         if not self._avail_ip_map.has_key(subnet):
             self._avail_ip_map[subnet] = list(subnet.avail_ip_set())
             self._avail_ip_map[subnet].sort()
+            self._avail_ip_map[subnet].reverse()
         
         ip_value = self._avail_ip_map[subnet].pop()
         
