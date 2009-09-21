@@ -44,13 +44,9 @@ class ShowCommand(MainCommand):
 
     @with_session
     def execute(self, session):
-        
-        object_spec_parser = self.db_config.object_spec_parser(
-            print_query=self.option.print_sql,
-            show_name=self.option.show_name)
-        
+                
         try:
-            resolvers = [ object_spec_parser.parse(arg) for arg in self.args ]
+            resolvers = [ self.db_config.spec_parser.parse(arg) for arg in self.args ]
             
         except ObjectSpecError, e:
             raise CommandArgumentError(self, str(e))
@@ -69,7 +65,7 @@ class ShowCommand(MainCommand):
     def resolve_all_specs(self, session, resolvers):
         try:  
             for resolver in resolvers:                
-                for obj in resolver.resolve(session):
+                for obj in resolver.resolve(session, print_query=self.option.print_sql):
                     if isinstance(obj, type):
                         yield obj.entity_display_processor().show(obj) 
                 

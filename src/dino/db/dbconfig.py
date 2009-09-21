@@ -92,6 +92,8 @@ class DbConfig(object):
         self._schema_info_queried = False
         self._schema_info = None
     
+        self.spec_parser = ObjectSpecParser(self.entity_set)
+    
     def __str__(self):
         return "DbConfig<%s>" % self.uri 
 
@@ -152,9 +154,6 @@ class DbConfig(object):
     def object_session(instance):
         return sqlalchemy.orm.session.object_session(instance)
         
-    
-    def object_spec_parser(self, **kwargs):
-        return ObjectSpecParser(self.entity_set, **kwargs)
         
     #
     # Testing / Maintenance methods

@@ -288,9 +288,11 @@ class ElementQueryResolver(BaseElementResolver):
         
           
     def resolve(self, session, **kwargs):
+        print_query = kwargs.get('print_query', False)
+        
         for entity in self.parent_resolver.resolve(session):
             query = self.create_query(session, entity)                            
-            if self.parser.print_query:
+            if print_query:
                 yield str(query)
                 
             else: 
@@ -505,10 +507,8 @@ class ObjectSpecParser(object):
      '''
 
 
-    def __init__(self, entity_set, **kwargs):
+    def __init__(self, entity_set):
         self.entity_set = entity_set
-        self.print_query = kwargs.get('print_query', False)  
-        self.show_name = kwargs.get('show_name', False)
     
     RESOLVERS = (
         EntityNameResolver,

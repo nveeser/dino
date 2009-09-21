@@ -239,7 +239,7 @@ class CreateCommand(ElementFormCommand):
             raise CommandArgumentError(self, "Must specify an EntityName")  
 
         for a in self.args:
-            if not self.session.spec_parser.is_spec(a, expected=EntityNameResolver):                
+            if not self.db_config.spec_parser.is_spec(a, expected=EntityNameResolver):                
                 raise CommandArgumentError(self, "Argument must be an EntityName")
                 
     def create_processor(self, session):
