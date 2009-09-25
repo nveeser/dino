@@ -1,0 +1,4 @@
+
+rpmtools/unittest/test_deploy.py test/
+- touched_file
+-src/dino dino-stuff/

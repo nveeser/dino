@@ -345,6 +345,9 @@ class DeployFile(list):
 				finally:
 					self.log.dec()
 
+			except EnvironmentError, ex:
+				raise DeployEntryException(str(ex))
+
 			except DeployEntryException, ex:
 				# This exception should not stop processing
 				self.log.info("DeployEntryException: % s" % ex)
@@ -406,8 +409,8 @@ class DeployEntry(object):
 	@staticmethod
 	def checkmkdir(target):
 		destdir = os.path.dirname(target)
-		if not os.path.exists(target):
-			os.makedirs(target)
+		if not os.path.exists(destdir):
+			os.makedirs(destdir)
 
 	def __str__(self):
 		return "[%s] [%s]" % (self._lhs, self._rhs)
@@ -492,7 +495,7 @@ class CopyEntry(DeployEntry):
 		elif targetfile != sourcefile:
 			self.log.warn("Warning: Renaming file: %s -> %s" % (sourcefile, targetfile))
 
-		self.checkmkdir(targetdir)
+		self.checkmkdir(target)
 
 		if os.path.isfile(target) and self.files_equal(source, target):
 			self.log.info("[C] Skip %s --> \t%s" % (self._lhs, self._rhs))
@@ -552,7 +555,7 @@ class CopyEntry(DeployEntry):
 			target_dir = os.path.join(target, relative_path)
 			if not os.path.exists(target_dir):
 				os.makedirs(target_dir)
-				self._perm.set_perm(target_file)
+				self._perm.set_perm(target_dir)
 
 
 			# check all files
@@ -627,8 +630,7 @@ class TouchEntry(DeployEntry):
 			if not os.path.exists(target):
 				self.log.info("[T] Touch file %s" % self._rhs)
 
-				(targetdir, targetfile) = os.path.split(target)
-				self.checkmkdir(targetdir)
+				self.checkmkdir(target)
 				open(target, 'w').close()
 				self._perm.set_perm(target)
 				self._deploy_file.files.inc()
@@ -644,6 +646,8 @@ class SymlinkEntry(DeployEntry):
 	def __init__(self, lhs, rhs, perm, raw, deploy_file):
 		DeployEntry.__init__(self, lhs, rhs, perm, raw, deploy_file)
 
+		self._lhs = self._lhs[1:]
+
 		if self._lhs[0] != '/':
 			self._lhs = os.path.join(deploy_file.defroot, self._lhs)
 		else:
@@ -651,52 +655,11 @@ class SymlinkEntry(DeployEntry):
 
 
 	def execute(self, source_root, target_root):
-		(realfile, symfile) = self._buildpaths(source_root, target_root)
-
-		self._makelink(realfile, symfile)
-
-	def _buildpaths(self, source_root, target_root):
-		"""Build the path to the symlink and the file relative to it
-		
-		/usr/lib/path/to/symlink -> /usr/lib/other/path/to/file
-		
-		becomes equivalent to:
-		
-		ln -s ../../other/path/to/file /usr/lib/path/to/symlink
-		realpath => ../../other/path/to/file
-		symfile => /usr/lib/path/to/symlink 
-		
-		"""
-
-		lhs = self._lhs.split("/")
-		rhs = self._rhs.split("/")
-
-		# Move up common dirs in the path
-		sympath = ""
-		while lhs[0] == rhs[0]:
-			sympath = os.path.join(sympath, rhs[0])
-			lhs.pop(0)
-			rhs.pop(0)
-
-		realpath = "/".join(lhs)
-		symhead = rhs.pop()
-
-		# Build up the relative path to the file based on the path of the link
-		# while putting the path in the sympath
-		for dir in rhs:
-			realpath = os.path.join("..", realfile)
-			sympath = os.path.join(sympath, dir)
-
-		symfile = os.path.join(target_root, sympath, symhead)
-		return (realpath, symfile)
-
-	def _makelink(self, realpath, symfile):
-		"""Makes symlink while checking for existing link and making 
-		any necessary directories"""
+		realpath = self._build_realpath()
+		symfile = os.path.join(target_root, self._rhs)
 
 		if os.path.islink(symfile):
-			linkvalue = os.readlink(symfile)
-			if linkvalue == realpath:
+			if os.readlink(symfile) == realpath:
 				self.log.info("[L] Skipping %s -> %s" % (self._lhs, self._rhs))
 				self._deploy_file.skipped.inc()
 				return
@@ -711,6 +674,32 @@ class SymlinkEntry(DeployEntry):
 		self.checkmkdir(symfile)
 		os.symlink(realpath, symfile)
 		self._deploy_file.files.inc()
+
+
+	def _build_realpath(self):
+		"""Build the path to the symlink and the file relative to it
+		
+		 -/usr/lib/other/path/to/file /usr/lib/path/to/symlink
+		
+		 /usr/lib/path/to/symlink -> /usr/lib/other/path/to/file 
+
+		realpath => ../../other/path/to/file
+				
+		becomes equivalent to:
+		
+		ln -s ../../other/path/to/file /usr/lib/path/to/symlink
+		"""
+		fileparts = self._lhs.split("/")
+		linkparts = self._rhs.split("/")
+
+		while fileparts[0] == linkparts[0]:
+			fileparts.pop(0)
+			linkparts.pop(0)
+
+		for dir in linkparts[:-1]:
+			fileparts.insert(0, "..")
+
+		return os.path.join(*fileparts)
 
 
 
@@ -744,7 +733,7 @@ class SvnProjectInfo(ProjectInfo):
 		self._process_info(info)
 
 	def _process_info(self, info):
-		parts = info.url.split('/')
+		parts = info.url.split(' / ')
 
 		if parts[-1] == 'trunk':
 			self.name = parts[-2]
@@ -765,7 +754,7 @@ class CommandMeta(type):
 
 		cls.log = logging.getLogger("rpmtool." + name)
 
-		# If this class's base class is not a CommandMeta class 
+		# If this class's base class is not a CommandMeta class
 		# (ie the base's metaclass is something other than CommandMeta), 
 		# then this class is the 'Root'. Add the Dictionary
 		base_class_type = type(bases[0])
