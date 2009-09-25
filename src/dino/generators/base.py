@@ -231,7 +231,7 @@ class Generator(object):
         args.extend(extra_args)
         check_call(args)
     
-    def sync_directory(self, source, target, delete=True, verbose=True, exclude=() ):
+    def sync_directory(self, source, target, delete=True, exclude=() ):
         source_root = source.rstrip('/') + '/'
         target_root = target.rstrip('/') + '/'
         source_len = len(source_root)

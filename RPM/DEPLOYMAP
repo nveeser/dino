@@ -1,0 +1,4 @@
+src/wrapper-virtualenv.py	/usr/bin/dino	     755
+src/wrapper-virtualenv.py	/usr/bin/dinoadm     755
+src/wrapper-virtualenv.py	/usr/bin/dino-probe  755
+dino-discover				/usr/bin/            755

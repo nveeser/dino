@@ -1,0 +1,4 @@
+#!/bin/sh
+
+/usr/local/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
+#--record=INSTALLED_FILES

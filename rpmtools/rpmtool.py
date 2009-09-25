@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE, STDOUT
 from optparse import OptionParser, make_option
 import traceback
 import threading
+import pwd
 
 try:
 	import hashlib
@@ -23,9 +24,8 @@ Name: %(name)s
 Version: %(version)s
 Release: %(release)s
 Packager: %(packager)s
-BuildRoot: %(buildroot)s
 Prefix: %(prefix)s
-License: Something about a license
+License: A License
 %(project-header)s
 %(project-depend)s
 
@@ -35,21 +35,18 @@ License: Something about a license
 %%prep
 %%build
 %%install
+%(install-script)s
+
 %%clean
 
-%%pre
 %(project-pre-script)s
 
-%%post
 %(project-post-script)s
 
-%%preun
 %(project-preun-script)s
 
-%%postun
 %(project-postun-script)s
 
-%%verifyscript
 %(project-verify-script)s
 
 %%files
@@ -172,19 +169,45 @@ class MyOptionParser(OptionParser):
 	def error(self, msg):
 		raise CommandArgumentError(msg)
 
-
+#####################################
+# Popen Output Handler Thread
+#####################################
 class ReadThread(threading.Thread):
-	def __init__(self, name, f, log):
+	THREADS = []
+	@classmethod
+	def joinall(cls):
+		waiting = True
+		while waiting:
+			waiting = False
+			for t in cls.THREADS:
+				if t.isAlive():  t.join(0.1)
+				waiting |= t.isAlive()
+
+	def __init__(self, name, f):
 		threading.Thread.__init__(self, name=name)
 		self.daemon = True
 		self.f = f
-		self.log = log
+
+		self.THREADS.append(self)
+		self.start()
 
 	def run(self):
 		line = self.f.readline()
 		while line != "":
-			self.log.info("%s: %s", self.name, line.strip())
+			self.handle(line[:-1])
 			line = self.f.readline()
+
+	def handle(self, line):
+		print "%s: %s" % (self.name, line)
+
+class LogReadThread(ReadThread):
+	def __init__(self, name, f, log):
+		self.log = log
+		ReadThread.__init__(self, name, f)
+
+	def handle(self, line):
+		self.log.info("%s: %s", self.name, line.strip())
+
 
 #####################################
 # RPM Spec Creator
@@ -206,7 +229,7 @@ class RpmSpec:
 		from socket import gethostname
 		pwent = getpwuid(getuid())
 		hostname = gethostname()
-		return " % s <% s@ % s > " % (pwent[4], pwent[0], hostname)
+		return "%s<%s@%s>" % (pwent[4], pwent[0], hostname)
 
 	def set_build_root(self, buildroot):
 		self._files = []
@@ -217,23 +240,23 @@ class RpmSpec:
 				self._files.append(os.path.join(install_dir, file))
 
 			if len(filenames) == 0:
-				self._files.append(" % dir " + install_dir)
+				self._files.append("%dir " + install_dir)
 
 		self._files.sort()
 		#self.filterFiles()
 
-	def read_file(self, filename, fail=False):
+	def read_file(self, filename, header="", fail=False):
 		filepath = os.path.join(self.project_root, filename)
 		if not (os.path.exists(filepath) and os.path.isfile(filepath)):
 			if fail:
-				raise RpmSpecException, "Missing file building RPM specfile: % s" % filename
+				raise RpmSpecException, "Missing file building RPM specfile: %s" % filename
 			else:
 				return ""
 
 		f = open(filepath)
 		data = f.read()
 		f.close()
-		return data
+		return header + data
 
 	def write(self, filename):
 		"Open and write to a file the rpmspec"
@@ -255,14 +278,15 @@ class RpmSpec:
 			'packager' : self.packager,
 			'buildroot' : os.path.abspath(self.buildroot),
 			'prefix'	: " / ",
-			'project-header' : self.read_file("RPM / header", fail=True),
-			'project-depend' : self.read_file("RPM / depend"),
-			'project-description' : self.read_file("RPM / description"),
-			'project-pre-script' : self.read_file("RPM / pre.sh"),
-			'project-post-script' : self.read_file("RPM / post.sh"),
-			'project-preun-script' : self.read_file("RPM / preun.sh"),
-			'project-postun-script' : self.read_file("RPM / postun.sh"),
-			'project-verify-script' : self.read_file("RPM / verify.sh"),
+			'project-header' : self.read_file("RPM/header", fail=True),
+			'project-depend' : self.read_file("RPM/depend"),
+			'project-description' : self.read_file("RPM/description"),
+			'install-script' : self.read_file("RPM/install"),
+			'project-pre-script' : self.read_file("RPM/pre.sh", header="%pre\n"),
+			'project-preun-script' : self.read_file("RPM/preun.sh", header="%preun\n"),
+			'project-post-script' : self.read_file("RPM/post.sh", header="%post\n"),
+			'project-postun-script' : self.read_file("RPM/postun.sh", header="%postun\n"),
+			'project-verify-script' : self.read_file("RPM/verify.sh", header="%verifyscript\n"),
 			'files' : "\n".join(self._files),
 		}
 
@@ -303,6 +327,7 @@ class DeployFile(list):
 		except IOError, e:
 			raise DeployFileException, e
 
+
 	def parse_line(self, rawline):
 		entry = DeployEntry.create(rawline, self)
 		if entry:
@@ -317,7 +342,6 @@ class DeployFile(list):
 					self.log.inc()
 					entry.execute(source_root, target_root)
 					self.execed.inc()
-					return self
 				finally:
 					self.log.dec()
 
@@ -325,7 +349,7 @@ class DeployFile(list):
 				# This exception should not stop processing
 				self.log.info("DeployEntryException: % s" % ex)
 				self.errors.inc()
-
+		return self
 
 	def set_default_root(self, path):
 		''' Default Root is the path added to every outgoing file 
@@ -342,7 +366,7 @@ class DeployFile(list):
 class_logger(DeployFile)
 
 class DeployEntry(object):
-	REGEX = re.compile("m |^ \s * ([ ^ \#\s]+)\s+(\S+)$|")
+	REGEX = re.compile("m|^\s*([^\#\s]+)\s+(\S+)\s*(\S+){0,1}$|")
 
 	@staticmethod
 	def create(rawline, deploy_file):
@@ -355,17 +379,18 @@ class DeployEntry(object):
 		if match is None:
 			raise DeployEntryParseException("this is not a valid line")
 
-		(lhs, rhs) = match.groups()
+		(lhs, rhs, stat) = match.groups()
 
 		for entry_type in (CopyEntry, TouchEntry, SymlinkEntry):
 			if entry_type.REGEX.match(lhs):
-				return entry_type(lhs, rhs, rawline, deploy_file)
+				return entry_type(lhs, rhs, PermSpec(stat), rawline, deploy_file)
 
 		raise DeployEntryParseException("Invalid Line")
 
-	def __init__(self, lhs, rhs, raw, deploy_file):
+	def __init__(self, lhs, rhs, perm, raw, deploy_file):
 		self._lhs = lhs
 		self._rhs = rhs
+		self._perm = perm
 		self._deploy_file = deploy_file
 		self._rawline = raw
 
@@ -390,6 +415,53 @@ class DeployEntry(object):
 
 class_logger(DeployEntry)
 
+
+class PermSpec(object):
+
+	def __init__(self, perm_spec):
+		self.owner = None
+		self.group = None
+		self.mode = None
+
+		if perm_spec is not None:
+			self._parse(perm_spec)
+
+	def _parse(self, perm_spec):
+		parts = perm_spec.split(":")
+
+		if len(parts) == 3:
+			(self.owner, self.group, self.mode) = parts
+
+		if len(parts) == 2:
+			self.owner = parts[0]
+			try:
+				self.mode = int(parts[1], 8)
+			except:
+				self.group = parts[1]
+
+		if len(parts) == 1:
+			try:
+				self.mode = int(parts[0], 8)
+			except:
+				self.owner = parts[0]
+
+	def set_perm(self, filename):
+		if self.owner:
+			uid = pwd.getpwnam(self.owner)[2]
+			self.log.debug("[P] chown: %d %s", uid, filename)
+			os.chown(filename, uid, -1)
+
+		if self.group:
+			gid = grp.getgrnam(self.group)[2]
+			self.log.debug("[P] chgrp: %d %s", gid, filename)
+			os.chown(filename, -1, gid)
+
+		if self.mode:
+			self.log.debug("[P] chmod: %o %s", self.mode, filename)
+			os.chmod(filename, self.mode)
+
+
+class_logger(PermSpec)
 
 class CopyEntry(DeployEntry):
 	''' Copy file(s) from (dir | file) to <file> or <dir>'''
@@ -429,6 +501,7 @@ class CopyEntry(DeployEntry):
 		else:
 			self.log.info("[C] Copying %s --> \t%s" % (self._lhs, self._rhs))
 			shutil.copy2(source, target)
+			self._perm.set_perm(target)
 			self._deploy_file.files.inc()
 
 	def sync_directory(self, source, target, delete=False, exclude=()):
@@ -479,6 +552,8 @@ class CopyEntry(DeployEntry):
 			target_dir = os.path.join(target, relative_path)
 			if not os.path.exists(target_dir):
 				os.makedirs(target_dir)
+				self._perm.set_perm(target_file)
+
 
 			# check all files
 			for f in filenames:
@@ -503,11 +578,13 @@ class CopyEntry(DeployEntry):
 
 				elif os.path.isfile(source_file):
 					if os.path.exists(target_file) and self.files_equal(source_file, target_file):
+						self.log.debug("[D] Skip %s", target_file)
 						self._deploy_file.skipped.inc()
 						continue
 
 					self.log.debug("[D] Copy %s", target)
 					shutil.copy2(source_file, target_file)
+					self._perm.set_perm(target_file)
 					self._deploy_file.files.inc()
 
 				else:
@@ -533,14 +610,13 @@ class TouchEntry(DeployEntry):
 	REGEX = re.compile("^-$")
 
 	def execute(self, source_root, target_root):
-
 		target = os.path.join(target_root, self._rhs)
-
 
 		if target.endswith('/'):
 			if not os.path.exists(target):
 				self.log.info("[T] Touch dir %s" % self._rhs)
 				os.mkdirs(target)
+				self._perm.set_perm(target)
 				self._deploy_file.files.inc()
 
 			else:
@@ -554,7 +630,7 @@ class TouchEntry(DeployEntry):
 				(targetdir, targetfile) = os.path.split(target)
 				self.checkmkdir(targetdir)
 				open(target, 'w').close()
-
+				self._perm.set_perm(target)
 				self._deploy_file.files.inc()
 
 			else:
@@ -565,8 +641,8 @@ class TouchEntry(DeployEntry):
 class SymlinkEntry(DeployEntry):
 	REGEX = re.compile("^-.+")
 
-	def __init__(self, lhs, rhs, raw, deploy_file):
-		DeployEntry.__init__(self, lhs, rhs, raw, deploy_file)
+	def __init__(self, lhs, rhs, perm, raw, deploy_file):
+		DeployEntry.__init__(self, lhs, rhs, perm, raw, deploy_file)
 
 		if self._lhs[0] != '/':
 			self._lhs = os.path.join(deploy_file.defroot, self._lhs)
@@ -871,7 +947,7 @@ class RpmSpecCommand(Command):
 			project_root=self.cli.project_root)
 		rpmspec.set_build_root(self.buildroot)
 		rpmspec.write(self.specfile)
-
+		self.log.info("Wrote specfile: %s", self.specfile)
 
 
 class RpmBuildCommand(Command):
@@ -889,13 +965,12 @@ class RpmBuildCommand(Command):
 			help="script to run at build time (default: <PROJECT_ROOT>/_buildroot)"),
 	)
 
-#--define "buildroot %(buildroot)s"
-
-	RPM_COMMAND = '''rpmbuild \
---buildroot %(buildroot)s \ 
---define "_rpmdir %(outdir)s" \
---define "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
--bb %(specfile)s '''
+	RPM_COMMAND = [ "rpmbuild",
+		"--buildroot", "%(buildroot)s",
+		"--define", "_rpmdir %(outdir)s",
+		"--define", "_builddir %(projectroot)s",
+		"--define", "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm",
+		"-bb", "%(specfile)s" ]
 
 
 	def handle_options(self, options, args):
@@ -916,17 +991,15 @@ class RpmBuildCommand(Command):
 			self.specfile = os.path.join(self.cli.project_root, self.specfile)
 
 
-
 	def execute(self):
-		if os.path.exists(self.install_script):
-			self.install()
+		#if os.path.exists(self.install_script):
+		#self.install()
 
 		if os.path.exists(self.deploymap):
 			self.deploy()
 
-		#self.spec()
-
-
+		self.spec()
+		self.build()
 
 	def install(self):
 		try:
@@ -936,23 +1009,11 @@ class RpmBuildCommand(Command):
 				'RPMTOOL_BUILD_ROOT' : self.buildroot,
 				'RPMTOOL_VERSION' : self.cli.version,
 			}
-
-			#p = Popen([self.install_script], stdout=PIPE, stderr=PIPE, env=env)
-			p = Popen(["/bin/find", "/tmp"], stdout=PIPE, stderr=PIPE, env=env)
-
-
-			ReadThread("STDOUT", p.stdout, self.log).start()
-			ReadThread("STDERR", p.stderr, self.log).start()
+			p = Popen([self.install_script], stdout=PIPE, stderr=PIPE, env=env)
+			LogReadThread("OUT", p.stdout, self.log)
+			LogReadThread("ERR", p.stderr, self.log)
 			p.wait()
-
-#			(stdout, stderr) = p.communicate()
-#			if stdout:
-#				for line in stdout.split("\n"):
-#					self.log.info("STDOUT: %s", line)
-#
-#			if stderr:
-#				for line in stderr.split("\n"):
-#					self.log.info("STDERR: %s", line)
+			LogReadThread.joinall()
 
 			self.log.info("------ Install (%s) Complete -----", self.cli.project_name)
 
@@ -973,7 +1034,7 @@ class RpmBuildCommand(Command):
 
 
 	def spec(self):
-		self.log.info("------ SpecFile %s -----", self.cli.project_name)
+		self.log.info("------ SpecFile -----")
 
 		rpmspec = RpmSpec(
 			name=self.cli.project_name,
@@ -982,10 +1043,26 @@ class RpmBuildCommand(Command):
 
 		rpmspec.set_build_root(self.buildroot)
 		rpmspec.write(self.specfile)
+		self.log.info("Wrote specfile: %s", self.specfile)
 
 
 	def build(self):
-		pass
+		self.log.info("------ BuildRpm -------")
+		vars = {
+			'buildroot' : self.buildroot,
+			'outdir' : self.cli.project_root,
+			'specfile' : self.specfile,
+			'projectroot' : self.cli.project_root,
+		}
+		cmd_args = [ arg % vars for arg in self.RPM_COMMAND ]
+
+		p = Popen(cmd_args, stdout=PIPE, stderr=PIPE)
+		LogReadThread("OUT", p.stdout, self.log)
+		LogReadThread("ERR", p.stderr, self.log)
+		p.wait()
+		LogReadThread.joinall()
+
+
 
 
 class HelpCommand(Command):
@@ -1084,7 +1161,7 @@ class RpmTool(object):
 
 	def setup_logging(self):
 		self.console_handler = logging.StreamHandler(sys.stdout)
-		self.console_handler.setLevel(logging.WARNING)
+		self.console_handler.setLevel(logging.INFO)
 
 		root = logging.getLogger("")
 		root.setLevel(logging.DEBUG)
