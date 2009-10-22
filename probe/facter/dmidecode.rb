@@ -51,7 +51,7 @@ IPMI Device Information
         if line =~ /#{key}/  and line =~ /#{subkey} (\w.*)\n*./
           result = $1
 
-          Facter.add("dmidecode_" + name) do            
+          Facter.add("dmi_" + name) do            
             confine :kernel => :linux
 
             setcode do

@@ -14,10 +14,10 @@ import createkeys
 import show
 import info
 import delete
+import fimport
 
 #import dino.cmd.jimport
 #import dino.cmd.showrack
 #import dino.cmd.list
 #import dino.cmd.query
 #import dino.cmd.edithost
- 

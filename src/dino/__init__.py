@@ -8,16 +8,16 @@ import logging
 #
 eggs = [ "SQLAlchemy-0.5.3-py2.4.egg", "SQLAlchemy-0.5.3-py2.6.egg"]
 for p in sys.path[:]:
-    for egg in eggs: 
+    for egg in eggs:
         fullname = os.path.join(p, egg)
         if os.path.exists(fullname):
             sys.path.insert(sys.path.index(p), fullname)
 
-sys.path.insert(0, "/mnt/hgfs/nicholas/Documents/workspace/SQLAlchemy-0.5.3/lib/")
+#sys.path.insert(0, "/mnt/hgfs/nicholas/Documents/workspace/SQLAlchemy-0.5.3/lib/")
 
 import sqlalchemy
-if sqlalchemy.__version__ != "0.5.3":
-    raise RuntimeException("Found wrong version of SqlAlchemy: %s" % sqlalchemy.__version__)
+if sqlalchemy.__version__ not in  [ "0.5.3", "0.5.4p2" ]:
+    raise RuntimeError("Found wrong version of SqlAlchemy: %s" % sqlalchemy.__version__)
 
 
 def get_class_logger(cls):
@@ -28,9 +28,9 @@ def get_class_logger(cls):
 
 class LogObjectMeta(type):
     def __init__(cls, name, bases, dict_):
-        super(LogObjectMeta, cls).__init__(name, bases, dict_) 
+        super(LogObjectMeta, cls).__init__(name, bases, dict_)
         cls.log = get_class_logger(cls)
-        
+
 class LogObject(object):
     __metaclass__ = LogObjectMeta
 
@@ -42,7 +42,7 @@ def _log_method(self, msg, *args, **kwargs):
         return
     if level >= self.getEffectiveLevel():
         self._log(level, msg, args, **kwargs)
-"""     
+"""
 
 # 20 INFO
 # 18 FINE
@@ -54,11 +54,11 @@ def setup_logging_levels():
     for (level, name) in ((14, 'FINEST'), (16, 'FINER'), (18, 'FINE')):
         logging.addLevelName(level, name)
         setattr(logging, name, level)
-        
-        exec METHOD_TEMPLATE % level 
+
+        exec METHOD_TEMPLATE % level
         _log_method.func_name = name.lower()
-        
+
         setattr(logging.Logger, _log_method.func_name, _log_method)
 
-    
+
 setup_logging_levels()

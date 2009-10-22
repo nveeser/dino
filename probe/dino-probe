@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if dmidecode | grep IPMI; then
+	  modprobe ipmi_si
+	  modprobe ipmi_devintf
+fi
+
 export FACTERLIB=/probe/facter 
 /usr/bin/facter > /probe.output
 
+# Do something to send it the results here..

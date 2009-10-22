@@ -1,4 +1,4 @@
-#!/usr/local/dino/bin/python
+#!/mw/dino/bin/python
 
 import sys
 import os

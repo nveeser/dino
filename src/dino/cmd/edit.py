@@ -12,44 +12,44 @@ from dino.db import *
 
 class ElementCommand(MainCommand):
     NAME = None
-    
+
     def validate(self):
         if len(self.args) < 1:
-            raise CommandArgumentError(self, "Must specify one EntityName / ElementName")  
+            raise CommandArgumentError(self, "Must specify one EntityName / ElementName")
 
-    
+
     def _find_element(self, session, assert_class=None):
-        try:            
+        try:
             resolver = session.spec_parser.parse(self.args[0], expected=ElementNameResolver)
-              
+
             if assert_class and resolver.get_entity() != assert_class:
                 raise CommandArgumentError(self, "EntityName must be: %s" % assert_class)
-            
+
             return resolver.resolve(session).next()
-                          
+
         except InvalidObjectSpecError, e:
             raise CommandArgumentError(self, "Invalid ObjectSpec: %s" % e)
         except UnknownElementError, e:
-            raise CommandExecutionError(self, str(e)) 
-        
-        
+            raise CommandExecutionError(self, str(e))
+
+
     def _find_elements(self, session):
         try:
-            for a in self.args:                
-                resolver = session.spec_parser.parse(a, expected=ElementNameResolver) 
+            for a in self.args:
+                resolver = session.spec_parser.parse(a, expected=ElementNameResolver)
                 for elmt in resolver.resolve(session):
                     yield elmt
-            
+
         except InvalidObjectSpecError, e:
             raise CommandArgumentError(self, "Invalid ObjectSpec: %s" % e)
         except UnknownElementError, e:
-            raise CommandExecutionError(self, str(e)) 
+            raise CommandExecutionError(self, str(e))
 
 
 
 
-            
-class ElementFormCommand(ElementCommand):                   
+
+class ElementFormCommand(ElementCommand):
     NAME = None
 
     def create_processor(self, session):
@@ -57,50 +57,50 @@ class ElementFormCommand(ElementCommand):
 
     def process_form(self, processor, form):
         raise NotImplementedError()
-                
+
     @with_session
     def execute(self, session):
         processor = self.create_processor(session)
-                       
+
         # Infile: -i
         #      
         if self.option.input:
             form = self.read_form()
             self.process_form(session, processor, form)
-        
+
         # Editor: (not -i or -o)
         #
-        else:                   
+        else:
             elements = list(self._find_elements(session))
             processor.show_headers = len(elements) == 1
             form = processor.to_form(elements)
-        
+
             if self.option.out:
                 self.write_form(form)
 
-            else:    
-                new_form = self.edit_form(form) 
-                
+            else:
+                new_form = self.edit_form(form)
+
                 if new_form == form:
                     self.log.info("Form unchanged: Not Submitting")
                     return
-                try:            
+                try:
                     self.process_form(session, processor, new_form)
                 except Exception, e:
                     self.log.error("Error Processing form: %s", e)
                     self.error_dump_form(new_form)
                     raise
-            
-    
-    def write_form(self, form):                    
+
+
+    def write_form(self, form):
         if not self.option.file:
-            print(form)            
+            print(form)
         else:
             f = open(self.option.file, 'w')
             f.write(form)
             f.close()
-    
-                
+
+
     def read_form(self):
         if not self.option.file:
             form = sys.stdin.read()
@@ -108,46 +108,46 @@ class ElementFormCommand(ElementCommand):
             f = file(self.option.file)
             form = f.read()
             f.close()
-    
+
         return form
 
     def edit_form(self, form):
-        (fd,path) = tempfile.mkstemp(prefix="dino.edit.", suffix=".json", dir="/var/tmp")
-        
+        (fd, path) = tempfile.mkstemp(prefix="dino.edit.", suffix=".json", dir="/var/tmp")
+
         os.write(fd, form)
-        os.close(fd)  
-        
+        os.close(fd)
+
         if os.environ.has_key("VISUAL"):
             editor = os.environ["VISUAL"]
         elif os.environ.has_key("EDITOR"):
             editor = os.environ["EDITOR"]
         else:
             editor = "/usr/bin/vi"
-        
-        os.spawnv(os.P_WAIT, editor, [ editor, path] )
-        
-        form = open(path).read()        
-        os.unlink(path) 
-        
+
+        os.spawnv(os.P_WAIT, editor, [ editor, path])
+
+        form = open(path).read()
+        os.unlink(path)
+
         return form
-        
+
     def error_dump_form(self, form):
         for i in range(1, 20):
             filename = "dino.edit.%d" % i
             if not os.path.exists(filename):
                 break
-                
+
         f = open(filename, 'w')
         f.write(form)
         f.close()
         self.log.info("Writing current form to file: %s", filename)
-        
-        
 
-                    
-            
-        
-class EditCommand(ElementFormCommand):    
+
+
+
+
+
+class EditCommand(ElementFormCommand):
     '''
     Edit the specified Element Instance(s)
     
@@ -157,65 +157,65 @@ class EditCommand(ElementFormCommand):
     '''
     NAME = "edit"
     USAGE = "{ -i | [ -o ] <ObjectSpecList> } [ -f <filename> ] "
-    GROUP = "element" 
-    OPTIONS = ( 
-        Option('-o', dest='out', action='store_true', default=False), 
-        Option('-i', dest='input', action='store_true', default=False), 
+    GROUP = "element"
+    OPTIONS = (
+        Option('-o', dest='out', action='store_true', default=False),
+        Option('-i', dest='input', action='store_true', default=False),
         Option('-f', dest='file', default=None),
-        Option('-n', '--no-commit',  dest='no_commit', action='store_true', default=False), 
+        Option('-n', '--no-commit', dest='no_commit', action='store_true', default=False),
         )
 
-    def validate(self):            
+    def validate(self):
         if len(self.args) < 1 and not self.option.input:
-            raise CommandArgumentError(self, "Must specify an ElementName (<EntityName>/<InstanceName>)")  
+            raise CommandArgumentError(self, "Must specify an ElementName (<EntityName>/<InstanceName>)")
 
 
     def create_processor(self, session):
         return MultiElementFormProcessor(session)
-        
+
 
     def process_form(self, session, processor, form):
-                     
-        session.begin()    
-        
+
+        session.begin()
+
         processor.process(form)
-        
+
         desc = session.create_change_description()
-        
+
         try:
             if self.option.no_commit:
                 self.log.info("Forced Rollback")
                 session.rollback()
-                
+
             else:
-                self.log.info("Committing")  
-                session.commit()  
-                
+                self.log.info("Committing")
+                session.commit()
+
         except Exception, e:
             self.log.info("Error: %s" % e)
-            session.rollback() 
+            session.rollback()
             raise
-        
+
         # Tell the user about what changed
         #
         for change in desc:
             self.log.info(str(change))
 
-        
+
         if self.option.no_commit:
             self.log.info("no-commit specified: nothing submitted")
 
         elif len(desc) == 0:
             self.log.info("No Change: Not Submitted")
-            
+
         elif session.last_changeset:
             self.log.info("Submitted: %s", session.last_changeset)
-            
+
         else:
             self.log.info("Submitted")
-        
-            
-            
+
+
+
 class CreateCommand(ElementFormCommand):
     '''
     Create a new instance(s) of the specified Element type(s)
@@ -227,29 +227,29 @@ class CreateCommand(ElementFormCommand):
     NAME = "create"
     USAGE = " { -i | [ -o ] <EntityNameList> } [ -f <filename> ]"
     GROUP = "element"
-    OPTIONS = ( 
-        Option('-o', dest='out', action='store_true', default=False), 
-        Option('-i', dest='input', action='store_true', default=False), 
-        Option('-f', dest='file', default=None), 
-        Option('-n', '--no-commit',  dest='no_commit', action='store_true', default=False),
+    OPTIONS = (
+        Option('-o', dest='out', action='store_true', default=False),
+        Option('-i', dest='input', action='store_true', default=False),
+        Option('-f', dest='file', default=None),
+        Option('-n', '--no-commit', dest='no_commit', action='store_true', default=False),
         )
 
-    def validate(self):            
+    def validate(self):
         if len(self.args) < 1 and not self.option.input:
-            raise CommandArgumentError(self, "Must specify an EntityName")  
+            raise CommandArgumentError(self, "Must specify an EntityName")
 
         for a in self.args:
-            if not self.session.spec_parser.is_spec(a, expected=EntityNameResolver):                
+            if not self.db_config.object_spec_parser().is_spec(a, expected=EntityNameResolver):
                 raise CommandArgumentError(self, "Argument must be an EntityName")
-                
+
     def create_processor(self, session):
         return MultiElementFormProcessor(session, allow_create=True)
-     
+
 
     def _find_elements(self, session):
         try:
             for a in self.args:
-                yield session.resolve_entity(a).create_empty()                     
+                yield session.resolve_entity(a).create_empty()
 
         except UnknownEntityError, e:
             raise CommandArgumentError(self, str(e))
@@ -258,42 +258,42 @@ class CreateCommand(ElementFormCommand):
     def process_form(self, session, processor, form):
 
         session.begin()
-                                           
-        is_modified = processor.process(form)      
-        
+
+        is_modified = processor.process(form)
+
         desc = session.create_change_description()
 
         if self.option.no_commit:
             self.log.info("Forced Rollback")
             session.rollback()
-                    
+
         elif is_modified:
-            self.log.fine("Element(s) Modified: Commit")                                            
+            self.log.fine("Element(s) Modified: Commit")
             session.commit()
-            
+
         else:
-            self.log.fine("Element(s) Unchanged: Rollback")                                            
+            self.log.fine("Element(s) Unchanged: Rollback")
             session.rollback()
-        
+
         # Tell the user about what changed
         #
         for change in desc:
             self.log.info(str(change))
-     
+
         if self.option.no_commit:
             self.log.info("no-commit specified: nothing submitted")
 
         elif len(desc) == 0:
             self.log.info("No Change: Not Submitted")
-            
+
         elif session.last_changeset:
             self.log.info("Submitted: %s", session.last_changeset)
-        
+
         else:
             self.log.info("Submitted")
-    
 
-            
+
+
 class DumpCommand(EditCommand):
     '''
     Dump the contents of the specified Element(s)
@@ -305,23 +305,22 @@ class DumpCommand(EditCommand):
     NAME = "dump"
     USAGE = "<ElementNameList> [ -f <filename> ]"
     GROUP = "element"
-    OPTIONS = ( 
-        Option('-f', dest='file', default=None), 
-        )       
+    OPTIONS = (
+        Option('-f', dest='file', default=None),
+        )
 
-    def validate(self):            
+    def validate(self):
         if len(self.args) < 1:
-            raise CommandArgumentError(self, "Must specify an ElementName (<EntityName>/<InstanceName>)")  
+            raise CommandArgumentError(self, "Must specify an ElementName (<EntityName>/<InstanceName>)")
 
     @with_session
-    def execute(self, session): 
+    def execute(self, session):
         processor = MultiElementFormProcessor(session, show_read_only=True)
         elements = list(self._find_elements(session))
-        
+
         processor.show_headers = len(elements) == 1
-        
-        form = processor.to_form(elements)     
-                                   
+
+        form = processor.to_form(elements)
+
         self.write_form(form)
-            
-     
+

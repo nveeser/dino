@@ -3,5 +3,6 @@
 *.swp
 *.pyc
 *~
+*.rpm
 .DS_Store
 
