@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 <%inherit file="/master.mako"/>
 
-<table border="1">
+<table>
 	<thead>
     <tr> 
-    	<th>Path</td>
-    	<th>Name</td>    	 
-    	<th>Conditions</td> 
-    	<th>Defaults</td> 
-    	<th>Hardcoded</td> 
+    	<th>Path</th>
+    	<th>Name</th>    	 
+    	<th>Conditions</th> 
+    	<th>Defaults</th> 
+    	<th>Hardcoded</th> 
     </tr>
     </thead>
      % for i,r in enumerate(c.routes):

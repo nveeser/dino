@@ -9,8 +9,7 @@ class DumpController(BaseController):
     	c.path = sys.path
         c.dump_obj = dict([ (n, getattr(request, n)) for n in dir(request) ])
         c.environ = request.environ
-        return
-        #render('/dump.mako')
+        return render('/dump.mako')
 
     def routes(self):
         c.routes = config['routes.map'].matchlist

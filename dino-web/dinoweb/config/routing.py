@@ -23,4 +23,8 @@ def make_map():
     map.resource('element', 'elements', path_prefix='/element/{entity_name}')
 
     map.connect('/dump/{action}', controller='dump')
+
+
+    map.connect('/probe', controller='probe', action='update',
+                conditions=dict(method=['POST']))
     return map

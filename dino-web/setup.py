@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
     name='dino-web',
-    version='0.1',
+    version='0.9',
     description='',
     author='',
     author_email='',

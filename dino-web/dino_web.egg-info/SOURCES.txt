@@ -28,13 +28,15 @@ dinoweb/lib/helpers.py
 dinoweb/model/__init__.py
 dinoweb/model/meta.py
 dinoweb/public/bg.png
+dinoweb/public/coffee-with-milk.css
 dinoweb/public/favicon.ico
 dinoweb/public/index.html
+dinoweb/public/jquery-1.3.2.min.js
 dinoweb/public/pylons-logo.gif
-dinoweb/public/table.css
 dinoweb/templates/dump.mako
 dinoweb/templates/master.mako
 dinoweb/templates/dump/routes.mako
+dinoweb/templates/elements/element.mako
 dinoweb/templates/elements/elements.mako
 dinoweb/templates/elements/entities.mako
 dinoweb/tests/__init__.py
