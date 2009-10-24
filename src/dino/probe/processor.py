@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 
-import os,sys
+import os, sys
 import operator
 import stat
 import subprocess
 import logging
 from StringIO import StringIO
 
-from dino import LogObject
+from dino import class_logger
 from dino.probe.error import *
 
 '''
@@ -30,66 +30,65 @@ A probe is dict of the form:
 
 '''
 
-
 # processing engine for probes
-class Processor(LogObject):
-    
+class Processor(object):
+
     # initialize and check if probe root path is valid
     def __init__(self, probe_specs, check_result=True):
         self._probes = probe_specs
         self.check_result = check_result
-                         
+
 
     # execute the probes and pre/post exoec files if present
     def run(self):
         results = {}
-        for probe in self._probes:     
-      
+        for probe in self._probes:
+
             # check method file location
             if not os.path.exists(probe.method()):
                 raise ProcessorError('Probe method %s not found.' % probe.method())
-            
+
             # check if executable, if not make it so
             if os.stat(probe.method()).st_mode & (
-                stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH) == 0:
+                stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) == 0:
                 raise ProcessorError('Probe method is not executable: %s' % probe.method())
-            
-                
-                
+
+
+
             # Run probe method file            
             self.log.info('Executing %s %s' % (
                 os.path.basename(probe.method()), ' '.join(probe.args)))
-                
+
             res, out, err = self._exec(probe.method(), probe.args)
-            
+
             probe_output = out.readline().strip()
             self.log.info('    Output: %s' % probe_output)
             if not out.closed:
                 out.close()
             if not err.closed:
                 err.close()
-            
-                
+
+
             # check results only if needed
             if  self.check_result:
                 result = self._check_results(probe, probe_output)
                 self.log.info('    check result %s' % str(result))
-            
-                
+
+
             # Handle Output
             if probe.no_output == 0:
                 probe_key = ('%s %s' % (probe.name, ' '.join(probe.args))).strip()
-                results[probe_key] = probe_output                
+                results[probe_key] = probe_output
             else:
                 self.log.debug('    output suppression requested')
-        
+
         return results
 
     # actually executes a probe method
     def _exec(self, cmd, args=[]):
         #print [cmd] + args 
         try:
-            proc = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, 
+            proc = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, shell=False, env=os.environ)
             self.log.debug("os.environ")
             # wait for it to finish before returning
@@ -103,13 +102,13 @@ class Processor(LogObject):
         if ok:
             (act, msg) = (probe.ok_act, probe.ok_msg)
         else:
-            (act, msg) = (probe.err_act,probe.err_msg)
-            
+            (act, msg) = (probe.err_act, probe.err_msg)
+
         if act == 'next':
             self.log.debug('    action=next, moving on')
             # cache value, if directed.
             if probe.cache != "no":
-                self.log.debug('    caching result of %s into %s' % ( probe.name, probe.cache))
+                self.log.debug('    caching result of %s into %s' % (probe.name, probe.cache))
                 os.environ[probe.cache] = result
             return
         elif act == 'abort':
@@ -131,6 +130,7 @@ class Processor(LogObject):
                 result = self._exec_action(probe, result, ok=False)
             return probe.err_msg, result
 
+class_logger(Processor)
 
 
 

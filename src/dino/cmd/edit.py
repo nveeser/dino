@@ -3,14 +3,13 @@ import tempfile
 import logging
 from optparse import Option
 
-from dino.cmd.command import with_session
-from dino.cmd.maincmd import MainCommand
+from dino.cmd.command import with_session, DinoCommand
 from dino.cmd.exception import *
 from dino.db import *
 
 
 
-class ElementCommand(MainCommand):
+class ElementCommand(DinoCommand):
     NAME = None
 
     def validate(self):

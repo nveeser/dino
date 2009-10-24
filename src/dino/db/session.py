@@ -4,7 +4,7 @@ from sqlalchemy.orm.attributes import instance_state, manager_of_class
 import sqlalchemy.exc as sa_exc
 
 
-from dino.config import class_logger
+from dino import class_logger
 
 from exception import UnknownElementError, DatabaseError, ElementExistsError
 import changeset

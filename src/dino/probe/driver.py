@@ -12,55 +12,55 @@ try:
 except ImportError:
     import simplejson as json
 
-from dino import LogObject
+from dino import class_logger
 from dino.probe.processor import Processor
 from dino.probe.error import *
 from dino.probe.loader import ProbeSpecLoader
 
 DEFAULT_HW_TYPE = "unknown unknown"
 
-class Driver(LogObject):
-        
+class Driver(object):
+
     def __init__(self, type_map_file=None, probe_root=None):
-        
+
         if type_map_file is None:
             type_map_file = self._find_path("probe-spec/type_map.json")
-            
-        self.log.debug('using type_map: %s' % type_map_file)          
-        self._type_map = self._read_type_map(type_map_file)       
+
+        self.log.debug('using type_map: %s' % type_map_file)
+        self._type_map = self._read_type_map(type_map_file)
 
         if probe_root is None:
-            probe_root = self._find_path("probe-exec")           
-             
-        self.log.debug('using probe root: %s' % probe_root)          
-        self._loader = ProbeSpecLoader(probe_root)        
+            probe_root = self._find_path("probe-exec")
+
+        self.log.debug('using probe root: %s' % probe_root)
+        self._loader = ProbeSpecLoader(probe_root)
 
 
     def probe(self, hw_info=None):
-        
+
         if hw_info:
             if ':' not in hw_info:
                 raise UnknowHardwareError("Could not determine hardware from forced spec: %s" % hw_info)
             (hw_type, hw_sub_type) = hw_info.split(':')
-            
+
         else:
             probe_specs = self._loader.find_probe_set("identify")
-            
+
             result = Processor(probe_specs, check_result=False).run()
-            
+
             result = self._identify_hw_type(result)
             if len(result) == 0:
                 raise UnknowHardwareError('Could not determine hardware type')
-    
+
             self.log.info('check results %s' % result)
             (hw_type, hw_sub_type) = result.split()
-        
-        
-        (os.environ['MW_MODEL_NAME'], os.environ['MW_HNODE_TYPE_DICT']) = (hw_type,hw_sub_type)
-                
-        spec_name = "%s.%s" % (hw_type,hw_sub_type)
+
+
+        (os.environ['MW_MODEL_NAME'], os.environ['MW_HNODE_TYPE_DICT']) = (hw_type, hw_sub_type)
+
+        spec_name = "%s.%s" % (hw_type, hw_sub_type)
         probe_specs = self._loader.find_probe_set(spec_name)
-        
+
         return Processor(probe_specs, check_result=True).run()
 
 
@@ -72,12 +72,12 @@ class Driver(LogObject):
         return res
 
     def _find_path(self, path):
-        path = os.path.join(os.path.dirname(__file__), path)            
+        path = os.path.join(os.path.dirname(__file__), path)
         if os.path.exists(path):
-            return path 
+            return path
         else:
             raise ConfigError("Can't find path: %s" % path)
-        
+
     def _read_type_map(self, map_file):
         self.log.info("read file: %s" % map_file)
         f = open(map_file, 'r')
@@ -86,10 +86,11 @@ class Driver(LogObject):
         finally:
             f.close()
 
-    def _identify_hw_type(self, results):        
+    def _identify_hw_type(self, results):
         for type in self._type_map:
             if self._type_map[type] == results:
                 return type
-        
+
         return DEFAULT_HW_TYPE
 
+class_logger(Driver)

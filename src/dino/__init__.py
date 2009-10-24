@@ -5,7 +5,7 @@ import logging
 #
 # Major Hack to get around multiple installs of package sqlalchemy
 # Should be using pkg_resources.py
-#
+# This is only necessary on Gentoo...in Fedora we use Virtualenv
 eggs = [ "SQLAlchemy-0.5.3-py2.4.egg", "SQLAlchemy-0.5.3-py2.6.egg"]
 for p in sys.path[:]:
     for egg in eggs:
@@ -20,19 +20,9 @@ if sqlalchemy.__version__ not in  [ "0.5.3", "0.5.4p2" ]:
     raise RuntimeError("Found wrong version of SqlAlchemy: %s" % sqlalchemy.__version__)
 
 
-def get_class_logger(cls):
-    return logging.getLogger(cls.__module__ + "." + cls.__name__)
-
-#logging.get_class_logger = get_class_logger
-
-
-class LogObjectMeta(type):
-    def __init__(cls, name, bases, dict_):
-        super(LogObjectMeta, cls).__init__(name, bases, dict_)
-        cls.log = get_class_logger(cls)
-
-class LogObject(object):
-    __metaclass__ = LogObjectMeta
+def class_logger(cls, level=None):
+    logger = logging.getLogger(cls.__module__ + "." + cls.__name__.lower())
+    cls.log = logger
 
 
 METHOD_TEMPLATE = """\

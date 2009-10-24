@@ -1,0 +1,25 @@
+[DEFAULT]
+debug = true
+# Uncomment and replace with the address which should receive any error reports
+#email_to = you@yourdomain.com
+smtp_server = localhost
+error_email_from = paste@localhost
+
+[app:main]
+use = egg:dino-web
+full_stack = true
+static_files = true
+
+
+cache_dir = /mw/data/dinoweb/data
+beaker.session.key = dinoweb
+beaker.session.secret = somesecret
+set debug = false
+
+dino_local = false
+#dino.uri=mysql://%(user)s:%(password)s@%(host)s/%(db)s
+dino.user=nicholas
+dino.password=moosejaw
+dino.host=172.31.127.11
+dino.db=dinodb_nick
+#dino.sql_debug=1

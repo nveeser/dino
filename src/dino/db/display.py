@@ -4,7 +4,7 @@ import sqlalchemy.orm as sa_orm
 import sqlalchemy.types as sa_types
 import sqlalchemy.orm.properties as sa_props
 
-from dino.config import class_logger
+from dino import class_logger
 import element
 
 class DisplayProcessor(object):

@@ -5,11 +5,10 @@ import logging
 import yaml
 from optparse import Option
 
-from dino.cmd.maincmd import MainCommand
-from dino.cmd.command import with_session
+from dino.cmd.command import with_session, DinoCommand
 from dino.cmd.exception import *
 from dino.db import *
-from dino.config import class_logger
+from dino import class_logger
 
 '''
 --- 
@@ -102,10 +101,71 @@ processorcount: "2"
 
 
 '''
+
+
 class FacterProcessorError(Exception):
 	pass
 
 BAD_SERIAL_LIST = ('empty', '1234567890', 'To Be Filled By O.E.M.')
+
+
+class FacterImportCommand(DinoCommand):
+
+    NAME = 'fimport'
+    USAGE = 'file'
+    GROUP = 'data'
+    OPTIONS = (
+         Option('-n', '--no-submit', action='store_false', dest='submit', default=True),
+    )
+
+    def validate(self):
+        if len(self.args) < 1:
+            raise CommandArgumentError(self, "Must specify a file/dir to add")
+
+
+    @with_session
+    def execute(self, session):
+        if self.cmd_env:
+            self.cmd_env.increase_verbose()
+
+        proc = FacterInfoProcessor(session)
+
+        for path in self.arg_iterator():
+            session.open_changeset()
+
+            f = open(path)
+            text = f.read()
+            f.close()
+            for data in yaml.load_all(text):
+                proc.process(data)
+
+        if self.option.submit:
+            self.log.fine("Submitting Objects: %s / %s " % (len(session.new), len(session.dirty)))
+            cs = session.submit_changeset()
+            self.log.info("Committed Changeset: " + str(cs))
+
+        else:
+            session.revert_changeset()
+            self.log.info("Not submitting")
+
+
+    def arg_iterator(self):
+        for path in self.args:
+            if not os.path.exists(path):
+                raise CommandArgumentError(self, "Path does not exist: " + path)
+
+            if os.path.isfile(path):
+                yield path
+
+            elif os.path.isdir(path):
+                for x in os.listdir(path):
+                    filepath = os.path.join(path, x)
+                    if os.path.isfile(filepath):
+                        yield filepath
+
+            else:
+                raise CommandArgumentError(self, "add can only accept dir or file")
+
 
 class FacterInfoProcessor(object):
 	def __init__(self, session):
@@ -235,62 +295,6 @@ class FacterInfoProcessor(object):
 class_logger(FacterInfoProcessor)
 
 
-class FacterImportCommand(MainCommand):
-
-	NAME = 'fimport'
-	USAGE = 'file'
-	GROUP = 'data'
-	OPTIONS = (
-	 	Option('-n', '--no-submit', action='store_false', dest='submit', default=True),
-    )
-
-	def validate(self):
-		if len(self.args) < 1:
-			raise CommandArgumentError(self, "Must specify a file/dir to add")
-
-
-	@with_session
-	def execute(self, session):
-		if self.cli:
-			self.cli.increase_verbose()
-
-		proc = FacterInfoProcessor(session)
-
-		for path in self.arg_iterator():
-			session.open_changeset()
-
-			f = open(path)
-			text = f.read()
-			f.close()
-			for data in yaml.load_all(text):
-				proc.process(data)
-
-		if self.option.submit:
-			self.log.fine("Submitting Objects: %s / %s " % (len(session.new), len(session.dirty)))
-			cs = session.submit_changeset()
-			self.log.info("Committed Changeset: " + str(cs))
-
-		else:
-			session.revert_changeset()
-			self.log.info("Not submitting")
-
-
-	def arg_iterator(self):
-		for path in self.args:
-			if not os.path.exists(path):
-				raise CommandArgumentError(self, "Path does not exist: " + path)
-
-			if os.path.isfile(path):
-				yield path
-
-			elif os.path.isdir(path):
-				for x in os.listdir(path):
-					filepath = os.path.join(path, x)
-					if os.path.isfile(filepath):
-						yield filepath
-
-			else:
-				raise CommandArgumentError(self, "add can only accept dir or file")
 
 
 

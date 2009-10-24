@@ -1,10 +1,9 @@
 
-from dino.cmd.command import with_session
-from dino.cmd.maincmd import MainCommand
+from dino.cmd.command import with_session, DinoCommand
 from dino.cmd.exception import *
 from dino.cmd.jsonutil import *
 from dino.db import ElementNameResolver
-class JsonExportCommand(MainCommand):
+class JsonExportCommand(DinoCommand):
 
     '''Query repository for a complete server description.'''
 
@@ -15,26 +14,23 @@ class JsonExportCommand(MainCommand):
     def validate(self):
         if len(self.args) < 1:
             raise CommandArgumentError(self, 'Please specify a server in fqdn format.\n')
-        if len(self.args) >= 2: 
+        if len(self.args) >= 2:
             raise CommandArgumentError(self, 'You can specify ONLY ONE server.\n')
 
-    @with_session 
+    @with_session
     def execute(self, session):
-             
+
         name = self.args[0].split('.')
-        if len(name) != 3: 
+        if len(name) != 3:
             raise CommandArgumentError(self, 'Host does not have the proper fqdn format.')
-            
+
         processor = JsonProcessor(self, session)
-    
+
         resolver = session.spec_parser.parse(self.args[0], expected=ElementNameResolver)
-        
-        for elmt in resolver.resolve(session):                    
+
+        for elmt in resolver.resolve(session):
             json = processor.host_to_json(elmt)
-                
-        if self.cli is None:
-            return json
-    
-        print json        
-        
-    
+
+        self.cmd_env.write(json)
+
+

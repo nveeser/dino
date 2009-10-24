@@ -1,8 +1,7 @@
 import types
 from optparse import Option
 
-from dino.cmd.command import with_session
-from dino.cmd.maincmd import MainCommand
+from dino.cmd.command import with_session, DinoCommand
 from dino.cmd.exception import *
 
 from dino.db import (
@@ -15,7 +14,7 @@ from dino.db import (
 
 #import dino.db.element 
 
-class ShowCommand(MainCommand):
+class ShowCommand(DinoCommand):
     ''' Show Element(s) and attributes from the repository 
     Multiple ObjectSpecs may be specified, but must be of the same type.
     
@@ -59,11 +58,8 @@ class ShowCommand(MainCommand):
         # find the results of the each ObjectSpec      
         result = self.resolve_all_specs(session, resolvers)
 
-        if not self.cli:
-            return list(result)
-
         for x in result:
-            print x
+            self.cmd_env.write(x)
 
 
     def resolve_all_specs(self, session, resolvers):

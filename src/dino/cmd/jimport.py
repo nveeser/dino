@@ -11,8 +11,7 @@ from optparse import Option
 
 from itertools import ifilter
 
-from dino.cmd.maincmd import MainCommand
-from dino.cmd.command import with_session
+from dino.cmd.command import with_session, DinoCommand
 from dino.cmd.exception import *
 from dino.db import *
 
@@ -66,7 +65,7 @@ from dino.db import *
 
 
 
-class JsonImportCommand(MainCommand):
+class JsonImportCommand(DinoCommand):
     ''' 
     (This command is currently unused)
     '''
@@ -85,8 +84,8 @@ class JsonImportCommand(MainCommand):
 
     @with_session
     def execute(self, session):
-        if self.cli:
-            self.cli.increase_verbose()
+        if self.cmd_env:
+            self.cmd_env.increase_verbose()
 
         proc = BasicJsonProcessor(self, session)
 
@@ -106,7 +105,7 @@ class JsonImportCommand(MainCommand):
 
 
 
-        if self.cli and len(proc.unknown_items) > 0:
+        if self.cmd_env and len(proc.unknown_items) > 0:
             self.log.error("Missing items:")
             for name, value in proc.unknown_items:
                 self.log.error("    %s: %s", name, value)

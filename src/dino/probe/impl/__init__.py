@@ -1,5 +1,5 @@
 
-from dino import LogObject
+from dino import class_logger
 
 from subprocess import Popen
 
@@ -21,10 +21,11 @@ except ImportError:
           print("Failed to import ElementTree from any known place")
 
 
-class Probe(LogObject):
+class Probe(object):
     def run(self):
         pass
-    
+
     def exec_process(self, cmd):
         pass
-    
+
+class_logger(Probe)

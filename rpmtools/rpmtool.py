@@ -239,8 +239,8 @@ class RpmSpec:
             for file in filenames:
                 self._files.append(os.path.join(install_dir, file))
 
-            if len(filenames) == 0:
-                self._files.append("%dir " + install_dir)
+            #if len(filenames) == 0:
+            self._files.append("%dir " + install_dir)
 
         self._files.sort()
         #self.filterFiles()

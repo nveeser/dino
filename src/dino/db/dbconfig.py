@@ -3,8 +3,7 @@ import re
 
 import sqlalchemy
 
-from dino.config import class_logger
-import dino.config
+from dino import class_logger
 import dino.db.schema
 from session import ElementSession
 from objectresolver import ObjectSpecParser
@@ -53,16 +52,16 @@ class DbConfig(object):
         'sql_debug' : '0',
     }
 
-    @classmethod
-    def create_from_cliconfig(cls, file_section='db', **kwargs):
-        '''
-        Create a DbConfig using values via config files, and passed in keyword args.
-        '''
-        file_config = dino.config.load_config(file_section)
-        if file_config is None:
-            raise DbConfigError("Cannot find file section: %s" % file_section)
-
-        return cls.create_from_dict(file_config, **kwargs)
+#    @classmethod
+#    def create_from_cliconfig(cls, file_section='db', **kwargs):
+#        '''
+#        Create a DbConfig using values via config files, and passed in keyword args.
+#        '''
+#        file_config = dino.config.load_config(file_section)
+#        if file_config is None:
+#            raise DbConfigError("Cannot find file section: %s" % file_section)
+#
+#        return cls.create_from_dict(file_config, **kwargs)
 
     @classmethod
     def create_from_dict(cls, dict_, prefix="", **kwargs):
@@ -148,7 +147,7 @@ class DbConfig(object):
         self.scoped_session_wrapper = scope.make_scoped(self.session_factory,
             methods=method_set, properties=property_set, classmethods=classmethod_set)
 
-        if int(kwargs.get('sql_debug')):
+        if int(kwargs.get('sql_debug', '0')):
             self.setup_sql_handler()
 
         if kwargs.get('check_version', True):
@@ -273,13 +272,13 @@ class DbConfig(object):
 
     def dump_schema(self):
         import StringIO
-        buf = StringIO.StringIO()
-        engine = sqlalchemy.engine.create_engine('mysql://', strategy='mock', executor=lambda s: buf.write(s + ";\n"))
+        buf = []
+        engine = sqlalchemy.engine.create_engine('mysql://', strategy='mock', executor=lambda s: buf.append(s + ";"))
 
         for md in self.metadata_set:
             md.create_all(engine)
 
-        return buf.getvalue()
+        return buf
 
     @classmethod
     def setup_sql_handler(cls):

@@ -1,13 +1,13 @@
 from optparse import Option
 
-from dino.cmd.maincmd import MainCommand
+from dino.cmd.command import DinoCommand
 from dino.cmd.exception import *
 
 from dino.generators.base import Generator, NoSuchGeneratorError, GeneratorException
 
 from dino.db import DbConfig, DbConfigError
 
-class GenerateCommand(MainCommand):
+class GenerateCommand(DinoCommand):
     ''' Run Generator(s) for various services '''
     NAME = ("generate", "gen")
     USAGE = "{ -l | [ <generator> [ <generator> ] ... ] [ -g | -a ] }"
@@ -28,8 +28,8 @@ class GenerateCommand(MainCommand):
             print "   ", g.NAME
 
     def execute(self):
-        if self.cli:
-            self.cli.setup_base_logger("dino.generate")
+        if self.cmd_env:
+            self.cmd_env.setup_base_logger("dino.generate")
 
         if self.option.list:
             for g in Generator.generator_class_iterator():
@@ -42,16 +42,11 @@ class GenerateCommand(MainCommand):
         else:
             classes = Generator.generator_class_iterator(exclude='dns')
 
-        try:
-            gen_db_config = DbConfig.create_from_cliconfig(file_section="generator.db")
-        except DbConfigError, e:
-            self.log.fine("Falling back to main db config")
-            gen_db_config = self.db_config
-
+        generator_settings = self.cmd_env.get_config("generate")
 
         try:
 
-            gen_list = [ c(gen_db_config) for c in classes ]
+            gen_list = [ c(self.db_config, generator_settings) for c in classes ]
 
             for gen in gen_list:
                 gen.parse(self.args)

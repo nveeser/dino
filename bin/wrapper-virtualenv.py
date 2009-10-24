@@ -3,19 +3,15 @@
 import sys
 import os
 
-
-#class Importer(object):
-#    def find_module(self, fullname, path=None):
-#        print "SEARCH: ", fullname, path
-#        return None  
-#          
-#sys.meta_path.append(Importer())
+root = os.path.dirname(__file__)
+if os.path.exists(os.path.join(root, ".svn")):
+	sys.path[0] = os.path.join(root, "..", "src")
 
 cmdname = os.path.basename(sys.argv[0])
 
 if cmdname in ('dino', 'dinoadm', 'belle', 'pug', 'cli'):
-    import dino.cmd.cli
-    dino.cmd.cli.AdminCli().main(sys.argv)
+    import dino.cli.admin
+    dino.cli.admin.DinoCli().main(sys.argv)
 
 elif cmdname in ('dino-probe'):
     import dino.probe.cli

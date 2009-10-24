@@ -1,6 +1,6 @@
 from dino.cmd.exception import *
-from dino.cmd.command import with_session
-from dino.cmd.maincmd import MainCommand
+from dino.cmd.command import DinoCommand
+
 
 import admin
 import help
@@ -15,9 +15,4 @@ import show
 import info
 import delete
 import fimport
-
-#import dino.cmd.jimport
-#import dino.cmd.showrack
-#import dino.cmd.list
-#import dino.cmd.query
-#import dino.cmd.edithost
+#import jimport
