@@ -15,14 +15,14 @@ class SetCommand(DinoCommand):
     OPTIONS = (
         Option('-n', '--no-commit', dest='no_commit', action='store_true', default=False),
     )
-    def validate(self):
-        if len(self.args) < 2:
+    def validate(self, opts, args):
+        if len(args) < 2:
             raise CommandArgumentError(self, "command must have one object argument and one value argument")
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
 
-        (spec_string, value) = self.args
+        (spec_string, value) = args
 
         resolver = session.spec_parser.parse(spec_string, expected=PropertySpecResolver)
 
@@ -54,7 +54,7 @@ class SetCommand(DinoCommand):
 
         desc = session.create_change_description()
 
-        if self.option.no_commit:
+        if opts.no_commit:
             self.log.info("no-commit specified: nothing submitted")
         else:
             session.commit()

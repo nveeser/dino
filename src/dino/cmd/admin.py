@@ -37,7 +37,7 @@ class CreateAllCommand(AdminSubCommand):
     NAME = 'createall'
     USAGE = ''
 
-    def execute(self):
+    def execute(self, opts, args):
         self.log.info("CREATE Tables")
         self.parent.db_config.create_all()
 
@@ -48,7 +48,7 @@ class DropAllCommand(AdminSubCommand):
     USAGE = ''
 
     @with_connection
-    def execute(self, connection):
+    def execute(self, opts, args, connection):
         """drop all tables listed in the current metadata (entity_set)"""
 
         self.parent.db_config.assert_unprotected()
@@ -62,7 +62,7 @@ class ClearSchemaCommand(AdminSubCommand):
     USAGE = ''
 
     @with_connection
-    def execute(self, connection):
+    def execute(self, opts, args, connection):
         self.parent.db_config.assert_unprotected()
         self.parent.db_config.clear_schema()
 
@@ -73,7 +73,7 @@ class TruncateCommand(AdminSubCommand):
     USAGE = ''
 
     @with_connection
-    def execute(self, connection):
+    def execute(self, opts, args, connection):
         self.parent.db_config.assert_unprotected()
         self.parent.db_config.truncate_all()
 
@@ -83,7 +83,7 @@ class SchemaDumpCommand(AdminSubCommand):
     NAME = 'schema'
     USAGE = ''
 
-    def execute(self):
+    def execute(self, opts, args):
         for line in self.parent.db_config.dump_schema():
             self.cmd_env.write(line)
 
@@ -91,7 +91,7 @@ class ConfigDumpCommand(AdminSubCommand):
     NAME = 'config'
     USAGE = ''
 
-    def execute(self):
+    def execute(self, opts, args):
         cfg = self.cmd_env.get_config()
 
         main_sections = ['db', 'logging', 'migrate', 'generate']
@@ -119,16 +119,16 @@ class CheckProtectedCommand(AdminSubCommand):
     USAGE = '[ <newvalue> ]'
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
         info = self.parent.db_config.schema_info()
 
-        if len(self.args) > 0:
+        if len(args) > 0:
 
             try:
-                x = eval(self.args[0])
+                x = eval(args[0])
                 new_value = bool(x)
             except Exception, e:
-                raise CommandArgumentError(self, "Could not parse '%s' (%s)" % (self.args[0], e))
+                raise CommandArgumentError(self, "Could not parse '%s' (%s)" % (args[0], e))
 
 
             if new_value != info.protected:
@@ -157,7 +157,7 @@ class UpdateNamesCommand(AdminSubCommand):
     USAGE = ''
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
 
         session.begin()
 
@@ -176,7 +176,7 @@ class UpdateSubnetsCommand(AdminSubCommand):
     USAGE = ''
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
         session.begin()
         for addr in session.query(IpAddress).all():
             subnet = addr.query_subnet()
@@ -215,13 +215,13 @@ digraph M {
     ]
 '''
 
-    def validate(self):
+    def validate(self, opts, args):
         pass
 
     @with_session
-    def execute(self, session):
-        if self.option.outfile:
-            f = open(self.option.outfile, 'w')
+    def execute(self, opts, args, session):
+        if opts.outfile:
+            f = open(opts.outfile, 'w')
         else:
             f = sys.stdout
 
@@ -332,13 +332,8 @@ class ListLoggersCommand(AdminSubCommand):
     NAME = 'loggers'
     USAGE = ''
 
-    def execute(self):
-
-        log = logging.getLogger("dino")
-
-        loggers = sorted(self._find_loggers())
-
-        for l in loggers:
+    def execute(self, opts, args):
+        for l in sorted(self._find_loggers()):
             self.cmd_env.write(l.name)
 
     def _find_loggers(self):
@@ -354,7 +349,7 @@ class ErrorCommand(AdminSubCommand):
     NAME = 'error'
     USAGE = ''
 
-    def execute(self):
+    def execute(self, opts, args):
         self.a()
 
     def a(self):

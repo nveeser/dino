@@ -3,6 +3,26 @@ import logging
 
 log = logging.getLogger(__name__)
 
+def increment_level(curr_level):
+    level_map = {
+        logging.CRITICAL : logging.WARNING,
+        logging.WARNING : logging.INFO,
+        logging.INFO : logging.FINE,
+        logging.FINE : logging.FINER,
+        logging.FINER : logging.FINEST,
+        logging.FINEST : logging.DEBUG,
+        logging.DEBUG : logging.DEBUG
+    }
+    if curr_level == logging.NOTSET:
+        return logging.CRITICAL
+
+    for level in level_map.keys():
+        if curr_level >= level:
+            next_level = level_map[level]
+
+    return next_level
+
+
 class LogController(object):
     IGNORE_CONFIG_LOGGER_NAMES = [ 'console_format' ]
 
@@ -47,20 +67,7 @@ class LogController(object):
             logging.getLogger(name).setLevel(level)
 
     def increase_verbose(self):
-        level_map = {
-            logging.WARNING : logging.INFO,
-            logging.INFO : logging.FINE,
-            logging.FINE : logging.FINER,
-            logging.FINER : logging.FINEST,
-            logging.FINEST : logging.DEBUG,
-            logging.DEBUG : logging.DEBUG
-        }
-
-        curr_level = self.console_handler.level
-        for level in level_map.keys():
-            if curr_level >= level:
-                next_level = level_map[level]
-
+        next_level = increment_level(self.console_handler.level)
         self.console_handler.setLevel(next_level)
 
     def setup_base_logger(self, logger_name=""):
@@ -69,6 +76,6 @@ class LogController(object):
         l.addHandler(self.console_handler)
         l.setLevel(logging.DEBUG)
 
-LogController()
+#LogController()
 
 

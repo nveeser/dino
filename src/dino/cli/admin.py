@@ -45,8 +45,8 @@ class DinoCli(BaseDinoCli):
 
             cmd_class = cmd.DinoCommand.get_command(cmd_name)
             command = cmd_class(db_config, self)
-            command.parse(args)
-            command.execute()
+            (opts, args) = command.parse(args)
+            command.execute(opts, args)
 
         except cmd.CommandArgumentError, e:
             print "CommandArgumentError: ", e.msg

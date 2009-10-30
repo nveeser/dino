@@ -15,9 +15,9 @@ class HelpCommand(DinoCommand):
     USAGE = "[ commands | entities | objectspec | <Command> | <EntityName> ]"
     GROUP = "system"
 
-    def execute(self):
-        if len(self.args) > 0:
-            argument = self.args[0]
+    def execute(self, opts, args):
+        if len(args) > 0:
+            argument = args[0]
 
             if argument == "entities":
                 self.list_entities()
@@ -33,7 +33,7 @@ class HelpCommand(DinoCommand):
                 self.print_entity(entity)
 
             elif DinoCommand.has_command(argument):
-                cmd_class = DinoCommand.find_command(self.args[0])
+                cmd_class = DinoCommand.find_command(args[0])
                 cmd = cmd_class(self.db_config, self.cmd_env)
                 self.print_command(cmd)
 

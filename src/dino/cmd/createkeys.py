@@ -18,8 +18,8 @@ class CreateKeys(DinoCommand):
         Option('-f', dest='force', action='store_true', default=False),
         )
 
-    def validate(self):
-        if len(self.args) != 1:
+    def validate(self, opts, args):
+        if len(args) != 1:
             raise CommandArgumentError(self, "Command must have one Host argument")
 
 
@@ -54,10 +54,10 @@ class CreateKeys(DinoCommand):
         return (pub_key, priv_key)
 
     @with_session
-    def execute(self, session):
-        instance_name = self.args[0]
+    def execute(self, session, opts, args):
+        instance_name = args[0]
 
-        resolver = session.spec_parser.parse(self.args[0])
+        resolver = session.spec_parser.parse(args[0])
 
         host = resolver.resolve().next()
         if host is None:
@@ -72,7 +72,7 @@ class CreateKeys(DinoCommand):
             i = SshKeyInfo(rsa_key=rsa_priv, rsa_pub=rsa_pub, dsa_key=dsa_priv, dsa_pub=dsa_pub)
             host.ssh_key_info = i
 
-        elif self.option.force:
+        elif opts.force:
             host.ssh_key_info.set(rsa_key=rsa_priv, rsa_pub=rsa_pub, dsa_key=dsa_priv, dsa_pub=dsa_pub)
 
         else:

@@ -79,10 +79,11 @@ class TestChangeSet(ChangeSetTest):
         p = self.sess.query(Person).filter_by(name='eddie').first()
         self.sess.open_changeset()
         self.sess.delete(p)
+        print "DELETE SUBMIT"
         cs = self.sess.submit_changeset()
 
-        assert cs is not None
         assert self.sess.last_changeset is not None
+        assert cs is not None
 
         result = self.sess.query(Person).filter_by(name='eddie').all()
 

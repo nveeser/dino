@@ -15,8 +15,8 @@ class EditHostCommand(ElementFormCommand):
         Option('-f', dest='file', default=None),
         )
 
-    def validate(self):
-        if len(self.args) < 1 and not self.option.input:
+    def validate(self, opts, args):
+        if len(args) < 1 and not opts.input:
             raise CommandArgumentError(self, "Must specify one ElementName")
 
 
@@ -63,8 +63,8 @@ class CreateHostCommand(ElementFormCommand):
         Option('-f', dest='file', default=None),
         )
 
-    def validate(self):
-        if len(self.args) < 1 and not self.option.input:
+    def validate(self, opts, args):
+        if len(args) < 1 and not opts.input:
             raise CommandArgumentError(self, "Must specify one ElementName")
 
 
@@ -114,12 +114,12 @@ class DumpHostCommand(EditHostCommand):
         Option('-f', dest='file', default=None),
     )
 
-    def validate(self):
-        if len(self.args) < 1:
+    def validate(self, opts, args):
+        if len(args) < 1:
             raise CommandArgumentError(self, "Must specify one Host ElementName")
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
         processor = ElementFormProcessor.create(session)
 
         form = self.create_form(session, processor)

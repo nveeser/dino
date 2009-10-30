@@ -24,7 +24,7 @@ class MigrateCommand(DinoCommand):
         self.downgrades = {}
 
 
-    def execute(self):
+    def execute(self, opts, args):
         # Create session without checking version
         self.load_files()
 

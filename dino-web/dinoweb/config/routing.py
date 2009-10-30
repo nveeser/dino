@@ -26,5 +26,9 @@ def make_map():
 
 
     map.connect('/probe', controller='probe', action='update',
-                conditions=dict(method=['POST']))
+                conditions=dict(method=['PUT']))
+
+    map.connect('/probe', controller='probe', action='test',
+                conditions=dict(method=['GET']))
     return map
+

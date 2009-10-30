@@ -109,14 +109,17 @@ class Command(object):
         else:
             return "PROG_NAME"
 
+    def default_options(self):
+        pass
+
     def parse(self, args):
         ''' Parse arguments on command '''
 
-    def execute(self):
+    def execute(self, opts, args, **kwargs):
         '''Execute Command'''
         raise NotImplemented()
 
-    def validate(self):
+    def validate(self, opts, args):
         ''' Should be implemented to validate command line options '''
 
     def print_usage(self):
@@ -176,11 +179,11 @@ class CommandWithClassSubCommand(Command):
                 self.parent = parent
                 self.cmd_env = cmd_env
 
-            def execute(self):
+            def execute(self, opts, args):
                 raise NotImplemented()
 
             def parse(self, args):
-                (self.option, self.args) = self.parser.parse_args(args=args)
+                return self.parser.parse_args(args=args)
 
             def print_usage(self):
                 self.log(self.prog_name + " " + self.MAIN_COMMAND_NAME + " " + self.NAME + " " + self.USAGE)
@@ -200,19 +203,19 @@ class CommandWithClassSubCommand(Command):
                 self.parser.add_option('-v', '--verbose', action='callback', callback=self.cmd_env.increase_verbose_cb)
         self.args = args
 
-    def execute(self):
+    def execute(self, opts, args):
         if self.SUBCOMMAND_CLASS is None:
             raise CommandExecutionError(self, "SubCommand improperly defined")
 
         if len(self.args) < 1:
             raise CommandArgumentError(self, "Must specifiy a subcommand")
 
-        cmd_name = self.args.pop(0)
+        cmd_name = args.pop(0)
         cmd_class = self.SUBCOMMAND_CLASS.get_command(cmd_name)
         cmd = cmd_class(self, self.cmd_env)
-        cmd.parse(self.args)
-        cmd.validate()
-        return cmd.execute()
+        (opts, args) = cmd.parse(args)
+        cmd.validate(opts, args)
+        return cmd.execute(opts, args)
 
 
     def print_help(self):
@@ -248,14 +251,14 @@ class CommandWithMethodSubCommand(Command):
     NAME = None
     USAGE = ""
 
-    def execute(self):
-        if len(self.args) < 1:
+    def execute(self, opts, args):
+        if len(args) < 1:
             raise CommandArgumentError(self, "Must specify a subcommand")
-        (subcmd, self.args) = (self.args[0], self.args[1:])
+        (subcmd, args) = (args[0], args[1:])
 
         if hasattr(self, 'sub_' + subcmd):
             meth = getattr(self, 'sub_' + subcmd)
-            return meth()
+            return meth(opts, args)
         else:
             raise CommandArgumentError(self, "Unknown subcommand: " + subcmd)
 

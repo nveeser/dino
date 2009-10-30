@@ -1,6 +1,7 @@
-#/usr/bin/env python
+#/usr/bin/env python 
 
 import os
+import types
 import logging
 import yaml
 from optparse import Option
@@ -99,14 +100,71 @@ processor0: AMD Opteron(tm) Processor 248
 processor1: AMD Opteron(tm) Processor 248
 processorcount: "2"
 
+---
+architecture => x86_64
+cdp_device_eth0 => a5s1
+cdp_port_eth0 => GigabitEthernet1/3
+dmidecode_bios_vendor => Dell Inc.
+dmidecode_chassis_type => Rack Mount Chassis
+dmidecode_ipmi_spec_version => 2.0
+facterversion => 1.5.5
+hardwareisa => x86_64
+hardwaremodel => x86_64
+interfaces => eth0,eth1,eth2,eth3,sit0
+ipaddress => 172.29.5.17
+ipaddress_eth0 => 172.29.5.17
+ipmi_device => true
+ipmi_gateway1 => 172.29.5.1
+ipmi_gateway2 => 0.0.0.0
+ipmi_ip => 172.29.5.27
+ipmi_mac => 00:26:b9:33:25:d9
+ipmi_mask => 255.255.255.0
+is_virtual => false
+macaddress => 00:26:B9:33:25:D1
+macaddress_eth0 => 00:26:B9:33:25:D1
+macaddress_eth1 => 00:26:B9:33:25:D3
+macaddress_eth2 => 00:26:B9:33:25:D5
+macaddress_eth3 => 00:26:B9:33:25:D7
+manufacturer => Dell Inc.
+memorysize => 93.67 GB
+netmask => 255.255.255.0
+netmask_eth0 => 255.255.255.0
+network_eth0 => 172.29.5.0
+physicalprocessorcount => 2
+processor0 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor1 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor10 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor11 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor12 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor13 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor14 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor15 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor2 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor3 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor4 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor5 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor6 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor7 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor8 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processor9 => Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+processorcount => 16
+productname => PowerEdge R710
+serialnumber => 8V4LVH1
+type => Rack Mount Chassis
+virtual => physical
 
 '''
 
 
 class FacterProcessorError(Exception):
-	pass
+    pass
 
-BAD_SERIAL_LIST = ('empty', '1234567890', 'To Be Filled By O.E.M.')
+class MissingChassisError(FacterProcessorError):
+    def __init__(self, manufacturer, productname):
+        self.manufacturer = manufacturer
+        self.productname = productname
+
+BAD_SERIALNO_LIST = ('empty', '1234567890', 'To Be Filled By O.E.M.')
 
 
 class FacterImportCommand(DinoCommand):
@@ -118,28 +176,29 @@ class FacterImportCommand(DinoCommand):
          Option('-n', '--no-submit', action='store_false', dest='submit', default=True),
     )
 
-    def validate(self):
-        if len(self.args) < 1:
+    def validate(self, opts, args):
+        if len(args) < 1:
             raise CommandArgumentError(self, "Must specify a file/dir to add")
 
 
     @with_session
-    def execute(self, session):
-        if self.cmd_env:
-            self.cmd_env.increase_verbose()
+    def execute(self, opts, args, session):
 
         proc = FacterInfoProcessor(session)
 
-        for path in self.arg_iterator():
-            session.open_changeset()
+        session.open_changeset()
 
-            f = open(path)
-            text = f.read()
-            f.close()
-            for data in yaml.load_all(text):
-                proc.process(data)
+        try:
+            for d in self.arg_iterator(args):
+                for data_dict in d:
+                    proc.process(data_dict)
 
-        if self.option.submit:
+        except FacterProcessorError, e:
+            raise CommandExecutionError(self, e)
+
+        desc = session.create_change_description()
+
+        if opts.submit:
             self.log.fine("Submitting Objects: %s / %s " % (len(session.new), len(session.dirty)))
             cs = session.submit_changeset()
             self.log.info("Committed Changeset: " + str(cs))
@@ -148,152 +207,203 @@ class FacterImportCommand(DinoCommand):
             session.revert_changeset()
             self.log.info("Not submitting")
 
+        for change in desc:
+            self.log.info(str(change))
 
-    def arg_iterator(self):
-        for path in self.args:
-            if not os.path.exists(path):
-                raise CommandArgumentError(self, "Path does not exist: " + path)
 
-            if os.path.isfile(path):
-                yield path
 
-            elif os.path.isdir(path):
-                for x in os.listdir(path):
-                    filepath = os.path.join(path, x)
+    def arg_iterator(self, args):
+        ''' look through args and produce a list (tuple, generator) of dictionaries '''
+
+        def yaml_data(filepath):
+            f = open(filepath)
+            text = f.read()
+            f.close()
+            return yaml.load_all(text)
+
+        for arg in args:
+            if not os.path.exists(arg):
+                raise CommandArgumentError(self, "Path does not exist: " + arg)
+
+            if os.path.isfile(arg):
+                yield yaml_data(arg)
+
+            elif os.path.isdir(arg):
+                for x in os.listdir(arg):
+                    filepath = os.path.join(arg, x)
                     if os.path.isfile(filepath):
-                        yield filepath
+                        yield yaml_data(filepath)
 
             else:
                 raise CommandArgumentError(self, "add can only accept dir or file")
 
 
+
 class FacterInfoProcessor(object):
-	def __init__(self, session):
-		self.session = session
+    def __init__(self, session):
+        self.session = session
+
+    def process(self, data_dict):
+        if not isinstance(data_dict, dict):
+             raise FacterProcessorError("Invalid type passed in: %s" % type(data))
+
+        # Device 
+        #
+        device = self.find_device(data_dict)
+        if device is None:
+            hid = self.create_hid(data_dict)
+            serialno = data_dict.get('serialnumber')
+            device = Device(hid=hid, status="INVENTORY", serialno=serialno)
+            self.session.add(device)
 
 
-	def process(self, data):
-		if isinstance(data, basestring):
-			data = yaml.load_all(data)
-		elif isinstance(data, dict):
-			pass
-		else:
-			raise FacterProcessorError("Invalid type passed in: %s" % type(data))
+        # Physical / Virtual
+        if data_dict.get('virtual', 'physical') == 'physical':
+            hw_type = 'server'
+        else:
+            hw_type = 'vm'
 
-		device = self.find_device(data)
+        self.log.info("Server type: %s", hw_type)
+        #if device.hw_type != hw_type:
+        device.hw_type = hw_type
 
-		if device is None:
-			hid = self.create_hid(data)
-			device = Device(hid=hid, status="INVENTORY")
-			self.session.add(device)
-			device.host = Host()
+        # Chassis
+        #
+        if device.chassis is None:
+            vendor = data_dict.get('manufacturer')
+            product = data_dict.get('productname')
 
+            device.chassis = self.session.query(Chassis).filter_by(vendor=vendor, product=product).first()
 
-		if data.get('virtual', 'physical') == 'physical':
-			device.hw_type = 'server'
-		else:
-			device.hw_type = 'vm'
-		self.log.info("Server type: %s", device.hw_type)
+            if device.chassis is None:
+                raise FacterProcessorError("Could not find chassis information from data: (manufacturer/productname) %s/%s" % (vendor, product))
 
-		device.serialno = data.get('serialnumber')
+        # Host
+        # 
+        if device.host is None:
+            pod = self.session.query(Pod).filter_by(name='inv').first()
+            name = "%s-%s" % (device.chassis.name, device.hid)
+            device.host = Host(name=name, pod=pod)
 
-		found_ports = []
-		ipaddress = None
-		for iface in data.get('interfaces', "").split(","):
-			mac = data['macaddress_%s' % iface]
-			port = device.find_port(mac)
-			if port is None:
-				port = Port(mac=mac, name=iface, device=device)
+        # Ports / Interfaces
+        #
+        network = self.update_port_info(device, data_dict)
 
-			self.log.info("Port: %s", port)
+        # Rack / Site
+        # 
+        if network.site is None:
+            raise FacterProcessorError("Subnet does not have a (single) site: %s" % network)
 
-			found_ports.append(port)
+        # Find the rack from the site
+        rack = self.session.query(Rack).filter_by(name='UNKNOWN').filter_by(site=network.site).first()
 
-			if data.has_key("ipaddress_%s" % iface):
-				port.is_blessed = True
-				ipvalue = data["ipaddress_%s" % iface]
-				ipaddress = IpAddress(value=ipvalue)
-				iface = Interface(port_name=port.name, host=device.host, address=ipaddress)
-				self.session.add(ipaddress)
-				self.session.add(iface)
+        if rack is None:
+            raise FacterProcessorError("Could not find the UNKNOWN rack for site: %s" % network.site)
 
-		# remove ports that no longer show up in the probe
-		for port in device.ports:
-			if port not in found_ports:
-				device.ports.remove(port)
+        if device.rack != rack:
+            device.rack = rack
 
 
-		# Find the site from the subnet
-		net = ipaddress.query_subnet()
-		ipaddress.subnet = net
+    def update_port_info(self, device, data_dict):
 
-		self.log.info("%s -> %s", ipaddress, net)
+        found_ports = []
+        blessed_address = None
+        for iface_name in data_dict.get('interfaces', "").split(","):
+            mac = data_dict['macaddress_%s' % iface_name]
+            port = device.find_port(mac)
 
-		if net.site is None:
-			raise FacterProcessorError("Subnet does not have a (single) site: %s" % net)
+            if port is None:
+                port = Port(mac=mac, name=iface_name, device=device)
+                self.log.info("NEW Port: %s", port)
 
-		# Find the rack from the site
-		rack = self.session.query(Rack).filter_by(name='UNKNOWN').filter_by(site=net.site).first()
+            found_ports.append(port)
 
-		if rack is None:
-			raise FacterProcessorError("Could not find the UNKNOWN rack for site: %s" % net.site)
+            if data_dict.has_key("ipaddress_%s" % iface_name):
+                self.log.info("Port has blessed addres: %s" % port)
+                port.is_blessed = True
 
-		device.rack = rack
+                if port.interface is None:
+                    self.session.add(Interface(port_name=iface_name, host=device.host))
 
-
-
-
-
-
-	def create_hid(self, data):
-		hid = data.get('serialnumber')
-
-		if hid is not None and hid not in BAD_SERIAL_LIST:
-			return hid
-
-		interfaces = data.get('interfaces')
-		if interfaces is None:
-			raise FacterProcessorError("Facter data does not provide interfaces list")
-
-		for iface in interfaces.split(','):
-			if data.has_key("macaddress_%s" % iface):
-				return data.get("macaddress_%s" % iface).replace(":", "")
-
-		raise FacterProcessorError("Could not find serial number or mac address")
+                ipvalue = data_dict["ipaddress_%s" % iface_name]
+                blessed_address = IpAddress(value=ipvalue)
+                if blessed_address != port.interface.address:
+                    self.log.info("setting port to blessed address")
+                    port.interface.address = blessed_address
+                else:
+                    self.log.info("getting blessed address from port")
+                    blessed_address = port.interface.address
 
 
-	def find_device(self, data):
-		device = None
+        # remove ports that no longer show up in the probe
+        for port in device.ports:
+            if port not in found_ports:
+                device.ports.remove(port)
 
-		serialnum = data.get('serialnumber')
-		if serialnum is not None:
-			self.log.info("FindDev: by SerialNumber: %s", serialnum)
-			device = self.session.query(Device).filter_by(instance_name=serialnum).first()
+        if blessed_address is None:
+            raise FacterProcessorError("Could not find the blessed address")
 
-			if device:
-				return device
+        self.log.info("Blessed Address: %s", blessed_address)
+        return blessed_address.query_subnet()
 
-		interfaces = data.get('interfaces')
-		if interfaces is None:
-			raise FacterProcessorError("Facter data does not provide interfaces list")
+    def get_serial(self, data_dict):
+        serial = data_dict.get('serialnumber')
 
-		for iface in interfaces.split(','):
-			self.log.info("FindDev: by Interface: %s", iface)
+        if serial is not None:
+            serial = serial.replace(" ", "")
+            serial = serial.replace("VMware-", "")
 
-			if not data.has_key("macaddress_%s" % iface):
-				continue
+        return serial
 
-			macname = data.get("macaddress_%s" % iface).replace(":", "")
 
-			device = self.session.query(Device).filter_by(instance_name=macname).first()
-			if device:
-				return device
+    def create_hid(self, data_dict):
+        serial = self.get_serial(data_dict)
 
-		return device
+        if serial is not None and serial not in BAD_SERIALNO_LIST:
+            return serial
+
+        interfaces = data_dict.get('interfaces')
+        if interfaces is None:
+            raise FacterProcessorError("Facter data does not provide interfaces list")
+
+        for iface in interfaces.split(','):
+            if data_dict.has_key("macaddress_%s" % iface):
+                return data_dict.get("macaddress_%s" % iface).replace(":", "")
+
+        raise FacterProcessorError("Could not find serial number or mac address")
+
+
+    def find_device(self, data_dict):
+        device = None
+
+        serialnum = self.get_serial(data_dict)
+        if serialnum is not None:
+            self.log.info("FindDev: by SerialNumber: %s", serialnum)
+            device = self.session.query(Device).filter_by(instance_name=serialnum).first()
+
+            if device:
+                return device
+
+        interfaces = data_dict.get('interfaces')
+        if interfaces is None:
+            raise FacterProcessorError("Facter data does not provide interfaces list")
+
+        for iface in interfaces.split(','):
+            self.log.info("FindDev: by Interface: %s", iface)
+
+            if not data_dict.has_key("macaddress_%s" % iface):
+                continue
+
+            macname = data_dict.get("macaddress_%s" % iface).replace(":", "")
+
+            device = self.session.query(Device).filter_by(instance_name=macname).first()
+            if device:
+                return device
+
+        return None
 
 
 class_logger(FacterInfoProcessor)
-
 
 
 

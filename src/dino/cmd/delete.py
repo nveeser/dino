@@ -21,9 +21,9 @@ class DeleteCommand(DinoCommand):
         Option('-n', '--no-commit', dest='no_commit', action='store_true', default=False),
     )
 
-    def find_elements(self, session):
+    def find_elements(self, args, session):
         try:
-            for a in self.args:
+            for a in args:
                 expected = (ElementNameResolver, ElementQueryResolver, ElementIdResolver)
                 resolver = session.spec_parser.parse(a, expected=expected)
 
@@ -36,11 +36,11 @@ class DeleteCommand(DinoCommand):
             raise CommandExecutionError(self, e)
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
 
         session.begin()
 
-        for elmt in self.find_elements(session):
+        for elmt in self.find_elements(args, session):
             session.delete(elmt)
 
         desc = session.create_change_description()
@@ -48,13 +48,13 @@ class DeleteCommand(DinoCommand):
         for change in desc:
             self.log.info(str(change))
 
-        if self.option.no_commit:
+        if opts.no_commit:
             session.rollback()
         else:
             session.commit()
 
 
-        if self.option.no_commit:
+        if opts.no_commit:
             self.log.info("no-commit specified: nothing submitted")
 
         elif len(desc) == 0:

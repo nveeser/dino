@@ -18,11 +18,11 @@ from dino import class_logger
 from session import ElementSession
 import element
 from exception import ElementInstanceNameError
+from objectresolver import ObjectSpecParser, ElementNameResolver, InvalidObjectSpecError
 
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 
 __all__ = ['DerivedField', 'use_element_name' ]
-
 
 
 
@@ -41,11 +41,11 @@ class ElementNameBuilder(EntityBuilder):
 
         # Create NameProcessor (and for Revision Entity too)
         #
-        entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(format)
+        entity.NAME_PROCESSOR = ElementNameBuilder.InstanceNameDeclarationProcessor(format)
 
         if hasattr(entity, 'Revision'):
             revision_pattern = "%s@{revision}" % format
-            entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameProcessor(revision_pattern)
+            entity.Revision.NAME_PROCESSOR = ElementNameBuilder.InstanceNameDeclarationProcessor(revision_pattern)
 
         self.add_mapper_extension(self.InstanceNameExtension())
 
@@ -71,6 +71,14 @@ class ElementNameBuilder(EntityBuilder):
             assert isinstance(instance, element.Element)
             if instance.instance_name is None:
                 raise ElementInstanceNameError("InstanceName cannot be None: %s(%s)" % (mapper.class_, id(instance)))
+
+            try:
+                spec_parser = ObjectSpecParser(mapper.class_.entity_set)
+                spec_parser.parse(instance.element_name, expected=ElementNameResolver)
+
+            except InvalidObjectSpecError:
+                raise ElementInstanceNameError("InstanceName is invalid: %s", instance.element_name)
+
             return sa_orm.EXT_CONTINUE
 
         before_update = before_insert
@@ -141,7 +149,7 @@ class ElementNameBuilder(EntityBuilder):
             self.depend_list = self.process_spec(self.target_entity, value_path, ())
 
         def process_spec(self, listener_entity, value_path, join_tuple):
-            self.log.info("  Process: %s %s %s", listener_entity.__name__, value_path, tuple(x.__name__ for x in join_tuple))
+            self.log.fine("  Process: %s %s %s", listener_entity.__name__, value_path, tuple(x.__name__ for x in join_tuple))
 
             if len(value_path) == 1:
                 listener_attr_name = value_path[0]
@@ -161,7 +169,7 @@ class ElementNameBuilder(EntityBuilder):
 
 
         def _create_listener(self, listener_entity, listener_attr_name, join_list, listener_value_path=None):
-            self.log.fine("     Listener: %s.%s updates %s value:%s join%s ",
+            self.log.finer("     Listener: %s.%s updates %s value:%s join%s ",
                 listener_entity.__name__, listener_attr_name,
                 self.target_entity.__name__,
                 listener_value_path,
@@ -174,17 +182,34 @@ class ElementNameBuilder(EntityBuilder):
 
     class InstanceNameAttributeListener(AttributeExtension):
         '''
-        Listens to the attribute (used in another Element's InstanceName).
+        Listens to the an attribute on some Element 
         
-        The Target Entity whose InstanceName needs to be updated.
+        target_entity:
+            Entity  
+            
+        join_entity_path:
+             list of intermediary Entities to join to, to
+        build a query which will specify which specific Element(s) (instance(s)) need to be updated       
         
-        The join_entity_path is the list of intermediary Entities to join to, to
-        build a query which will specify which specific Elements (instances) need to be updated       
+        target_name_key
+            the key used in the InstanceName pattern which has changed
         
-        target_name_key is the key used in the InstanceName pattern which has changed
-        
-        listener_attr_path is the attribute path (if any) to retrieve the actually value 
-        used in the InstanceName.   
+        listener_attr_path:
+            the attribute path (if any) to retrieve the actually value 
+            used in the InstanceName.  
+            
+            Example:
+                Host.instance_name -> {name}.{pod.name}.{device.rack.site.name}
+                
+                If a Host's Device changes Rack, then the Site name of the Host may change, 
+                and thus the Host's instance_name may change.
+                
+                The attribute to listen to is Device.rack.  The value the listener gets is the new Rack object. 
+                The value to use to update the Host's instance_name is not a Rack object, 
+                but value of Rack.site.name
+                
+                In that case, the listener_attr_path is "site.name"
+                
         '''
         def __init__(self, target_entity, join_entity_path, target_name_key, listener_attr_path):
             self.target_entity = target_entity
@@ -210,24 +235,24 @@ class ElementNameBuilder(EntityBuilder):
             return newvalue
 
         def update_self(self, state, update_value, initiator):
-            self.log.finer("TRIGGER SELF: %s.%s -> %s", initiator.class_.__name__, initiator.key,
+            self.log.finest("TRIGGER SELF: %s.%s -> %s", initiator.class_.__name__, initiator.key,
                 self.target_entity.__name__)
 
-            self.log.finer("   Passed Value: { %s : %s }", self.target_key_name, update_value)
+            self.log.finest("   Passed Value: { %s : %s }", self.target_key_name, update_value)
 
             state.obj().update_name(override_dict={ self.target_key_name : update_value })
 
 
         def update_dependents(self, state, update_value, initiator):
-            self.log.fine("TRIGGER: %s.%s -> %s via %s %s", initiator.class_.__name__, initiator.key,
+            self.log.finest("TRIGGER: %s.%s -> %s via %s %s", initiator.class_.__name__, initiator.key,
                 self.target_entity.__name__, tuple(x.__name__ for x in self.join_entity_path), self.value_path)
 
             session = object_session(state.obj())
             if session is None:
-                self.log.finer("   No session on Source Entity: not updating dependent objects")
+                self.log.finest("   No session on Source Entity: not updating dependent objects")
                 return
 
-            self.log.finer("   Passed Value: { %s : %s }", self.target_key_name, update_value)
+            self.log.finest("   Passed Value: { %s : %s }", self.target_key_name, update_value)
             for element in self.find_dependent_elements(session, state.obj()):
                 element.update_name(override_dict={ self.target_key_name : update_value })
 
@@ -240,7 +265,7 @@ class ElementNameBuilder(EntityBuilder):
             # Find Elements in the DB
             #
             for element in q.filter_by(id=match_instance.id).all():
-                self.log.finer("   Update(DB): %s", repr(element))
+                self.log.finest("   Update(DB): %s", repr(element))
                 yield element
 
 
@@ -259,7 +284,7 @@ class ElementNameBuilder(EntityBuilder):
 
             for element in session.new:
                 if isinstance(element, self.target_entity) and element.get_path(join_attribute_path) == match_instance:
-                    self.log.fine("   Update(Session): %s", repr(element))
+                    self.log.finer("   Update(Session): %s", repr(element))
                     yield element
 
 
@@ -268,7 +293,7 @@ class ElementNameBuilder(EntityBuilder):
 
 
 
-    class InstanceNameProcessor(object):
+    class InstanceNameDeclarationProcessor(object):
         NAME_RE = re.compile('{(\w[^}]*)}')
         OPTIONAL_RE = re.compile('(?<!%)\(([^{]*){(\w[^}]*)}([^)]*)\)(?!s)')
 
@@ -290,7 +315,7 @@ class ElementNameBuilder(EntityBuilder):
 
         @staticmethod
         def _attribute_names(pattern):
-            for m in ElementNameBuilder.InstanceNameProcessor.NAME_RE.finditer(pattern):
+            for m in ElementNameBuilder.InstanceNameDeclarationProcessor.NAME_RE.finditer(pattern):
                 yield m.group(1)
 
         def _split_conditional_keys(self, key_tuple, pattern):
@@ -298,6 +323,7 @@ class ElementNameBuilder(EntityBuilder):
             Look for contitional keys and split the pattern into two patterns, 
                 one with the conditional supplied 
                 one without the contitional supplied.
+                recurse...
                 
             (),           'FOO(:{optional})' 
             becomes
@@ -305,7 +331,7 @@ class ElementNameBuilder(EntityBuilder):
             ('optional'), 'FOO:%(optional)s'  
                 
             '''
-            m = ElementNameBuilder.InstanceNameProcessor.OPTIONAL_RE.search(pattern)
+            m = ElementNameBuilder.InstanceNameDeclarationProcessor.OPTIONAL_RE.search(pattern)
             if m:
                 (before, optional_key, after) = m.groups()
 
@@ -330,10 +356,10 @@ class ElementNameBuilder(EntityBuilder):
             'FOO-{key}' -> 'FOO-%(key)s' 
             '{key1}_{key2} -> '%(key1)s_%(key2)s'
             '''
-            m = ElementNameBuilder.InstanceNameProcessor.NAME_RE.search(pattern)
+            m = ElementNameBuilder.InstanceNameDeclarationProcessor.NAME_RE.search(pattern)
             while m:
                 pattern = pattern[:m.start()] + "%(" + m.group(1) + ")s" + pattern[m.end():]
-                m = ElementNameBuilder.InstanceNameProcessor.NAME_RE.search(pattern)
+                m = ElementNameBuilder.InstanceNameDeclarationProcessor.NAME_RE.search(pattern)
             return pattern
 
 

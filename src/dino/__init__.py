@@ -2,6 +2,9 @@ import sys
 import os
 import logging
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.NOTSET)
+
 #
 # Major Hack to get around multiple installs of package sqlalchemy
 # Should be using pkg_resources.py

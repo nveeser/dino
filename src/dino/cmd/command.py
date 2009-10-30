@@ -26,7 +26,7 @@ class DinoCommandMeta(CommandMeta):
         super(DinoCommandMeta, cls).__init__(name, bases, dict_)
 
         # Add logging to all commands
-        cls.log = logging.getLogger(DinoCommandMeta.LOG_ROOT + name)
+        cls.log = logging.getLogger(DinoCommandMeta.LOG_ROOT + name.lower())
 
         # Add wrapper for catching model exceptions
         cls.execute = cls._execute_decorator(cls.execute)
@@ -65,15 +65,19 @@ class DinoCommand(Command):
         self.cmd_env.setup_base_logger("dino.cmd")
         self.log.fine("DBConfig: %s" % self.db_config.uri)
 
-
-    def validate(self):
-        pass
-
-    def parse(self, args):
         if self.cmd_env and not self.parser.has_option("-v"):
                 self.parser.add_option('-v', '--verbose', action='callback', callback=self.cmd_env.increase_verbose_cb)
-        (self.option, self.args) = self.parser.parse_args(args=args)
-        self.validate()
+
+    def validate(self, options, args):
+        pass
+
+    def default_options(self):
+        return self.parser.get_default_values()
+
+    def parse(self, args):
+        (opts, args) = self.parser.parse_args(args=args)
+        self.validate(opts, args)
+        return (opts, args)
 
     def print_usage(self):
         if isinstance(self.NAME, (list, tuple)):
@@ -91,12 +95,12 @@ class_logger(DinoCommand)
 #    
 def with_session(func):
     '''decorator for methods that need a session'''
-    def session_func(self):
+    def session_func(self, *args, **kwargs):
         session = None
         try:
             self.log.finer("open session")
-            session = self.db_config.session()
-            return func(self, session)
+            args = args + (self.db_config.session(),)
+            return func(self, *args, **kwargs)
         finally:
             if session:
                 self.log.finer("close session")
@@ -107,13 +111,13 @@ def with_session(func):
 
 def with_connection(func):
     '''decorator for methods that need a connection'''
-    def connection_func(self):
+    def connection_func(self, *args, **kwargs):
 
         connection = None
         try:
             self.log.finer("open connection")
-            connection = self.db_config.connection()
-            return func(self, connection)
+            args.append(self.db_config.connection())
+            return func(self, *args, **kwargs)
         finally:
             if connection:
                 self.log.finer("close connection")

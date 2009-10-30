@@ -20,7 +20,7 @@ import pprint; pp = pprint.PrettyPrinter(indent=2).pprint
 # UnitTest 
 #
 
-class TestCommandContext(BaseCommandEnvironment):
+class TestCommandEnvironment(BaseCommandEnvironment):
     def __init__(self):
         BaseCommandEnvironment.__init__(self)
         self.output = []
@@ -38,9 +38,10 @@ class CommandTest(DatabaseTest):
     def runCommand(self, *args):
         (cmdname, args) = (args[0], list(args[1:]))
         cmd_cls = DinoCommand.find_command(cmdname)
-        cmd = cmd_cls(self.db, TestCommandContext())
-        cmd.parse(args)
-        cmd.execute()
+        cmd = cmd_cls(self.db, TestCommandEnvironment())
+        (opts, args) = cmd.parse(args)
+        cmd.validate(opts, args)
+        cmd.execute(opts, args)
         return cmd.cmd_env.output
 
 

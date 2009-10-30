@@ -57,8 +57,8 @@ class ElementMeta(elixir.EntityMeta):
     def entity_display_processor(cls):
         return EntityDisplayProcessor()
 
-    def __str__(self):
-        return self.__name__
+    def __str__(cls):
+        return cls.__name__
 
 
 class Element(object):

@@ -1,6 +1,6 @@
 
 from sqlalchemy.orm import ColumnProperty, validates, object_session
-from sqlalchemy import func, types
+from sqlalchemy import func as sa_func, types as sa_types
 from sqlalchemy.databases.mysql import MSInteger
 
 import schema
@@ -10,7 +10,7 @@ from dino.db.exception import *
 #  Special Types
 # # # # # # # # # # # # # # # # # # # 
 
-class IpType(types.TypeDecorator):
+class IpType(sa_types.TypeDecorator):
     # Prefixes Unicode values with "PREFIX:" on the way in and
     # strips it off on the way out.
     impl = MSInteger
@@ -54,9 +54,9 @@ class IpType(types.TypeDecorator):
 
 
 
-class StringSetType(types.TypeDecorator):
+class StringSetType(sa_types.TypeDecorator):
     def __init__(self, length, choices):
-        self.impl = types.String(length)
+        self.impl = sa_types.String(length)
         self.choices = set([ c.lower() for c in choices ])
 
     def process_bind_param(self, value, dialect):
@@ -113,12 +113,12 @@ class Device(object):
         return value
 
     def find_port(self, mac):
-	    assert isinstance(mac, basestring), "Mac Address must be specified by string"
-	    for port in self.ports:
-	        if port.mac == mac:
-	            return port
+        assert isinstance(mac, basestring), "Mac Address must be specified by string"
+        for port in self.ports:
+            if port.mac == mac:
+                return port
 
-	        return None
+        return None
 
 
 class IpAddress(object):
@@ -137,10 +137,7 @@ class IpAddress(object):
     @property
     def nsubnet(self):
         if self._subnet is None:
-            session = object_session(self)
-            assert session is not None, "Object must have session to perform query"
-
-            self._subnet = Subnet.find_subnet(session, self.nvalue)
+            self._subnet = self.query_subnet()
 
         return self._subnet
     #
@@ -153,7 +150,7 @@ class IpAddress(object):
     def __cmp__(self, o):
         if isinstance(o, schema.IpAddress):
             return self.nvalue - o.nvalue
-        return 0
+        return - 1
 
     def query_subnet(self):
         session = object_session(self)
@@ -194,7 +191,7 @@ class Subnet(object):
     def find_subnet(self, session, address):
         int_address = IpType.network_int(address)
 
-        sql_netmask = func.power(2, 32) - func.power(2, (32 - schema.Subnet.mask_len))
+        sql_netmask = sa_func.power(2, 32) - sa_func.power(2, (32 - schema.Subnet.mask_len))
 
         q = session.query(schema.Subnet)\
                 .filter(schema.Subnet.addr == sql_netmask.op('&')(int_address))\
@@ -365,5 +362,4 @@ class Chassis(object):
     #   
     def validate_element(self):
         pass
-
 

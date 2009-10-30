@@ -27,18 +27,18 @@ class GenerateCommand(DinoCommand):
         for g in Generator.generator_class_iterator():
             print "   ", g.NAME
 
-    def execute(self):
+    def execute(self, opts, args):
         if self.cmd_env:
             self.cmd_env.setup_base_logger("dino.generate")
 
-        if self.option.list:
+        if opts.list:
             for g in Generator.generator_class_iterator():
                 print g.NAME
             return
 
 
-        if len(self.args) > 0:
-            classes = [ Generator.get_generator_class(name) for name in self.args ]
+        if len(args) > 0:
+            classes = [ Generator.get_generator_class(name) for name in args ]
         else:
             classes = Generator.generator_class_iterator(exclude='dns')
 
@@ -49,21 +49,21 @@ class GenerateCommand(DinoCommand):
             gen_list = [ c(self.db_config, generator_settings) for c in classes ]
 
             for gen in gen_list:
-                gen.parse(self.args)
+                gen.parse(args)
 
-            if self.option.generate:
+            if opts.generate:
                 for gen in gen_list:
                     gen.generate()
 
-            if self.option.compare:
+            if opts.compare:
                 for gen in gen_list:
                     gen.compare()
 
-            if self.option.activate:
+            if opts.activate:
                 for gen in gen_list:
                     gen.activate()
 
-            if not self.option.generate and not self.option.compare and not self.option.activate:
+            if not opts.generate and not opts.compare and not opts.activate:
                 for gen in gen_list:
                     gen.generate()
 

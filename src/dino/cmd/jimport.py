@@ -77,13 +77,13 @@ class JsonImportCommand(DinoCommand):
         Option('-n', '--no-submit', action='store_false', dest='submit', default=True),
     )
 
-    def validate(self):
-        if len(self.args) < 1:
+    def validate(self, opts, args):
+        if len(args) < 1:
             raise CommandArgumentError(self, "Must specify a file/dir to add")
 
 
     @with_session
-    def execute(self, session):
+    def execute(self, opts, args, session):
         if self.cmd_env:
             self.cmd_env.increase_verbose()
 
@@ -94,7 +94,7 @@ class JsonImportCommand(DinoCommand):
 
             proc.process(path)
 
-            if self.option.submit:
+            if opts.submit:
                 self.log.fine("Submitting Objects: %s / %s " % (len(session.new), len(session.dirty)))
                 cs = session.submit_changeset()
                 self.log.info("Committed Changeset: " + str(cs))
@@ -113,7 +113,7 @@ class JsonImportCommand(DinoCommand):
 
 
     def arg_iterator(self):
-        for path in self.args:
+        for path in args:
             if not os.path.exists(path):
                 raise CommandArgumentError(self, "Path does not exist: " + path)
 
