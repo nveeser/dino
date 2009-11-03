@@ -23,3 +23,17 @@ dino.password=moosejaw
 dino.host=172.31.127.11
 dino.db=dinodb_nick
 #dino.sql_debug=1
+
+
+[logger_root]
+level = INFO
+handlers = console, wsgierrors
+
+[handlers]
+keys = console, wsgierrors
+
+[handler_wsgierrors]
+class = pylons.log.WSGIErrorsHandler
+args = ()
+level = ERROR
+format = generic

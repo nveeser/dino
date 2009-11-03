@@ -47,7 +47,7 @@ class DbConfig(object):
         'poolclass' : None,
         'max_overflow': 10,
         'pool_size' : 5,
-        'pool_recycle' :-1,
+        'pool_recycle' :3000,
         'pool_timeout' : 30,
         'sql_debug' : '0',
     }
