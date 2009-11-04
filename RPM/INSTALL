@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+/mw/app/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
+
+pushd dino-web
+/mw/app/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
+popd
+

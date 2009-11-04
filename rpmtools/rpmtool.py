@@ -173,22 +173,24 @@ class MyOptionParser(OptionParser):
 # Popen Output Handler Thread
 #####################################
 class ReadThread(threading.Thread):
-    THREADS = []
+    THREADS = {}
+    DEFAULT_GROUP = "DEFAULT"
+
     @classmethod
-    def joinall(cls):
+    def JoinAll(cls, group=DEFAULT_GROUP):
         waiting = True
         while waiting:
             waiting = False
-            for t in cls.THREADS:
+            for t in cls.THREADS.get(group, []):
                 if t.isAlive():  t.join(0.1)
                 waiting |= t.isAlive()
 
-    def __init__(self, name, f):
+    def __init__(self, name, f, group=DEFAULT_GROUP):
         threading.Thread.__init__(self, name=name)
         self.daemon = True
         self.f = f
 
-        self.THREADS.append(self)
+        self.THREADS.setdefault(group, []).append(self)
         self.start()
 
     def run(self):
@@ -214,11 +216,12 @@ class LogReadThread(ReadThread):
 #####################################
 class RpmSpec:
     '''Create a specfile'''
-    def __init__(self, name=None, version=1, release=1, project_root=None):
+    def __init__(self, name=None, version=1, release=1, project_root=None, package_path="RPM"):
         self.name = name
         self.version = version
         self.release = release
         self.project_root = project_root
+        self.package_path = package_path
         self.packager = self._getUsername()
         self.buildroot = None
         self._files = []
@@ -246,10 +249,10 @@ class RpmSpec:
         #self.filterFiles()
 
     def read_file(self, filename, header="", fail=False):
-        filepath = os.path.join(self.project_root, filename)
+        filepath = os.path.join(self.project_root, self.package_path, filename)
         if not (os.path.exists(filepath) and os.path.isfile(filepath)):
             if fail:
-                raise RpmSpecException, "Missing file building RPM specfile: %s" % filename
+                raise RpmSpecException, "Missing file while building RPM specfile: %s" % filename
             else:
                 return ""
 
@@ -278,15 +281,15 @@ class RpmSpec:
             'packager' : self.packager,
             'buildroot' : os.path.abspath(self.buildroot),
             'prefix'    : "/",
-            'project-header' : self.read_file("RPM/header", fail=True),
-            'project-depend' : self.read_file("RPM/depend"),
-            'project-description' : self.read_file("RPM/description"),
+            'project-header' : self.read_file("header", fail=True),
+            'project-depend' : self.read_file("depend"),
+            'project-description' : self.read_file("description"),
             'install-script' : "",
-            'project-pre-script' : self.read_file("RPM/pre.sh", header="%pre\n"),
-            'project-preun-script' : self.read_file("RPM/preun.sh", header="%preun\n"),
-            'project-post-script' : self.read_file("RPM/post.sh", header="%post\n"),
-            'project-postun-script' : self.read_file("RPM/postun.sh", header="%postun\n"),
-            'project-verify-script' : self.read_file("RPM/verify.sh", header="%verifyscript\n"),
+            'project-pre-script' : self.read_file("pre.sh", header="%pre\n"),
+            'project-preun-script' : self.read_file("preun.sh", header="%preun\n"),
+            'project-post-script' : self.read_file("post.sh", header="%post\n"),
+            'project-postun-script' : self.read_file("postun.sh", header="%postun\n"),
+            'project-verify-script' : self.read_file("verify.sh", header="%verifyscript\n"),
             'files' : "\n".join(self._files),
         }
 
@@ -910,11 +913,14 @@ class DeployCommand(Command):
 class RpmSpecCommand(Command):
     '''Generate a specfile for project from input directory'''
     NAME = 'spec'
-    USAGE = '[ -S <specfile> ] <buildroot>'
+    USAGE = '[ -S <specfile> ] [ -n <package_name> ] <buildroot>'
 
     OPTIONS = (
         make_option('-S', dest='specfile', default=None,
-            help="Spec file to create (default: <PROJECT_ROOT>/<PROJECT_NAME>.spec)"),
+            help="Spec file to create (default: <PROJECT_ROOT>/<PackageName>.spec)"),
+        make_option('-n', dest='package_name', default=None,
+            help="Name of package to build (default: <PROJECT_ROOT>/<PackageName>.spec)"),
+
     )
 
     def handle_options(self, options, args):
@@ -941,16 +947,18 @@ class RpmSpecCommand(Command):
 class RpmBuildCommand(Command):
     '''Build Rpm '''
     NAME = 'build'
-    USAGE = '[ -S <specfile> ] [ -b <buildroot> ] [ -s <install_script> ] [ -m <deploy_map> ]'
+    USAGE = '[ -S <specfile> ] [ -b <buildroot> ] [ -s <install_script> ] [ -m <deploy_map> ] [ -n <name> ]'
     OPTIONS = (
-        make_option('-S', dest='specfile', default="project.spec",
-            help="Spec file to create (default: <PROJECT_ROOT>/project.spec)"),
-        make_option('-s', dest='install_script', default="RPM/install",
-            help="script to run at build time (default: <PROJECT_ROOT>/RPM/install)"),
-        make_option('-m', dest='deploymap', default="RPM/DEPLOYMAP",
-            help="script to run at build time (default: <PROJECT_ROOT>/RPM/DEPLOYMAP)"),
-        make_option('-b', dest='buildroot', default="_buildroot",
+        make_option('-S', dest='specfile', default=None,
+            help="Spec file to create (default: <PROJECT_ROOT>/<name>.spec)"),
+        make_option('-s', dest='install_script', default=None,
+            help="script to run at build time (default: <PROJECT_ROOT>/RPM/[<name>/]INSTALL)"),
+        make_option('-m', dest='deploymap', default=None,
+            help="script to run at build time (default: <PROJECT_ROOT>/RPM/[<name>/]DEPLOYMAP)"),
+        make_option('-b', dest='buildroot', default=None,
             help="script to run at build time (default: <PROJECT_ROOT>/_buildroot)"),
+        make_option('-n', dest='package_name', default=None,
+            help="Package name to build: (default: project)"),
     )
 
     RPM_COMMAND = [ "rpmbuild",
@@ -960,21 +968,39 @@ class RpmBuildCommand(Command):
         "--define", "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm",
         "-bb", "%(specfile)s" ]
 
+    def __init__(self, cli=None):
+        Command.__init__(self, cli)
+        self.package_name = None
+        self.specfile = "project.spec"
+        self.install_script = "RPM/INSTALL"
+        self.deploymap = "RPM/DEPLOYMAP"
+        self.buildroot = "_buildroot"
 
     def handle_options(self, options, args):
-        self.install_script = options.install_script
+        if options.package_name is not None:
+            self.package_name = options.package_name
+            self.install_script = "RPM/%s/INSTALL" % options.package_name
+            self.deploymap = "RPM/%s/DEPLOYMAP" % options.package_name
+            self.specfile = "%s.spec" % options.package_name
+
+        if options.install_script is not None:
+            self.install_script = options.install_script
+
+        if options.deploymap is not None:
+            self.deploymap = options.deploymap
+
+        if options.buildroot is not None:
+            self.buildroot = options.buildroot
+
+        if options.specfile is not None:
+            self.specfile = options.specfile
+
         if not os.path.isabs(self.install_script):
             self.install_script = os.path.join(self.cli.project_root, self.install_script)
-
-        self.deploymap = options.deploymap
         if not os.path.isabs(self.deploymap):
             self.deploymap = os.path.join(self.cli.project_root, self.deploymap)
-
-        self.buildroot = options.buildroot
         if not os.path.isabs(self.buildroot):
             self.buildroot = os.path.join(self.cli.project_root, self.buildroot)
-
-        self.specfile = options.specfile
         if not os.path.isabs(self.specfile):
             self.specfile = os.path.join(self.cli.project_root, self.specfile)
 
@@ -989,6 +1015,7 @@ class RpmBuildCommand(Command):
         self.spec()
         self.build()
 
+
     def install(self):
         try:
             self.log.info("------ Install %s -----", self.cli.project_name)
@@ -1000,13 +1027,17 @@ class RpmBuildCommand(Command):
             p = Popen([self.install_script], stdout=PIPE, stderr=PIPE, env=env)
             LogReadThread("OUT", p.stdout, self.log)
             LogReadThread("ERR", p.stderr, self.log)
-            p.wait()
-            LogReadThread.joinall()
+            ret = p.wait()
+            LogReadThread.JoinAll()
+
+            if ret != 0:
+                raise CommandExecutionError("Bad return code from INSTALL: %s" % ret)
 
             self.log.info("------ Install (%s) Complete -----", self.cli.project_name)
 
         except OSError, e:
             raise CommandExecutionError("Error executing install script: %s" % e)
+
 
     def deploy(self):
         self.log.info("----- Deploy %s ------", self.cli.project_name)
@@ -1024,10 +1055,16 @@ class RpmBuildCommand(Command):
     def spec(self):
         self.log.info("------ SpecFile -----")
 
+        if self.package_name is not None:
+            package_path = "RPM/%s" % self.package_name
+        else:
+            package_path = "RPM"
+
         rpmspec = RpmSpec(
             name=self.cli.project_name,
             version=self.cli.version,
-            project_root=self.cli.project_root)
+            project_root=self.cli.project_root,
+            package_path=package_path)
 
         rpmspec.set_build_root(self.buildroot)
         rpmspec.write(self.specfile)
@@ -1047,9 +1084,11 @@ class RpmBuildCommand(Command):
         p = Popen(cmd_args, stdout=PIPE, stderr=PIPE)
         LogReadThread("OUT", p.stdout, self.log)
         LogReadThread("ERR", p.stderr, self.log)
-        p.wait()
-        LogReadThread.joinall()
+        ret = p.wait()
+        LogReadThread.JoinAll()
 
+        if ret != 0:
+            raise CommandExecutionError("Bad return code from INSTALL: %s" % ret)
 
 
 
