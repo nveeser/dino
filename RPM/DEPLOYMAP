@@ -2,7 +2,7 @@ bin/wrapper-virtualenv.py	/usr/bin/dino	     755
 bin/wrapper-virtualenv.py	/usr/bin/dinoadm     755
 bin/wrapper-virtualenv.py	/usr/bin/dino-probe  755
 bin/dino-discover				/usr/bin/            755
-bin/dinoweb.wsgi		/mw/dino/bin/	755
+bin/dinoweb.wsgi		/mw/app/dino/bin/	755
 -				/etc/dino/
 dino.cfg.example		/etc/dino/
 dinoweb.ini.example		/etc/dino/
