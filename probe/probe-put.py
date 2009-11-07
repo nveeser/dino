@@ -4,6 +4,7 @@ import sys
 import os
 import httplib
 import urllib
+import urlparse
 
 from optparse import OptionParser
 
@@ -36,11 +37,20 @@ class PutProbeData(object):
         if opts.traceback:
             query['traceback'] = 1
 
-        (netloc, filepath) = args
-        data = self.read_file(filepath)
+        (uri_root, filepath) = args
 
-        conn = httplib.HTTPConnection(netloc)
-        conn.request("PUT", "/probe?%s" % urllib.urlencode(query), data)
+        o = urlparse.urlparse(uri_root)
+        if o.path[-1] == '/':
+            base_path = o.path[:-1]
+        else:
+            base_path = o.path
+
+        request_path = "%s/probe?%s" % (base_path, urllib.urlencode(query))
+        data = self.read_file(filepath)
+        headers = {'accept' : 'text/plain'}
+
+        conn = httplib.HTTPConnection(o.netloc)
+        conn.request("PUT", request_path, data, headers)
 
         res = conn.getresponse()
         if res.status != 200:

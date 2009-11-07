@@ -8,4 +8,7 @@ fi
 export FACTERLIB=/probe/facter 
 /usr/bin/facter > /probe.output
 
-# Do something to send it the results here..
+URL=$(cat /proc/cmdline | grep -o 'to=[^ ]*' | sed -e 's/to=//')
+
+python /probe/probe-put.py ${URL} /probe.output
+
