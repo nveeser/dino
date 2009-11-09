@@ -10,9 +10,12 @@ import dino.cmd as cmd
 class ProbeController(DinoCommandController):
 
     def update(self):
-        probe_dir = config['probe_data_dir']
-        if not os.path.isdir(probe_dir):
-            os.makedirs(probe_dir)
+        if not config.has_key('probe_data_dir'):
+            raise HTTPServerError("dinoweb.ini has missing key: probe_data_dir")
+            #abort(500, )
+
+        if not os.path.isdir(config['probe_data_dir']):
+            os.makedirs(config['probe_data_dir'])
 
         filepath = os.path.join(config['probe_data_dir'], "%s.yaml" % request.environ['REMOTE_ADDR'])
 
@@ -29,7 +32,7 @@ class ProbeController(DinoCommandController):
             opts = command.default_options()
             args = [ filepath ]
             command.execute(opts, args)
-            return "\n".join(self.env.output)
+            return self.env
 
         except cmd.CommandError, e:
             response.status = "406"

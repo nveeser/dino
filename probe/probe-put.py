@@ -49,14 +49,19 @@ class PutProbeData(object):
         data = self.read_file(filepath)
         headers = {'accept' : 'text/plain'}
 
-        conn = httplib.HTTPConnection(o.netloc)
-        conn.request("PUT", request_path, data, headers)
+        import socket
+        try:
+            conn = httplib.HTTPConnection(o.netloc)
+            conn.request("PUT", request_path, data, headers)
 
-        res = conn.getresponse()
-        if res.status != 200:
-            print "ERROR: ", res.status, res.reason
+            res = conn.getresponse()
+            if res.status != 200:
+                print "ERROR: ", res.status, res.reason
 
-        print res.read()
+            print res.read()
+
+        except socket.error, e:
+            print "ERROR: ", e
 
 if __name__ == "__main__":
     PutProbeData().execute(sys.argv[1:])

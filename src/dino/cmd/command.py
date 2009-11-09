@@ -63,7 +63,7 @@ class DinoCommand(Command):
             self.cmd_env.increase_verbose()  # make INFO the default log level
 
         self.cmd_env.setup_base_logger("dino.cmd")
-        self.log.fine("DBConfig: %s" % self.db_config.uri)
+        #self.log.fine("DBConfig: %s" % self.db_config.uri)
 
         if self.cmd_env and not self.parser.has_option("-v"):
                 self.parser.add_option('-v', '--verbose', action='callback', callback=self.cmd_env.increase_verbose_cb)

@@ -11,8 +11,9 @@ from pylons.templating import render_mako as render
 from pylons import session, config, request, response
 from dinoweb.model import meta
 from pylons.controllers.util import *
-from dino.command import AbstractCommandEnvironment
+from webob.exc import *
 
+from dino.command import AbstractCommandEnvironment
 from dino.cli.log import increment_level
 
 class BaseController(WSGIController):
@@ -66,9 +67,21 @@ class WebCommandEnvironment(AbstractCommandEnvironment):
     def prog_name(self):
         return "dinoweb"
 
+    def __iter__(self):
+        for line in self.output:
+            yield line + "\n"
+
     def remove(self):
         if self._base_logger is not None:
             self._base_logger.removeHandler(self._handler)
+
+    def _assert_log_level(self):
+        if self._base_logger is None:
+            return
+
+        if self._base_logger.level is logging.NOTSET or \
+            self._base_logger.level > self._handler.level:
+            self._base_logger.level = self._handler.level
 
     def setup_base_logger(self, logger_name=""):
         ''' Called by DinoCommand constructor to initialize logging for output '''
@@ -77,9 +90,13 @@ class WebCommandEnvironment(AbstractCommandEnvironment):
 
         self._output_logger = logging.getLogger("%s.OUTPUT" % logger_name)
 
+        self._assert_log_level()
+
     def increase_verbose(self):
         next_level = increment_level(self._handler.level)
         self._handler.setLevel(next_level)
+
+        self._assert_log_level()
 
     def increase_verbose_cb(self, option, opt, value, parser):
         self.increase_verbose()

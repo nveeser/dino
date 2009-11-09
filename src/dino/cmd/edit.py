@@ -116,6 +116,14 @@ class ElementFormCommand(ElementCommand):
         os.write(fd, form)
         os.close(fd)
 
+#        editor = None
+#        for path in (os.environ.get("VISUAL"), os.environ.get("EDITOR"), "/usr/bin/vi", "/bin/vi", "/usr/bin/vim"):
+#            if path is not None and os.path.exists(path):
+#                editor = path
+#
+#        if editor is None:
+#            raise CommandExecutionError("Could not find editor: set environment variable VISUAL or EDITOR")
+
         if os.environ.has_key("VISUAL"):
             editor = os.environ["VISUAL"]
         elif os.environ.has_key("EDITOR"):

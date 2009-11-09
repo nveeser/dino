@@ -378,10 +378,11 @@ class FacterInfoProcessor(object):
 
         serialnum = self.get_serial(data_dict)
         if serialnum is not None:
-            self.log.info("FindDev: by SerialNumber: %s", serialnum)
+            self.log.fine("FindDev: by SerialNumber: %s", serialnum)
             device = self.session.query(Device).filter_by(instance_name=serialnum).first()
 
             if device:
+                self.log.info("Found Device: %s", str(device))
                 return device
 
         interfaces = data_dict.get('interfaces')

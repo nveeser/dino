@@ -5,6 +5,7 @@ from pylons import request
 from pylons.controllers.util import forward
 from pylons.middleware import error_document_template
 from webhelpers.html.builder import literal
+from webob import MIMEAccept
 
 from dinoweb.lib.base import BaseController
 
@@ -23,12 +24,22 @@ class ErrorController(BaseController):
     def document(self):
         """Render the error document"""
         resp = request.environ.get('pylons.original_response')
+
+
+        accept_set = MIMEAccept('Accept', request.headers['accept'])
+
         content = literal(resp.body) or cgi.escape(request.GET.get('message', ''))
-        page = error_document_template % \
-            dict(prefix=request.environ.get('SCRIPT_NAME', ''),
-                 code=cgi.escape(request.GET.get('code', str(resp.status_int))),
-                 message=content)
+
+        if accept_set.accept_html():
+            page = error_document_template % \
+                dict(prefix=request.environ.get('SCRIPT_NAME', ''),
+                     code=cgi.escape(request.GET.get('code', str(resp.status_int))),
+                     message=content)
+        else:
+            page = content
+
         return page
+
 
     def img(self, id):
         """Serve Pylons' stock images"""
