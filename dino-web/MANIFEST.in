@@ -1,3 +1,0 @@
-include dinoweb/config/deployment.ini_tmpl
-recursive-include dinoweb/public *
-recursive-include dinoweb/templates *

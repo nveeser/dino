@@ -1,3 +1,0 @@
-
-db = None
-Session = None
