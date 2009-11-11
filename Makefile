@@ -8,5 +8,5 @@ rpm:
 	rpmtools/rpmtool.py build
 
 clean:
-	rm -rf _buildroot build dino-web/build project.spec dino-web/data
+	rm -rf _buildroot src/build web/build project.spec web/data
 	

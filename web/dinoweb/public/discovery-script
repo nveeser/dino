@@ -1,0 +1,51 @@
+#!/bin/sh
+
+BASE=""
+PROBE_ROOT="${BASE}/probe-tools"
+
+. /usr/lib/liblinuxlive
+
+# FIND URL
+if [ $1 ]; then
+	url=$1
+else
+	url=$(cmdline_value to)
+fi
+
+echo "-----------------------------------------"
+echo "Pulling Probe Tools"
+echo "URL: ${url}"
+echo "-----------------------------------------"
+
+pushd "${BASE}/"
+if [ ! -d ${PROBE_ROOT} ]; then
+	echo "DOWNLOAD tar"
+	if ! wget -nv ${url}/probe/download -O probe.tar; then
+		echo "Error downloading"
+		exit 2
+	fi
+	echo "UNTAR"
+	/usr/bin/tar -xvf probe.tar
+fi
+popd
+
+echo "-----------------------------------------"
+if /usr/sbin/dmidecode | grep IPMI; then
+	echo "LOAD IPMI"
+	modprobe ipmi_si
+	modprobe ipmi_devintf
+else
+	echo "SKIP IPMI"
+fi
+echo "-----------------------------------------"
+
+echo "-----------------------------------------"
+echo "RUN FACTER PROBE"
+echo "-----------------------------------------"
+FACTERLIB=${PROBE_ROOT}/facter /usr/bin/facter -y > ${PROBE_ROOT}/probe.yaml
+
+echo "-----------------------------------------"
+echo "UPLOAD RESULTS"
+echo "-----------------------------------------"
+/usr/bin/python ${PROBE_ROOT}/probe-put.py ${url} ${PROBE_ROOT}/probe.yaml
+
