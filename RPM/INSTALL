@@ -6,3 +6,7 @@ pushd dino-web
 /mw/app/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
 popd
 
+echo "Updating Perms"
+pylibdir=$(/mw/app/dino/bin/python -c 'import distutils.sysconfig as s; print s.get_python_lib()')
+#chmod -R 755 $RPMTOOL_BUILD_ROOT/${pylibdir}/dino/probe/probe-exec/*
+chmod 755 $RPMTOOL_BUILD_ROOT/${pylibdir}/dino/generators/activate_dns.sh

@@ -14,7 +14,10 @@ try:
     import hashlib
 except ImportError:
     import md5 as hashlib
-
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 import pysvn
 
@@ -710,7 +713,10 @@ class SymlinkEntry(DeployEntry):
 # Project Info
 ########################################################################
 class ProjectInfo(object):
+    RELEASE_DATA = ".rpm_release"
+
     def __init__(self, project_root=None):
+        self.root = project_root
         self.name = None
         self.version = None
 
@@ -724,8 +730,33 @@ class ProjectInfo(object):
         else:
             raise ProjectInfoException("Could not determine project info for path: %s" % root)
 
+    def _load_release(self):
+        fp = os.path.join(self.root, ProjectInfo.RELEASE_DATA)
+
+        if os.path.exists(fp):
+            f = open(fp)
+            release_info = json.load(f)
+            f.close()
+        else:
+            release_info = {}
+
+        if release_info.has_key(self.version):
+            self.log.debug("Increment Version")
+            release_info[self.version] += 1
+        else:
+            self.log.debug("First Version")
+            release_info[self.version] = 1
+
+        f = open(fp, "w")
+        json.dump(release_info, f)
+        f.close()
+
+        return release_info[self.version]
+
+class_logger(ProjectInfo)
 
 class SvnProjectInfo(ProjectInfo):
+
     def __init__(self, root):
         self.client = pysvn.Client()
         self.root = os.path.abspath(root)
@@ -734,6 +765,7 @@ class SvnProjectInfo(ProjectInfo):
             raise ProjectInfoException("Cannot get SVN Info")
 
         self._process_info(info)
+        self.release = self._load_release()
 
     def _process_info(self, info):
         parts = info.url.split('/')
@@ -744,7 +776,7 @@ class SvnProjectInfo(ProjectInfo):
             self.name = parts[-3]
             self.version = "R%s.%s" % (parts[-1], str(info.revision.number))
 
-
+class_logger(SvnProjectInfo)
 
 ########################################################################
 # Command Setup
@@ -938,6 +970,7 @@ class RpmSpecCommand(Command):
         rpmspec = RpmSpec(
             name=self.cli.project_name,
             version=self.cli.version,
+            release=self.cli.release,
             project_root=self.cli.project_root)
         rpmspec.set_build_root(self.buildroot)
         rpmspec.write(self.specfile)
@@ -1063,6 +1096,7 @@ class RpmBuildCommand(Command):
         rpmspec = RpmSpec(
             name=self.cli.project_name,
             version=self.cli.version,
+            release=self.cli.release,
             project_root=self.cli.project_root,
             package_path=package_path)
 
@@ -1136,8 +1170,24 @@ class RpmTool(object):
 
     )
 
-    def handle_global_options(self, options):
 
+    def __init__(self):
+        self.parser = MyOptionParser(usage="", add_help_option=False)
+        self.parser.allow_interspersed_args = False
+        for opt in self.OPTIONS:
+            self.parser.add_option(opt)
+        self.setup_logging()
+
+        self.traceback = False
+        self.project_root = None
+        self.project_name = None
+        self.project_info = None
+        self.version = None
+        self.release = None
+
+
+
+    def handle_global_options(self, options):
         if hasattr(options, 'verbose'):
             for i in range(0, options.verbose):
                 self.increase_verbose()
@@ -1153,11 +1203,14 @@ class RpmTool(object):
 
         # Project Info (via SCM like Subversion)
         #
-        project_info = ProjectInfo.create(self.project_root)
+        if not self.project_info or self.project_info.root != self.project_root:
+            self.project_info = ProjectInfo.create(self.project_root)
 
         # Project Version
         #
-        self.version = project_info.version
+        self.version = self.project_info.version
+        self.release = self.project_info.release
+
 
         # Project Name
         #
@@ -1166,7 +1219,7 @@ class RpmTool(object):
         elif os.environ.has_key('PROJECT_NAME'):
             self.project_name = os.environ['PROJECT_NAME']
         else:
-            self.project_name = project_info.name
+            self.project_name = self.project_info.name
 
         # Exception traceback 
         #
@@ -1174,17 +1227,6 @@ class RpmTool(object):
             self.traceback = options.traceback
 
 
-    def __init__(self):
-        self.parser = MyOptionParser(usage="", add_help_option=False)
-        self.parser.allow_interspersed_args = False
-        for opt in self.OPTIONS:
-            self.parser.add_option(opt)
-        self.setup_logging()
-
-        self.traceback = False
-        self.project_root = None
-        self.project_name = None
-        self.version = None
 
     def setup_logging(self):
         self.console_handler = logging.StreamHandler(sys.stdout)

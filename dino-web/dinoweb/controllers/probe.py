@@ -1,6 +1,8 @@
 import sys
 import os
 import traceback
+from subprocess import Popen, PIPE
+
 from pylons import request
 
 from dinoweb.lib.base import *
@@ -10,14 +12,14 @@ import dino.cmd as cmd
 class ProbeController(DinoCommandController):
 
     def update(self):
-        if not config.has_key('probe_data_dir'):
-            raise HTTPServerError("dinoweb.ini has missing key: probe_data_dir")
+        if not config.has_key('probe_cache_dir'):
+            raise HTTPServerError("dinoweb.ini has missing key: probe_cache_dir")
             #abort(500, )
 
-        if not os.path.isdir(config['probe_data_dir']):
-            os.makedirs(config['probe_data_dir'])
+        if not os.path.isdir(config['probe_cache_dir']):
+            os.makedirs(config['probe_cache_dir'])
 
-        filepath = os.path.join(config['probe_data_dir'], "%s.yaml" % request.environ['REMOTE_ADDR'])
+        filepath = os.path.join(config['probe_cache_dir'], "%s.yaml" % request.environ['REMOTE_ADDR'])
 
         probe_form = request.body
 
@@ -40,4 +42,19 @@ class ProbeController(DinoCommandController):
             if self.is_traceback():
                 output += [ line for line in e.format_trace() ]
             return output
+
+    def download(self):
+        response.content_type = 'application/x-gtar'
+        response.headers.add('content-disposition', 'filename="probe.tar"')
+
+        p = Popen([ 'tar', '-c', '-f', '-', '-C',
+                    config['pylons.paths']['root'], 'probe-tools' ],
+            stdout=PIPE, stderr=PIPE)
+
+        (stdout, stderr) = p.communicate()
+
+        if stderr != "":
+            raise HTTPServerError(stderr)
+
+        return [ stdout ]
 

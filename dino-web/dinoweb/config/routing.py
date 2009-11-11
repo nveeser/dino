@@ -18,17 +18,14 @@ def make_map():
     map.connect(None, '/error/{action}', controller='error')
     map.connect(None, '/error/{action}/{id}', controller='error')
 
-    # CUSTOM ROUTES HERE
+
     map.connect('entities', '/element', controller='elements', action='entities')
     map.resource('element', 'elements', path_prefix='/element/{entity_name}')
-
-    map.connect('/dump/{action}', controller='dump')
-
 
     map.connect('/probe', controller='probe', action='update',
                 conditions=dict(method=['PUT']))
 
-    map.connect('/probe', controller='probe', action='test',
-                conditions=dict(method=['GET']))
+    map.connect('/{controller}/{action}')
+
     return map
 
