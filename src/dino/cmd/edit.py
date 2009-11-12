@@ -130,17 +130,19 @@ class ElementFormCommand(ElementCommand):
         raise CommandExecutionError("Could not find editor: set environment variable VISUAL or EDITOR")
 
     def edit_form(self, opts, form):
+        # Write
         (fd, path) = tempfile.mkstemp(prefix="dino.edit.", suffix=".yaml", dir="/var/tmp")
-
         os.write(fd, form)
         os.close(fd)
 
-
+        # Edit
         editor_path = self._find_editor()
-
         os.spawnv(os.P_WAIT, editor_path, [editor_path, path])
 
-        form = open(path).read()
+        # Read / Delete
+        f = open(path)
+        form = f.read()
+        f.close()
         os.unlink(path)
 
         return form

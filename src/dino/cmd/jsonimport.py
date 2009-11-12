@@ -32,7 +32,7 @@ class JsonImportCommand(DinoCommand):
     def execute(self, opts, args, session):
         proc = JsonProcessor(self, session)
 
-        for path in self.arg_iterator():
+        for path in self.arg_iterator(args):
             session.open_changeset()
 
             # process record
@@ -49,7 +49,7 @@ class JsonImportCommand(DinoCommand):
             session.expunge_all()
 
 
-    def arg_iterator(self):
+    def arg_iterator(self, args):
         for path in args:
             if not os.path.exists(path):
                 raise CommandArgumentError(self, "Path does not exist: " + path)
