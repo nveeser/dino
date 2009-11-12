@@ -51,6 +51,14 @@ class ElementCommand(DinoCommand):
 class ElementFormCommand(ElementCommand):
     NAME = None
 
+    DEFAULT_EDITOR_LIST = (
+        os.environ.get("VISUAL", "environ.VISUAL.unset"),
+        os.environ.get("EDITOR", "environ.EDITOR.unset"),
+        "/usr/bin/vi",
+        "/bin/vi",
+        "/usr/bin/vim"
+    )
+
     def create_processor(self, session):
         raise NotImplementedError()
 
@@ -110,28 +118,27 @@ class ElementFormCommand(ElementCommand):
 
         return form
 
+
+    def _find_editor(self):
+        for path in self.DEFAULT_EDITOR_LIST:
+            if path is not None and os.path.exists(path):
+                self.log.fine("EDITOR: %s", path)
+                return path
+            else:
+                self.log.fine("NOT EDITOR: %s", path)
+
+        raise CommandExecutionError("Could not find editor: set environment variable VISUAL or EDITOR")
+
     def edit_form(self, opts, form):
-        (fd, path) = tempfile.mkstemp(prefix="dino.edit.", suffix=".json", dir="/var/tmp")
+        (fd, path) = tempfile.mkstemp(prefix="dino.edit.", suffix=".yaml", dir="/var/tmp")
 
         os.write(fd, form)
         os.close(fd)
 
-#        editor = None
-#        for path in (os.environ.get("VISUAL"), os.environ.get("EDITOR"), "/usr/bin/vi", "/bin/vi", "/usr/bin/vim"):
-#            if path is not None and os.path.exists(path):
-#                editor = path
-#
-#        if editor is None:
-#            raise CommandExecutionError("Could not find editor: set environment variable VISUAL or EDITOR")
 
-        if os.environ.has_key("VISUAL"):
-            editor = os.environ["VISUAL"]
-        elif os.environ.has_key("EDITOR"):
-            editor = os.environ["EDITOR"]
-        else:
-            editor = "/usr/bin/vi"
+        editor_path = self._find_editor()
 
-        os.spawnv(os.P_WAIT, editor, [ editor, path])
+        os.spawnv(os.P_WAIT, editor_path, [editor_path, path])
 
         form = open(path).read()
         os.unlink(path)

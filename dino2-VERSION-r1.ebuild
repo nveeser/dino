@@ -10,7 +10,7 @@ if [[ ${REVISION} == "99999" ]]; then
 	REVISION=HEAD
 fi
 
-ESVN_REPO_URI="https://svn.metaweb.com/svn/se-packages/dino/trunk"
+ESVN_REPO_URI="https://svn.metaweb.com/svn/se-packages/dino/dev/3.0"
 ESVN_OPTIONS="-r $REVISION"
 ESVN_PROJECT="dino-trunk"
 
@@ -45,18 +45,26 @@ RDEPEND="
 	"
 
 
+src_compile() {
+    pushd src
+    distutils_src_compile
+    popd
+}
+
+
 src_install() {
-	distutils_src_install
-	
-	pylibdir="$(${python} -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')"
-    chmod -R 755 ${D}/$pylibdir/dino/probe/probe-exec/*
-	chmod 755 ${D}/$pylibdir/dino/generators/activate_dns.sh
-				
-	mkdir -p ${D}/usr/bin
-	mkdir -p ${D}/var/cache/dino
-	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dinoadm
-	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino
-	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino-probe
-	cp ${WORKDIR}/dino2-${PV}/bin/dino-discover ${D}/usr/bin/dino-discover
-	
+    pushd src
+    distutils_src_install
+    popd
+
+    chmod -R 755 ${D}/${pylibdir}/dino/probe/probe-exec/*
+    chmod 755 ${D}/${pylibdir}/dino/generators/activate_dns.sh
+
+    mkdir -p ${D}/usr/bin
+    mkdir -p ${D}/var/cache/dino
+    cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dinoadm
+    cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino
+    cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino-probe
+    cp ${WORKDIR}/dino2-${PV}/bin/dino-discover ${D}/usr/bin/dino-discover
+
 }
