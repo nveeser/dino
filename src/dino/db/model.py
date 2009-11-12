@@ -120,6 +120,12 @@ class Device(object):
 
         return None
 
+    def blessed_port(self):
+        for port in self.ports:
+            if port.is_blessed:
+                return port
+
+        return None
 
 class IpAddress(object):
 

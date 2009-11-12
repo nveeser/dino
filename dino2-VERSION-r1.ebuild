@@ -51,18 +51,12 @@ src_install() {
 	pylibdir="$(${python} -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')"
     chmod -R 755 ${D}/$pylibdir/dino/probe/probe-exec/*
 	chmod 755 ${D}/$pylibdir/dino/generators/activate_dns.sh
-		
-    pylibdir="$(${python} -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')"
-    
-    chmod -R 755 ${D}/$pylibdir/dino/probe/probe-exec/*
-	chmod 755 ${D}/$pylibdir/dino/generators/activate_dns.sh
-	
-	
+				
 	mkdir -p ${D}/usr/bin
 	mkdir -p ${D}/var/cache/dino
-	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dinoadm
-	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dino
-	cp ${WORKDIR}/dino2-${PV}/src/wrapper.py ${D}/usr/bin/dino-probe
-	cp ${WORKDIR}/dino2-${PV}/dino-discover ${D}/usr/bin/dino-discover
+	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dinoadm
+	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino
+	cp ${WORKDIR}/dino2-${PV}/bin/wrapper.py ${D}/usr/bin/dino-probe
+	cp ${WORKDIR}/dino2-${PV}/bin/dino-discover ${D}/usr/bin/dino-discover
 	
 }
