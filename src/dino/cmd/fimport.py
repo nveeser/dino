@@ -7,7 +7,7 @@ import yaml
 from optparse import Option
 
 from dino.cmd.command import with_session, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 from dino.db import *
 from dino import class_logger
 

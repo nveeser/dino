@@ -7,7 +7,7 @@ except ImportError:
 import sqlalchemy
 from sqlalchemy import and_
 
-from dino.cmd.exception import *
+from dino.command import *
 from dino.db.schema import *
 from dino.db.objectresolver import *
 

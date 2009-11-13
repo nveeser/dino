@@ -3,7 +3,7 @@ import logging
 
 from dino import class_logger
 import dino.cmd
-from dino.cmd.exception import *
+from dino.command import *
 from dino.db import ElementException, DatabaseError, SchemaVersionMismatch
 from dino.command import *
 

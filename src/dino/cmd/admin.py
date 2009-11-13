@@ -7,7 +7,7 @@ import sqlalchemy.types as sa_types
 
 from dino.command import Command, CommandMeta, CommandWithClassSubCommand
 from dino.cmd.command import with_session, with_connection, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 from dino.db import *
 
 

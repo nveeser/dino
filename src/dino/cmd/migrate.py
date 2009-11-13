@@ -4,7 +4,7 @@ import re
 from optparse import Option
 
 from dino.cmd.command import with_session, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 
 from dino.db import Element, schema, DbConfig, __file__ as db_filepath
 import pprint; pp = pprint.PrettyPrinter(indent=2).pprint

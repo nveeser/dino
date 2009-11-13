@@ -1,5 +1,5 @@
 from dino.cmd import DinoCommand
-from dino.cmd.exception import CommandArgumentError
+from dino.command import CommandArgumentError
 
 
 class InfoCommand(DinoCommand):

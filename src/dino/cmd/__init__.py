@@ -1,4 +1,4 @@
-from dino.cmd.exception import *
+from dino.command import *
 from dino.cmd.command import DinoCommand
 
 import admin

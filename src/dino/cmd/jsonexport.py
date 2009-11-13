@@ -1,6 +1,6 @@
 
 from dino.cmd.command import with_session, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 from dino.cmd.jsonutil import *
 from dino.db import ElementNameResolver
 class JsonExportCommand(DinoCommand):

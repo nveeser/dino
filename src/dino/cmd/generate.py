@@ -1,7 +1,7 @@
 from optparse import Option
 
 from dino.cmd.command import DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 
 from dino.generators.base import Generator, NoSuchGeneratorError, GeneratorException
 

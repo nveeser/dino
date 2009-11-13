@@ -3,7 +3,7 @@ import sqlalchemy.types as sa_types
 import sqlalchemy.orm.properties as sa_props
 
 from dino.cmd import DinoCommand
-from dino.cmd.exception import CommandArgumentError
+from dino.command import CommandArgumentError
 from dino.db import schema, Element, ObjectSpecParser, ResourceElement
 
 

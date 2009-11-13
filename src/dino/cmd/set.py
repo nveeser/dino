@@ -4,7 +4,7 @@ import sqlalchemy.orm.properties as sa_props
 
 from dino import class_logger
 from dino.cmd.command import with_session, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 
 from dino.db import *
 

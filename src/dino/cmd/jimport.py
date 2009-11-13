@@ -12,7 +12,7 @@ from optparse import Option
 from itertools import ifilter
 
 from dino.cmd.command import with_session, DinoCommand
-from dino.cmd.exception import *
+from dino.command import *
 from dino.db import *
 
 """
