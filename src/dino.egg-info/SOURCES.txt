@@ -19,6 +19,7 @@ dino/cmd/edit.py
 dino/cmd/edithost.py
 dino/cmd/exception.py
 dino/cmd/fimport.py
+dino/cmd/garden.py
 dino/cmd/generate.py
 dino/cmd/help.py
 dino/cmd/info.py

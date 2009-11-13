@@ -280,8 +280,12 @@ class Generator(object):
                 if os.path.islink(source_fp):
                     link_path = os.readlink(source_fp)
                     if os.path.exists(target_fp):
-                        if os.path.islink(target_fp) and link_path == os.readlink(target_fp):
-                            continue
+
+                        if os.path.islink(target_fp):
+                            if link_path == os.readlink(target_fp):
+                                continue
+                            else:
+                                os.unlink(target_fp)
 
                     self.log.info("   Updating: (link) %s", target_fp)
                     os.symlink(link_path, target_fp)
