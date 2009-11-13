@@ -16,6 +16,7 @@ setup(name='dino',
     package_data={
         'dino' : [ "dino.cfg" ],
         'dino.db' : [ "migrate/*" ],
+        'dino.probe' : [ "probe-exec/*", "probe-spec/*" ],
         'dino.generators' : [ "activate_dns.sh", "dns_merge.pl" ],
      }
     )
