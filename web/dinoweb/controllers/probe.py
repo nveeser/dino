@@ -33,7 +33,11 @@ class ProbeController(DinoCommandController):
             command = cmd.DinoCommand.get_command('fimport')(meta.db, self.env)
             opts = command.default_options()
             args = [ filepath ]
-            command.execute(opts, args)
+            command.execute(command.default_options(), args)
+
+            command = cmd.DinoCommand.get_command('garden')(meta.db, self.env)
+            command.execute(command.default_options(), ())
+
             return self.env
 
         except cmd.CommandError, e:

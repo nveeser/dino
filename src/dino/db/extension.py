@@ -417,7 +417,8 @@ class ValidateElementMapperExtension(MapperExtension):
             element.validate_element()
         return sa_orm.EXT_CONTINUE
 
-    before_update = before_insert
+    def before_update(self, mapper, connection, element):
+        self.before_insert(mapper, connection, element)
 
 
 

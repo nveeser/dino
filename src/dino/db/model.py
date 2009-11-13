@@ -140,12 +140,6 @@ class IpAddress(object):
 
     nvalue = property(_get_nvalue, _set_nvalue)
 
-    @property
-    def nsubnet(self):
-        if self._subnet is None:
-            self._subnet = self.query_subnet()
-
-        return self._subnet
     #
     # Methods
     #   
@@ -167,6 +161,10 @@ class IpAddress(object):
     def int2bin(n, count=32):
         """returns a string repr of the int in binary"""
         return "".join([str((n >> y) & 1) for y in range(count - 1, -1, -1)])
+
+    def validate_element(self):
+        if self.subnet is None:
+            self.subnet = self.query_subnet()
 
 
 class Subnet(object):
@@ -268,6 +266,9 @@ class Subnet(object):
                 ip_set.remove(ip.nvalue)
 
         return ip_set
+
+    def validate_element(self):
+        pass
 
 class Range(object):
     TYPES = ('dhcp', 'policy')
