@@ -75,6 +75,8 @@ class DinoCommand(Command):
             except SchemaVersionMismatch, e:
                 raise CommandExecutionError(self, e)
 
+    def default_options(self):
+        return self.parser.get_default_values()
 
     def parse(self, args):
         (opts, args) = self.parser.parse_args(args=args)

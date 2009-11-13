@@ -94,6 +94,9 @@ class Command(object):
     def parse(self, args):
         ''' Parse arguments on command '''
 
+    def default_options(self):
+        pass
+
     def validate(self, opts, args):
         ''' Should be implemented to validate command line options '''
 
@@ -219,12 +222,14 @@ class CommandWithClassSubCommand(Command):
                     return self.cmd_env.prog_name()
                 else:
                     return "PROG_NAME"
-
-            def validate(self, opts, args):
+            def default_options(self):
                 pass
 
             def parse(self, args):
                 return self.parser.parse_args(args=args)
+
+            def validate(self, opts, args):
+                pass
 
             def execute(self, opts, args):
                 raise NotImplemented()
