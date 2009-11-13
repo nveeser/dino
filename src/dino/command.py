@@ -109,18 +109,15 @@ class Command(object):
         else:
             return "PROG_NAME"
 
-    def default_options(self):
-        pass
-
     def parse(self, args):
         ''' Parse arguments on command '''
+
+    def validate(self, opts, args):
+        ''' Should be implemented to validate command line options '''
 
     def execute(self, opts, args, **kwargs):
         '''Execute Command'''
         raise NotImplemented()
-
-    def validate(self, opts, args):
-        ''' Should be implemented to validate command line options '''
 
     def print_usage(self):
         '''print single line usage about the command'''
@@ -143,15 +140,13 @@ class CommandWithClassSubCommand(Command):
     class MyCommand(CommandWithClassSubCommand):
         NAME = "mycmd"
         
-    
-    
-    class MyBaseSubCommand(Command):
-        pass
-        
-    CommandWithClassSubCommand.set_subcommand(MyCommand, MyBaseSubCommand)
+    MyBaseSubCommand = MyCommand.get_base_subcommand()
     
     class MySubCommand(MyBaseSubCommand):
-        pass 
+        NAME = 'mysub'
+        
+        def execute(self, opts, args):
+            ...
         
     '''
     NAME = None
@@ -167,11 +162,10 @@ class CommandWithClassSubCommand(Command):
 
     @classmethod
     def create_base_subcommand(cls):
-        class BaseSubCommand(Command):
+        class BaseSubCommand(object):
             '''Base Class of all subcommands'''
             NAME = None
-
-            MAIN_COMMAND_NAME = cls.NAME
+            MAIN_COMMAND = cls
 
             __metaclass__ = CommandMeta
 
@@ -179,39 +173,40 @@ class CommandWithClassSubCommand(Command):
                 self.parent = parent
                 self.cmd_env = cmd_env
 
-            def execute(self, opts, args):
-                raise NotImplemented()
+            @property
+            def prog_name(self):
+                if self.cmd_env:
+                    return self.cmd_env.prog_name()
+                else:
+                    return "PROG_NAME"
+
+            def validate(self, opts, args):
+                pass
 
             def parse(self, args):
                 return self.parser.parse_args(args=args)
 
+            def execute(self, opts, args):
+                raise NotImplemented()
+
             def print_usage(self):
-                self.log(self.prog_name + " " + self.MAIN_COMMAND_NAME + " " + self.NAME + " " + self.USAGE)
+                self.log.info(self.prog_name + " " + self.MAIN_COMMAND.NAME + " " + self.NAME + " " + self.USAGE)
 
             def print_help(self):
-                self.log("   ", self.__class__.__doc__)
+                self.log.info("   ", self.__class__.__doc__)
 
         return BaseSubCommand
-
-    @staticmethod
-    def set_subcommand(main_cmd_class, sub_cmd_class):
-        main_cmd_class.SUBCOMMAND_CLASS = sub_cmd_class
-        sub_cmd_class.MAIN_COMMAND_NAME = main_cmd_class.NAME
-
-    def parse(self, args):
-        if self.cmd_env and not self.parser.has_option("-v"):
-                self.parser.add_option('-v', '--verbose', action='callback', callback=self.cmd_env.increase_verbose_cb)
-        self.args = args
 
     def execute(self, opts, args):
         if self.SUBCOMMAND_CLASS is None:
             raise CommandExecutionError(self, "SubCommand improperly defined")
 
-        if len(self.args) < 1:
+        if len(args) < 1:
             raise CommandArgumentError(self, "Must specifiy a subcommand")
 
         cmd_name = args.pop(0)
         cmd_class = self.SUBCOMMAND_CLASS.get_command(cmd_name)
+        print cmd_class
         cmd = cmd_class(self, self.cmd_env)
         (opts, args) = cmd.parse(args)
         cmd.validate(opts, args)

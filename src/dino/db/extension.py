@@ -37,7 +37,7 @@ class ElementNameBuilder(EntityBuilder):
 
         # Create Field
         #
-        Field(sa_types.String(50), nullable=False, unique=True).attach(entity, 'instance_name')
+        Field(sa_types.String(100), nullable=False, unique=True).attach(entity, 'instance_name')
 
         # Create NameProcessor (and for Revision Entity too)
         #
@@ -72,6 +72,7 @@ class ElementNameBuilder(EntityBuilder):
             if instance.instance_name is None:
                 raise ElementInstanceNameError("InstanceName cannot be None: %s(%s)" % (mapper.class_, id(instance)))
 
+            # Build a spec parser and see if the instance_name is valid
             try:
                 spec_parser = ObjectSpecParser(mapper.class_.entity_set)
                 spec_parser.parse(instance.element_name, expected=ElementNameResolver)

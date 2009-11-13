@@ -10,19 +10,19 @@ from dino.exception import DinoException
 # Element Exception
 # # # # # # # # # # # # # # # # # # # 
 class ElementException(DinoException):
-    def __init__(self, *args): 
+    def __init__(self, *args):
         DinoException.__init__(self, *args)
-                        
+
         if hasattr(self.__class__, "MSG_STR"):
             self.args = args
-            try: 
+            try:
                 self.msg = self.MSG_STR % tuple(args)
             except TypeError:
-                self.msg = str( (self.MSG_STR,) + tuple(args) )
+                self.msg = str((self.MSG_STR,) + tuple(args))
         else:
             self.msg = args[0]
-            self.args = len(args) > 1 and args[1:] or ()        
-        
+            self.args = len(args) > 1 and args[1:] or ()
+
     def __str__(self):
         return self.msg
 
@@ -36,7 +36,7 @@ class InvalidElementClassError(ElementException):
 class ElementExistsError(ElementException):
     pass
 
-    
+
 class ElementNoSessionError(ElementException):
     MSG_STR = "Element has no session: %s"
 
@@ -57,11 +57,11 @@ class ElementInstanceNameError(ElementException):
 
 class ElementPropertyError(ElementException):
     pass
- 
+
 class ElementPropertyTypeError(ElementPropertyError):
     MSG_STR = "Type mismatch on attribute: %s/%s   Value: %s"
-    
-    
+
+
 class DatabaseError(ElementException):
     '''Used to wrap SQL Alchemy DBAPIError's '''
     def __init__(self, msg, dberr):
@@ -72,31 +72,31 @@ class DatabaseError(ElementException):
             self.msg = str(self.db_error.args[1])
         else:
             self.msg = str(self.sa_error)
-                
+
         DinoException.__init__(self, self.msg)
-                
-    def __str__(self):        
+
+    def __str__(self):
         return self.msg
-    
+
     def print_db_error(self):
-        if self.db_error:   
+        if self.db_error:
             args = [ str(a) for a in self.db_error.args ]
             arg_str = "[ " + ", ".join(args) + " ]"
             msg = "\t%s.%s(%s)" % (self.db_error.__module__, self.db_error.__class__.__name__, arg_str)
         else:
-            msg = "\t%s" % e        
+            msg = "\t%s" % e
 
         print msg
         print "STATEMENT:\n   %s" % self.sa_error.statement
         print "ARGS:     \n   %s" % str(self.sa_error.params)
-        
+
 # # # # # # # # # # # # # # # # # # # 
 #  ElementForm Exceptions
 # # # # # # # # # # # # # # # # # # #   
 
 class ElementFormException(ElementException):
     pass
-    
+
 class UnknownFormPropertyTypeError(ElementFormException):
     pass
 
@@ -113,13 +113,13 @@ class ObjectSpecError(ElementException):
     def __init__(self, msg, spec):
         self.msg = "%s: %s: '%s'" % (self.__class__.__name__, msg, spec)
         self.spec = spec
-        
+
 class InvalidObjectSpecError(ObjectSpecError):
     pass
-    
+
 class InvalidAttributeSpecError(ObjectSpecError):
     pass
-    
+
 class QueryClauseError(ObjectSpecError):
     pass
 
@@ -133,15 +133,15 @@ class ObjectSpecParserError(Exception):
 
 class ModelError(ElementException):
     pass
-    
+
 class InvalidIpAddressError(ModelError):
     MSG_STR = 'IP is invalid: %s'
-    
+
 class ModelArgumentError(ModelError):
     pass
 
 class SchemaVersionMismatch(ModelError):
-    MSG_STR = "Version Mismatch: Database (0x%08x) <-> Model (0x%08x)" 
+    MSG_STR = "Version Mismatch: Database (0x%04x) <-> Model (0x%04x)"
     def __init__(self, schema_info):
         ModelError.__init__(self, schema_info.version, schema_info.model_version)
 

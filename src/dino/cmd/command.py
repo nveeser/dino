@@ -4,7 +4,7 @@ import logging
 from dino import class_logger
 import dino.cmd
 from dino.cmd.exception import *
-from dino.db import ElementException, DatabaseError
+from dino.db import ElementException, DatabaseError, SchemaVersionMismatch
 from dino.command import *
 
 
@@ -55,6 +55,7 @@ class DinoCommand(Command):
     __metaclass__ = DinoCommandMeta
 
     NAME = None
+    ASSERT_SCHEMA_VERSION = True
 
     def __init__(self, db_config, cmd_env=None):
         Command.__init__(self, cmd_env)
@@ -68,16 +69,20 @@ class DinoCommand(Command):
         if self.cmd_env and not self.parser.has_option("-v"):
                 self.parser.add_option('-v', '--verbose', action='callback', callback=self.cmd_env.increase_verbose_cb)
 
-    def validate(self, options, args):
-        pass
+        if self.ASSERT_SCHEMA_VERSION:
+            try:
+                self.db_config.assert_schema_version()
+            except SchemaVersionMismatch, e:
+                raise CommandExecutionError(self, e)
 
-    def default_options(self):
-        return self.parser.get_default_values()
 
     def parse(self, args):
         (opts, args) = self.parser.parse_args(args=args)
         self.validate(opts, args)
         return (opts, args)
+
+    def validate(self, options, args):
+        pass
 
     def print_usage(self):
         if isinstance(self.NAME, (list, tuple)):
@@ -116,7 +121,7 @@ def with_connection(func):
         connection = None
         try:
             self.log.finer("open connection")
-            args.append(self.db_config.connection())
+            args += (self.db_config.connection(),)
             return func(self, *args, **kwargs)
         finally:
             if connection:

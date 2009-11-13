@@ -36,7 +36,7 @@ class ElementMeta(elixir.EntityMeta):
     def __init__(cls, name, bases, dict_):
         elixir.EntityMeta.__init__(cls, name, bases, dict_)
 
-        cls.log = logging.getLogger("dino.db.schema." + name)
+        cls.log = logging.getLogger("dino.db.schema." + name.lower())
 
         # If none of the base classes are 'derived' from ElementMeta, 
         # this class is the 'Root' (ie Element)
@@ -314,11 +314,15 @@ class Element(object):
         return str(ElementNameResolver.make_name(self.entity_name, self.derive_name()))
 
     def update_name(self, override_dict={}):
+        self.log.fine("  CHECKING NAME: %s %s", repr(self), self.instance_name)
+
         derived_name = self.NAME_PROCESSOR.derive_name(self, override_dict)
-        self.log.fine("UPDATE: %s %s", repr(self), derived_name)
+        if derived_name is None:
+            derived_name = self.id
+
         if self.instance_name != derived_name:
             self.instance_name = derived_name
-            self.log.info("Updating: %s", self.instance_name)
+            self.log.info("  Updating: %s", self.instance_name)
             return True
         else:
             return False

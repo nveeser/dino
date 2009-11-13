@@ -17,6 +17,7 @@ class MigrateCommand(DinoCommand):
     GROUP = "system"
     OPTIONS = ()
 
+    ASSERT_SCHEMA_VERSION = False
 
     def __init__(self, db_config, cmd_env=None):
         DinoCommand.__init__(self, db_config, cmd_env=cmd_env)
@@ -28,7 +29,7 @@ class MigrateCommand(DinoCommand):
         # Create session without checking version
         self.load_files()
 
-        session = self.db_config.session(check_version=False)
+        session = self.db_config.session()
         sinfo = schema.SchemaInfo.find(session, self.db_config.db, expunge=False)
 
         if sinfo is None:
@@ -58,17 +59,20 @@ class MigrateCommand(DinoCommand):
                 raise
 
 
+        try:
+            session.begin()
 
-        session.begin()
+            Element.update_all_names(session)
 
-        Element.update_all_names(session)
+            desc = session.create_change_description()
 
-        desc = session.create_change_description()
+            for change in desc:
+                self.log.info(str(change))
 
-        for change in desc:
-            self.log.info(str(change))
-
-        session.commit()
+            session.commit()
+        except:
+            session.rollback()
+            raise
 
     def do_upgrade(self, session, filepath, new_version):
         f = open(filepath)

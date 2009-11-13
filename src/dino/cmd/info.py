@@ -8,9 +8,10 @@ class InfoCommand(DinoCommand):
     NAME = "info"
     USAGE = ""
     GROUP = "system"
+    ASSERT_SCHEMA_VERSION = False
+
 
     def execute(self, opts, args):
-
         info = self.db_config.schema_info
         self.cmd_env.write("DB API URL: %s" % self.db_config.uri)
         if info is None:

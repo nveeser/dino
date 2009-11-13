@@ -99,7 +99,7 @@ class BaseDinoCli(BaseCommandEnvironment):
         parser.add_option('-x', '--xception-trace', action='store_true', dest='exception_trace', default=False)
         return parser
 
-    def create_db_config(self, cli_options, section='db'):
+    def create_db_config(self, cli_options, section='db', **kwargs):
         file_config = self.get_config(section)
         if file_config is None:
             raise DbConfigError("Cannot find file section: %s" % section)
@@ -107,6 +107,7 @@ class BaseDinoCli(BaseCommandEnvironment):
         cli_options = dict((key, getattr(cli_options, key))
             for key in ('host', 'user', 'password', 'db') if getattr(cli_options, key))
 
+        cli_options.update(kwargs)
         return DbConfig.create_from_dict(file_config, **cli_options)
 
     def main(self, argv):

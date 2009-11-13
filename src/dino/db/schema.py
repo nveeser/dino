@@ -22,16 +22,16 @@ import collection
 import model
 from model import IpType
 from display import RackDisplayProcessor, SubnetDisplayProcessor
+
 # 
 # Elixir / SQLAlchemy Metadata
 #
-# Prevent Elixir from using its own ScopedSessions
-__session__ = None
+# The following are consulted by Elixir 
+__session__ = None # Prevent Elixir from using its own ScopedSessions
 __entity_collection__ = entity_set = collection.EntityCollection()
 __metadata__ = metadata = MetaData()
 
-
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 0x0B
 
 class SchemaInfo(elixir.Entity):
     #
@@ -121,7 +121,7 @@ class Device(model.Device, Element):
     pdu_module = Field(sa_types.String(16), default="0")
     pdu_port = Field(sa_types.String(32), default="0")
     console_port = Field(sa_types.String(16), default="")
-    switch_port = Field(sa_types.String(16), default="")
+    switch_port = Field(sa_types.String(32), default="")
 
     #
     # Relationships

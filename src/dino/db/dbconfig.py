@@ -38,6 +38,7 @@ class DbConfig(object):
 
     BASE_OPTS = {
         'entity_set' : None,
+        'check_version' : True,
         'url' : None,
         'user' : None,
         'password' : None,
@@ -52,16 +53,6 @@ class DbConfig(object):
         'sql_debug' : '0',
     }
 
-#    @classmethod
-#    def create_from_cliconfig(cls, file_section='db', **kwargs):
-#        '''
-#        Create a DbConfig using values via config files, and passed in keyword args.
-#        '''
-#        file_config = dino.config.load_config(file_section)
-#        if file_config is None:
-#            raise DbConfigError("Cannot find file section: %s" % file_section)
-#
-#        return cls.create_from_dict(file_config, **kwargs)
 
     @classmethod
     def create_from_dict(cls, dict_, prefix="", **kwargs):
@@ -85,7 +76,6 @@ class DbConfig(object):
             (k, kwargs[k]) for k in kwargs if k in cls.BASE_OPTS.keys()
         )
         opts.update(arg_ops)
-
         return DbConfig(**opts)
 
 
@@ -135,10 +125,10 @@ class DbConfig(object):
 
         self.session_factory = sqlalchemy.orm.sessionmaker(
                 class_=ElementSession,
-                bind=self.engine, autocommit=True, autoflush=False,
+                bind=self.engine,
+                autocommit=True,
+                autoflush=False,
                 entity_set=self.entity_set)
-
-
 
         method_set = ElementSession.public_methods
         property_set = ('bind', 'dirty', 'deleted', 'new', 'identity_map', 'is_active')
@@ -151,8 +141,7 @@ class DbConfig(object):
             self.setup_sql_handler()
 
         if kwargs.get('check_version', True):
-            if self.entity_set.has_entity("SchemaInfo") and self.schema_info is not None:
-                self.schema_info.assert_version_match()
+            self.assert_schema_version()
 
     def __str__(self):
         return "DbConfig<%s>" % self.uri
@@ -177,7 +166,6 @@ class DbConfig(object):
         return DbConfig.URI % kwargs
 
     def session(self):
-        #return ElementSession(bind=self.engine, autocommit=True, autoflush=False, entity_set=self.entity_set)
         return self.session_factory()
 
     def entity_iterator(self, revisioned=False):
@@ -201,6 +189,10 @@ class DbConfig(object):
                 self.log.warning("No schema version is present")
 
         return self._schema_info
+
+    def assert_schema_version(self):
+        if self.entity_set.has_entity("SchemaInfo") and self.schema_info is not None:
+            self.schema_info.assert_version_match()
 
     def assert_unprotected(self):
         if self.schema_info and self.schema_info.protected:

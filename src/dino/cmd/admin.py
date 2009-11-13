@@ -22,7 +22,18 @@ class AdminCommand(CommandWithClassSubCommand, DinoCommand):
     USAGE = '<subcommand> [ <args> ]'
     GROUP = 'system'
 
-AdminSubCommand = AdminCommand.get_base_subcommand()
+    ASSERT_SCHEMA_VERSION = False
+
+BaseSubCommand = AdminCommand.get_base_subcommand()
+
+class AdminSubCommand(BaseSubCommand):
+
+    def __init__(self, parent, cmd_env):
+        BaseSubCommand.__init__(self, parent, cmd_env)
+
+        name = self.parent.log.name + "." + self.__class__.__name__
+        self.log = logging.getLogger(name)
+        self.db_config = self.parent.db_config
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -41,6 +52,7 @@ class CreateAllCommand(AdminSubCommand):
         self.log.info("CREATE Tables")
         self.parent.db_config.create_all()
 
+
 class DropAllCommand(AdminSubCommand):
     '''drop all tables listed in the current metadata (entity_set)'''
 
@@ -52,6 +64,7 @@ class DropAllCommand(AdminSubCommand):
         """drop all tables listed in the current metadata (entity_set)"""
 
         self.parent.db_config.assert_unprotected()
+        self.parent.db_config.assert_schema_version()
         self.log.info("DROP Tables")
         self.parent.db_config.drop_all()
 
@@ -64,6 +77,7 @@ class ClearSchemaCommand(AdminSubCommand):
     @with_connection
     def execute(self, opts, args, connection):
         self.parent.db_config.assert_unprotected()
+        self.parent.db_config.assert_schema_version()
         self.parent.db_config.clear_schema()
 
 
@@ -75,6 +89,7 @@ class TruncateCommand(AdminSubCommand):
     @with_connection
     def execute(self, opts, args, connection):
         self.parent.db_config.assert_unprotected()
+        self.parent.db_config.assert_schema_version()
         self.parent.db_config.truncate_all()
 
 

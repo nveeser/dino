@@ -14,6 +14,7 @@ class HelpCommand(DinoCommand):
     NAME = "help"
     USAGE = "[ commands | entities | objectspec | <Command> | <EntityName> ]"
     GROUP = "system"
+    ASSERT_SCHEMA_VERSION = False
 
     def execute(self, opts, args):
         if len(args) > 0:
@@ -43,13 +44,13 @@ class HelpCommand(DinoCommand):
         else:
             self.print_usage()
             print "For a list of commands:"
-            print "%s help commands" % self.cmd_env.prog_name
+            print "%s help commands" % self.cmd_env.prog_name()
             print
             print "For a list of elements:"
-            print "%s help elements" % self.cmd_env.prog_name
+            print "%s help elements" % self.cmd_env.prog_name()
             print
             print "For the ObjectSpec description"
-            print "%s help objectspec" % self.cmd_env.prog_name
+            print "%s help objectspec" % self.cmd_env.prog_name()
 
 
     @staticmethod

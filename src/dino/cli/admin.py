@@ -41,7 +41,8 @@ class DinoCli(BaseDinoCli):
 
             (cmd_name, args) = (args[0], args[1:])
 
-            db_config = self.create_db_config(options)
+            # check_version is false, let the commands do it.
+            db_config = self.create_db_config(options, check_version=False)
 
             cmd_class = cmd.DinoCommand.get_command(cmd_name)
             command = cmd_class(db_config, self)
