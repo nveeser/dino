@@ -42,6 +42,9 @@ option ntp-servers %(ntp-servers)s;
 filename "%(def_filename)s";
 server-name "%(def_server-name)s";
 
+option pxelinux.pathprefix "slax/";
+option pxelinux.configfile "main.cfg";
+
 """
 
 
