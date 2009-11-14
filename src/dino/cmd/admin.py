@@ -165,47 +165,6 @@ class CheckProtectedCommand(AdminSubCommand):
         self.cmd_env.write(info.protected)
 
 
-
-class UpdateNamesCommand(AdminSubCommand):
-    """ For all Elements in the model entity set, pull each instance and validate/update the instance_name column"""
-    NAME = 'update_names'
-    USAGE = ''
-
-    @with_session
-    def execute(self, opts, args, session):
-
-        session.begin()
-
-        Element.update_all_names(session)
-
-        desc = session.create_change_description()
-
-        session.commit()
-
-        for change in desc:
-            self.log.info(str(change))
-
-class UpdateSubnetsCommand(AdminSubCommand):
-    '''Validate that all subnets have the most appropriate parent subnet assigned'''
-    NAME = 'update_subnets'
-    USAGE = ''
-
-    @with_session
-    def execute(self, opts, args, session):
-        session.begin()
-        for addr in session.query(IpAddress).all():
-            subnet = addr.query_subnet()
-            if addr.subnet != subnet:
-                self.log.info("Updating: %s", str(addr))
-                addr.subnet = subnet
-
-        if len(session.dirty) > 0:
-            self.log.info("Flushing: %d" % len(session.dirty))
-            session.commit()
-        else:
-            self.log.info("No Changes")
-
-
 class DotCommand(AdminSubCommand):
     NAME = 'dot'
     USAGE = ""

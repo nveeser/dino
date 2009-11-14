@@ -45,6 +45,8 @@ class IpType(sa_types.TypeDecorator):
     def network_int(cls, address):
         if isinstance(address, schema.IpAddress):
             return address.nvalue
+        if isinstance(address, schema.Subnet):
+            return address.naddr
         elif isinstance(address, (int, long)):
             return address
         elif isinstance(address, basestring):

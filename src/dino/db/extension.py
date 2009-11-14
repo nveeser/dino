@@ -13,6 +13,7 @@ from sqlalchemy.orm.attributes import manager_of_class
 from elixir import Field
 from elixir.properties import EntityBuilder
 from elixir.statements import Statement
+from elixir.relationships import Relationship
 
 from dino import class_logger
 from session import ElementSession
@@ -510,4 +511,7 @@ class IndexedList(list):
         return self._map.get(key, default)
 
 class_logger(IndexedList)
+
+class PropertyClassReference(Relationship):
+    pass
 
