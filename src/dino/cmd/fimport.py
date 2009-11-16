@@ -187,7 +187,6 @@ class FacterImportCommand(DinoCommand):
         proc = FacterInfoProcessor(session)
 
         session.open_changeset()
-
         try:
             for d in self.arg_iterator(args):
                 for data_dict in d:
@@ -196,9 +195,13 @@ class FacterImportCommand(DinoCommand):
         except FacterProcessorError, e:
             raise CommandExecutionError(self, e)
 
-
-
         desc = session.create_change_description()
+
+        if len(desc) > 0:
+            self.log.info("Changes:")
+            for change in desc:
+                self.log.info("  " + str(change))
+
         if opts.submit:
             self.log.fine("Submitting Objects: %s / %s " % (len(session.new), len(session.dirty)))
             cs = session.submit_changeset()
@@ -208,10 +211,6 @@ class FacterImportCommand(DinoCommand):
             session.revert_changeset()
             self.log.info("Not submitting")
 
-        if len(desc) > 0:
-            self.log.info("Committed the following changes:")
-            for change in desc:
-                self.log.info("  " + str(change))
 
 
 

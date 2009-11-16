@@ -164,7 +164,7 @@ class IpAddress(object):
         """returns a string repr of the int in binary"""
         return "".join([str((n >> y) & 1) for y in range(count - 1, -1, -1)])
 
-    def validate_element(self):
+    def attach_element(self):
         if self.subnet is None:
             self.subnet = self.query_subnet()
 

@@ -172,8 +172,18 @@ class ElementSession(changeset.ChangeSetSession):
                     if session.query(element.__class__).filter_by(instance_name=element.instance_name).count() > 0:
                         raise ElementExistsError("Element already exists: %s" % element.element_name)
 
+        def after_attach(self, session, element):
+            """ 
+            calls the attach_element method when an element is attached to a session
+            this allows other elements to be connected together automatically
+            """
+            for element in session.dirty:
+                if hasattr(element, 'attach_element'):
+                    element.attach_element()
 
-
+            for element in session.new:
+                if hasattr(element, 'attach_element'):
+                    element.attach_element()
 
 class_logger(ElementSession)
 
