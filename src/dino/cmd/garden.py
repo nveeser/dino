@@ -1,4 +1,5 @@
 from optparse import Option
+import re
 
 from dino.cmd.command import with_session, DinoCommand
 from dino.command import *
@@ -29,6 +30,10 @@ class GardenCommand(DinoCommand):
 
         self.update_addresses(session)
 
+        self.update_location(session)
+
+
+
         desc = session.create_change_description()
         if len(desc) > 0:
             self.log.info("Pending Changes:")
@@ -45,6 +50,31 @@ class GardenCommand(DinoCommand):
             session.revert_changeset()
             self.log.info("Not submitting")
 
+
+    def update_location(self, session):
+
+        self.log.info("Update Location Information")
+
+        self.log.info("Looking for devices in the UNKNOWN rack")
+        for dev in session.query(Device).join(Rack).filter_by(name='UNKNOWN'):
+            self.log.fine("   Update Device: %s", dev)
+            ip = dev.blessed_port().interface.address.value
+            third = ip.split('.')[2]
+            rack = session.query(Rack).filter_by(name=third).first()
+
+            if rack is not None:
+                dev.rack = rack
+
+        self.log.info("Looking for devices with no rackpos")
+        switch_regex = re.compile("\s*\w+\d+\/(\d)+")
+        for dev in session.query(Device).filter_by(rackpos=None).join(Rack):
+            self.log.fine("   Update Device: %s", dev)
+            if dev.switch_port is None or dev.switch_port == "":
+                continue
+
+            m = switch_regex.match(dev.switch_port)
+            if m is not None:
+                dev.rackpos = str(m.group(1))
 
 
     def update_addresses(self, session):
