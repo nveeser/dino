@@ -381,13 +381,13 @@ class PropertySpecResolver(Resolver):
                 if self.list_index is not None:
                     try:
                         elmt = element_property.value()[self.list_index]
+                        if self.resolve_instance:
+                            yield elmt
+                        else:
+                            yield str(elmt)
+
                     except IndexError:
                         yield None
-
-                    if self.resolve_instance:
-                        yield elmt
-                    else:
-                        yield str(elmt)
 
                 else:
                     if self.resolve_instance:

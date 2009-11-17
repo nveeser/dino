@@ -66,7 +66,7 @@ class GardenCommand(DinoCommand):
                 dev.rack = rack
 
         self.log.info("Looking for devices with no rackpos")
-        switch_regex = re.compile("\s*\w+\d+\/(\d)+")
+        switch_regex = re.compile("\s*\w+\d+\/(\d+)\s*")
         for dev in session.query(Device).filter_by(rackpos=None).join(Rack):
             self.log.fine("   Update Device: %s", dev)
             if dev.switch_port is None or dev.switch_port == "":
