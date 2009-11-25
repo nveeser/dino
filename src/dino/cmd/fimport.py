@@ -274,6 +274,10 @@ class FacterInfoProcessor(object):
             vendor = data_dict.get('manufacturer')
             product = data_dict.get('productname')
 
+            if vendor == 'empty' and product == 'empty':
+                vendor = data_dict.get('baseboard_manufacturer')
+                product = data_dict.get('baseboard_model')
+
             device.chassis = self.session.query(Chassis).filter_by(vendor=vendor, product=product).first()
 
             if device.chassis is None:
