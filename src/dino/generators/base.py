@@ -232,6 +232,14 @@ class Generator(object):
         check_call(args)
 
     def sync_directory(self, source, target, delete=True, exclude=()):
+        ''' 
+            rsync-like copying with logging output
+            source: source directory to sync
+            target: target directory to sync
+            delete: delete files that exist in target, but not in source.
+            exclude: list of relative paths to exclude from the sync (relative to target)
+        '''
+
         source_root = source.rstrip('/') + '/'
         target_root = target.rstrip('/') + '/'
         source_len = len(source_root)
@@ -248,14 +256,6 @@ class Generator(object):
 
                     source_fp = os.path.join(source_root, relative_path, f)
                     target_fp = os.path.join(target_root, relative_path, f)
-
-                    if os.path.islink(source_fp) and not os.path.islink(target_fp):
-                        self.log.info("   Removing: %s", target_fp)
-                        os.unlink(target_fp)
-
-                    if os.path.islink(target_fp) and not os.path.islink(source_fp):
-                        self.log.info("   Removing: %s", target_fp)
-                        os.unlink(target_fp)
 
                     if not os.path.exists(source_fp):
                         self.log.info("   Removing: %s", target_fp)
@@ -279,20 +279,26 @@ class Generator(object):
 
                 if os.path.islink(source_fp):
                     link_path = os.readlink(source_fp)
-                    if os.path.exists(target_fp):
 
-                        if os.path.islink(target_fp):
-                            if link_path == os.readlink(target_fp):
-                                continue
-                            else:
-                                os.unlink(target_fp)
+                    if os.path.exists(target_fp):
+                        if not os.path.islink(target_fp):
+                            self.log.info("   Removing (symlink): %s", target_fp)
+                            os.unlink(target_fp)
+
+                        elif link_path == os.readlink(target_fp):
+                            continue
 
                     self.log.info("   Updating: (link) %s", target_fp)
                     os.symlink(link_path, target_fp)
 
                 elif os.path.isfile(source_fp):
                     if os.path.exists(target_fp):
-                        if self.file_hash(source_fp) == self.file_hash(target_fp):
+
+                        if not os.path.isfile(target_fp):
+                            self.log.info("   Removing (non-file): %s", target_fp)
+                            os.unlink(target_fp)
+
+                        elif self.file_hash(source_fp) == self.file_hash(target_fp):
                             continue
 
                     self.log.info("   Updating: %s", target_fp)
