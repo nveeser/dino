@@ -45,7 +45,9 @@ class ProbeController(DinoCommandController):
             output = [ "%s: %s\n" % (e.__class__.__name__, e.msg) ]
             if self.is_traceback():
                 output += [ line for line in e.format_trace() ]
-            return output
+                return output
+            else:
+                return [ str(e) ]
 
     def download(self):
         response.content_type = 'application/x-gtar'
