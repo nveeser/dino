@@ -421,8 +421,8 @@ class FacterInfoProcessor(object):
 
 
         # remove ports that no longer show up in the probe
-        for port in device.ports:
-            if port not in found_ports and not port.is_ipmi:
+        for port in device.ports[:]:
+            if port not in found_ports:
                 device.ports.remove(port)
 
         if blessed_address is None:
