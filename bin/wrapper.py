@@ -5,8 +5,10 @@ import os
 
 
 root = os.path.dirname(__file__)
-if os.path.exists(os.path.join(root, ".svn")):
-	sys.path[0] = os.path.join(root, "..", "src")
+for scm in (".svn", ".git"):
+    scm_dir = os.path.join(root, "..", scm)
+    if os.path.exists(scm_dir):
+         sys.path[0] = os.path.join(root, "..", "src")
 
 cmdname = os.path.basename(sys.argv[0])
 
