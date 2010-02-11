@@ -42,10 +42,10 @@ echo "-----------------------------------------"
 echo "-----------------------------------------"
 echo "RUN FACTER PROBE"
 echo "-----------------------------------------"
-FACTERLIB=${PROBE_ROOT}/facter /usr/bin/facter -y > ${PROBE_ROOT}/probe.yaml
+FACTERLIB=${PROBE_ROOT}/facter /usr/bin/facter -y > ${PROBE_ROOT}/output.yaml
 
 echo "-----------------------------------------"
 echo "UPLOAD RESULTS"
 echo "-----------------------------------------"
-/usr/bin/python ${PROBE_ROOT}/probe-put.py ${url} ${PROBE_ROOT}/probe.yaml
-
+echo "/usr/bin/python ${PROBE_ROOT}/probe-put.py ${url} ${PROBE_ROOT}/output.yaml" > /do-probe
+/usr/bin/python ${PROBE_ROOT}/probe-put.py ${url} ${PROBE_ROOT}/output.yaml
