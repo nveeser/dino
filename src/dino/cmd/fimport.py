@@ -164,7 +164,7 @@ class MissingChassisError(FacterProcessorError):
         self.manufacturer = manufacturer
         self.productname = productname
 
-BAD_SERIALNO_LIST = ('empty', '1234567890', 'To Be Filled By O.E.M.')
+BAD_SERIALNO_LIST = ('empty', '1234567890', 'To Be Filled By O.E.M.', 'ToBeFilledByO.E.M.')
 
 
 class FacterImportCommand(DinoCommand):
@@ -254,6 +254,7 @@ class FacterInfoProcessor(object):
         device = self.find_device(data_dict)
         if device is None:
             hid = self.create_hid(data_dict)
+            self.log.info("Device HID: %s", hid)
             serialno = data_dict.get('serialnumber')
             device = Device(hid=hid, status="INVENTORY", serialno=serialno)
             self.session.add(device)
@@ -274,7 +275,9 @@ class FacterInfoProcessor(object):
             vendor = data_dict.get('manufacturer')
             product = data_dict.get('productname')
 
-            if vendor == 'empty' and product == 'empty':
+            device.chassis = self.session.query(Chassis).filter_by(vendor=vendor, product=product).first()
+
+            if device.chassis is None:
                 vendor = data_dict.get('baseboard_manufacturer')
                 product = data_dict.get('baseboard_model')
 
@@ -379,6 +382,9 @@ class FacterInfoProcessor(object):
         if serial is not None and serial not in BAD_SERIALNO_LIST:
             return serial
 
+        if serial in BAD_SERIALNO_LIST:
+            self.log.info("This serial is crap: %s", serial)
+
         interfaces = data_dict.get('interfaces')
         if interfaces is None:
             raise FacterProcessorError("Facter data does not provide interfaces list")
@@ -447,7 +453,7 @@ class FacterInfoProcessor(object):
 
 
     def get_serial(self, data_dict):
-        serial = data_dict.get('serialnumber')
+        serial = data_dict.get('serialnumber').strip()
 
         if serial is not None:
             serial = serial.replace(" ", "")
@@ -471,6 +477,10 @@ class FacterInfoProcessor(object):
         if port is None:
             port = Port(mac=mac, name="ipmi", device=device, is_ipmi=True)
             self.log.info("NEW IPMI Port: %s", port)
+
+        if port.name != 'ipmi':
+            self.log.info("IPMI Port is Shared: %s", port)
+            return
 
         if data_dict.get('ipmi_ip'):
             if port.interface is None:
