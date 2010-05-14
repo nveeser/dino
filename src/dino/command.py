@@ -238,7 +238,10 @@ class CommandWithClassSubCommand(Command):
                 self.log.info(self.prog_name + " " + self.MAIN_COMMAND.NAME + " " + self.NAME + " " + self.USAGE)
 
             def print_help(self):
-                self.log.info("   ", self.__class__.__doc__)
+                if self.__class__.__doc__ is not None:
+                    self.log.info("   " + self.__class__.__doc__)
+                else:
+                    self.log.info("    No Help provided")
 
         return BaseSubCommand
 
