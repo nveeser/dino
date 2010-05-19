@@ -129,7 +129,7 @@ class DhcpGenerator(Generator):
         }
 
 
-        dc_info = self.pull_rapids_datacenter(self.settings, self.settings.site)
+        dc_info = self.pull_datacenter(self.settings)
         data['domain-name-servers'] = ", ".join(dc_info['ns'])
         data['time-servers'] = ", ".join(dc_info['ntp'])
         data['ntp-servers'] = ", ".join(dc_info['ntp'])
@@ -155,7 +155,7 @@ class DhcpGenerator(Generator):
         data = dict(base_data)
 
 
-        dc_info = self.pull_rapids_datacenter(self.settings, self.settings.site)
+        dc_info = self.pull_datacenter(self.settings)
 
         self.log.info("Find Subnets for Site: %s", self.settings.site)
         subnets = session.query(Subnet).join(Site).filter_by(name=self.settings.site).all()

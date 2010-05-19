@@ -211,11 +211,10 @@ class Generator(object):
 
 
     @staticmethod
-    def pull_rapids_datacenter(settings, datacenter):
-        fp = os.path.join(settings.rapids_root, 'release', 'datacenter', datacenter)
-        fd = open(fp, 'r')
-
-        return yaml.load(fd)['tmpl_data']
+    def pull_datacenter(settings):
+        filepath = os.path.join(settings.datacenter_file)
+        with open(filepath, 'r') as f:
+            return yaml.load(f)['tmpl_data']
 
     @staticmethod
     def rsync_directory(src, trg, delete=True, verbose=True, extra_args=()):
