@@ -57,12 +57,18 @@ class GardenCommand(DinoCommand):
 
         self.log.info("Looking for devices in the UNKNOWN rack")
         for dev in session.query(Device).join(Rack).filter_by(name='UNKNOWN'):
-            self.log.fine("   Update Device: %s", dev)
+            self.log.info("   Check Device: %s", dev)
             if dev.host is None:
-                self.log.info("Device has no host: %s", str(dev))
+                self.log.info("     Device has no host: %s", str(dev))
                 continue
 
-            ip = dev.blessed_port().interface.address.value
+            blessed_port = dev.blessed_port()
+
+            if not blessed_port.interface:
+                self.log.info("    Blessed Port has not Interface: %s", blessed_port)
+                continue
+
+            ip = blessed_port.interface.address.value
             third = ip.split('.')[2]
             rack = session.query(Rack).filter_by(name=third).first()
 
