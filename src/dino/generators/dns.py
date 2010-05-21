@@ -46,7 +46,7 @@ class DnsGenerator(Generator):
             self.log.fine("  Port: %s", port)
 
             if port.interface is None:
-                self.log.warn("Skipping Port with no Interface: " % port)
+                self.log.warn("Skipping Port with no Interface: %s", port)
                 continue
 
             host = port.device.host
@@ -81,7 +81,7 @@ class DnsGenerator(Generator):
             self.log.fine("  Port: %s", port)
 
             if port.interface is None:
-                self.log.warn("Skipping Port with no Interface: " % port)
+                self.log.warn("Skipping Port with no Interface: %s", port)
                 continue
 
             host = port.device.host
@@ -166,16 +166,11 @@ class DnsGenerator(Generator):
         #
         # Pull Static files from SVN
         #
-        internal_fp = pjoin(self.workdir, 'static-internal')
-        shared_fp = pjoin(self.workdir, 'static-shared')
+        static_fp = pjoin(self.workdir, 'static')
 
+        self.get_svn_uri(self.settings.dns_merge_uri, static_fp)
 
-        self.get_svn_uri(self.settings.dns_internal_uri, internal_fp)
-        self.get_svn_uri(self.settings.dns_shared_uri, shared_fp)
-
-        internal_recs = DnsRecord.parse_data_file(internal_fp)
-        shared_recs = DnsRecord.parse_data_file(shared_fp)
-        static_set = set(internal_recs + shared_recs)
+        static_set = set(DnsRecord.parse_data_file(static_fp))
 
         dynamic = list(self.query_dynamic())
 
@@ -192,11 +187,7 @@ class DnsGenerator(Generator):
         self.log.info("Writing output file: %s" % output_fp)
         f = open(output_fp, 'w')
 
-        x = open(internal_fp)
-        f.write(x.read())
-        x.close()
-
-        x = open(shared_fp)
+        x = open(static_fp)
         f.write(x.read())
         x.close()
 

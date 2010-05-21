@@ -36,13 +36,18 @@ class GenerateCommand(DinoCommand):
                 print g.NAME
             return
 
+        generator_settings = self.cmd_env.get_config("generate")
 
         if len(args) > 0:
             classes = [ Generator.get_generator_class(name) for name in args ]
-        else:
-            classes = Generator.generator_class_iterator(exclude='dns')
 
-        generator_settings = self.cmd_env.get_config("generate")
+        elif generator_settings.get('default_generators'):
+            names = map(lambda s: s.strip(), generator_settings.get('default_generators').split(','))
+            classes = [ c for c in Generator.generator_class_iterator() if c.NAME in names ]
+
+        else:
+            classes = Generator.generator_class_iterator(exclude=('dns', 'pxe'))
+
 
         try:
 
