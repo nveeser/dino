@@ -17,3 +17,11 @@ CREATE USER 'dinoadm'@'%'
 GRANT SELECT, INSERT, UPDATE, DELETE, ALTER, CREATE, INDEX
 	ON dinodb.* 
 	TO 'dinoadm';
+	
+	
+CREATE USER 'dino-gen'@'%' 
+	IDENTIFIED BY 'dino123';
+	
+GRANT SELECT, SHOW VIEW, CREATE TEMPORARY TABLES
+	ON dinodb.* 
+	TO 'dino-gen';

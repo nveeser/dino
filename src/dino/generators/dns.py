@@ -4,6 +4,7 @@ import sys
 import os
 import subprocess
 import re
+import shutil
 from os.path import join as pjoin
 
 if __name__ == "__main__":
@@ -186,7 +187,7 @@ class DnsGenerator(Generator):
         #
         # Write the output file
         #        
-        output_fp = pjoin(self.workdir, self.settings.dns_combinded_file)
+        output_fp = pjoin(self.workdir, "generated")
 
         self.log.info("Writing output file: %s" % output_fp)
         f = open(output_fp, 'w')
@@ -214,8 +215,8 @@ class DnsGenerator(Generator):
 
     def compare(self):
 
-        generated_fp = pjoin(self.workdir, self.settings.dns_combinded_file)
-        active_fp = self.settings.dns_data_file
+        generated_fp = pjoin(self.workdir, "generated")
+        active_fp = pjoin(self.settings.dns_auth_root, "root", "data")
 
         generated_records = set(DnsRecord.parse_data_file(generated_fp))
         active_records = set(DnsRecord.parse_data_file(active_fp))
@@ -254,18 +255,41 @@ class DnsGenerator(Generator):
 
 
     def activate(self):
-        script_path = pjoin(os.path.abspath(os.path.dirname(__file__)), 'activate_dns.sh')
-        p = subprocess.Popen([script_path], stdout=subprocess.PIPE,
-            env={'MW_BLESSED_PORT' : self.settings.dns_blessed_port})
-        p.wait()
-        if p.returncode != 0:
-            (out, err) = p.communicate()
-            print "STDOUT: "
-            print out
-            print "STDERR: "
-            print err
-            raise Exception("%s returned non 0 ret: %s" % (script_path, p.returncode))
-        return p.returncode
+        generated_fp = pjoin(self.workdir, "generated")
+        active_fp = pjoin(self.settings.dns_auth_root, "root", "data")
+
+        records = DnsRecord.parse_data_file(generated_fp)
+
+        domain_names = set((r.fqdn for r in records if isinstance(r, FullSoaRecord)))
+        for domain_name in domain_names:
+            cache_fp = pjoin(self.settings.dns_cache_root, "root", "servers", domain_name)
+            with open(cache_fp, 'w') as f:
+                f.write(self.settings.dns_blessed_ip)
+
+        network_names = set((r.ip[:r.ip.rfind('.')] for r in records if hasattr(r, "ip") and r.ip))
+        for ip_str in network_names:
+            cache_fp = pjoin(self.settings.dns_cache_root, "root", "ip", ip_str)
+            with open(cache_fp, 'w') as f:
+                f.write("")
+
+
+        try:
+            shutil.copyfile(generated_fp, active_fp)
+            self.log.info("update data.cdb")
+            result = subprocess.check_call('tinydns-data',
+                    cwd=pjoin(self.settings.dns_auth_root, "root"),
+                    env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
+
+            self.log.info("restart %s", self.settings.dns_auth_root)
+            result = subprocess.check_call(['svc', '-t', self.settings.dns_auth_root],
+                    env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
+
+            self.log.info("restart %s", self.settings.dns_cache_root)
+            result = subprocess.check_call(['svc', '-t', self.settings.dns_cache_root],
+                    env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
+
+        except subprocess.CalledProcessError, e:
+            print e
 
 
 

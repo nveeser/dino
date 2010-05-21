@@ -336,9 +336,9 @@ class DhcpGenerator(Generator):
         sections = [ HOST_FEDORA_TEMPLATE % d for d in self.query_fedora_hosts(session) ]
         generated_config.extend(sections)
 
-        self.log.info("generate: reading gentoo hosts")
-        sections = [ HOST_GENTOO_TEMPLATE % d for d in self.query_gentoo_hosts(session) ]
-        generated_config.extend(sections)
+        #self.log.info("generate: reading gentoo hosts")
+        #sections = [ HOST_GENTOO_TEMPLATE % d for d in self.query_gentoo_hosts(session) ]
+        #generated_config.extend(sections)
 
         self.log.info("generate: reading ipmi hosts")
         sections = [ IPMI_TEMPLATE % d for d in self.query_ipmi_hosts(session) ]
