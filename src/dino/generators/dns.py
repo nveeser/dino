@@ -267,16 +267,16 @@ class DnsGenerator(Generator):
         try:
             shutil.copyfile(generated_fp, active_fp)
             self.log.info("update data.cdb")
-            result = subprocess.check_call('tinydns-data',
+            result = self.check_call('tinydns-data',
                     cwd=pjoin(self.settings.dns_auth_root, "root"),
                     env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
 
             self.log.info("restart %s", self.settings.dns_auth_root)
-            result = subprocess.check_call(['svc', '-t', self.settings.dns_auth_root],
+            result = self.check_call(['svc', '-t', self.settings.dns_auth_root],
                     env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
 
             self.log.info("restart %s", self.settings.dns_cache_root)
-            result = subprocess.check_call(['svc', '-t', self.settings.dns_cache_root],
+            result = self.check_call(['svc', '-t', self.settings.dns_cache_root],
                     env={"PATH" : "/bin:/usr/bin:/usr/local/bin"})
 
         except subprocess.CalledProcessError, e:
