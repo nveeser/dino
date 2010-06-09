@@ -7,14 +7,6 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-root = os.path.join(os.path.dirname(__file__), 'dinoweb')
-
-def walk_dir(root, dir):
-    for (dir, dirnames, filenames) in os.walk(os.path.join(root, dir)):
-        for f in filenames:
-            fp = os.path.join(dir, f)
-            yield fp[len('dinoweb') + 1:]
-
 
 setup(
     name='dino-web',
@@ -30,7 +22,6 @@ setup(
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite='nose.collector',
-    #package_data={'dinoweb': list(walk_dir(root, 'probe-tools')) },
     zip_safe=False,
     paster_plugins=['PasteScript', 'Pylons'],
     entry_points="""
