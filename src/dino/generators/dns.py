@@ -85,8 +85,8 @@ class DnsGenerator(Generator):
                 continue
 
             host = port.device.host
-            #rec = FullARecord()
-            rec = ForwardARecord()
+            rec = FullARecord()
+            #rec = ForwardARecord()
             rec.fqdn = "ipmi-%s.%s.%s.%s" % (host.name, host.pod.name, host.site.name, self.settings.domain)
             rec.ip = port.interface.address.value
             self.log.fine("    FQDN: %s", rec.fqdn)

@@ -1,18 +1,18 @@
 #!/bin/sh -e
 
 pushd src
-/mw/app/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
+/mw/app/dino/bin/python setup.py install --root=$BARPM_INSTALL_ROOT
 popd 
 
 pushd web
-/mw/app/dino/bin/python setup.py install --root=$RPMTOOL_BUILD_ROOT
+/mw/app/dino/bin/python setup.py install --root=$BARPM_INSTALL_ROOT
 popd
 
 echo "Updating Perms"
 pylibdir=$(/mw/app/dino/bin/python -c 'import distutils.sysconfig as s; print s.get_python_lib()')
 
-#chmod -R 755 $RPMTOOL_BUILD_ROOT/${pylibdir}/dino/probe/probe-exec/*
-rm $RPMTOOL_BUILD_ROOT/${pylibdir}/dino/probe/probe-exec/*
+#chmod -R 755 $BARPM_INSTALL_ROOT/${pylibdir}/dino/probe/probe-exec/*
+rm $BARPM_INSTALL_ROOT/${pylibdir}/dino/probe/probe-exec/*
 
-chmod 755 $RPMTOOL_BUILD_ROOT/${pylibdir}/dino/generators/activate_dns.sh
+#chmod 755 $BARPM_INSTALL_ROOT/${pylibdir}/dino/generators/activate_dns.sh
 

@@ -31,7 +31,7 @@ dinoweb/model/meta.py
 dinoweb/probe-tools/probe-put.py
 dinoweb/probe-tools/facter/cdp.rb
 dinoweb/probe-tools/facter/dmidecode.rb
-dinoweb/probe-tools/facter/ipmi.rb
+dinoweb/probe-tools/facter/ipmi_device.rb
 dinoweb/public/bg.png
 dinoweb/public/coffee-with-milk.css
 dinoweb/public/discovery-script
